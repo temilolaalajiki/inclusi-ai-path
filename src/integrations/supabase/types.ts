@@ -14,16 +14,249 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      feedback: {
+        Row: {
+          comment: string | null
+          created_at: string | null
+          id: string
+          rating: string | null
+          recommendation_id: string
+          user_id: string
+        }
+        Insert: {
+          comment?: string | null
+          created_at?: string | null
+          id?: string
+          rating?: string | null
+          recommendation_id: string
+          user_id: string
+        }
+        Update: {
+          comment?: string | null
+          created_at?: string | null
+          id?: string
+          rating?: string | null
+          recommendation_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "feedback_recommendation_id_fkey"
+            columns: ["recommendation_id"]
+            isOneToOne: false
+            referencedRelation: "recommendations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      learners: {
+        Row: {
+          accessibility_needs: string[] | null
+          created_at: string | null
+          demographics: Json | null
+          id: string
+          learning_challenges: string[] | null
+          teacher_id: string | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          accessibility_needs?: string[] | null
+          created_at?: string | null
+          demographics?: Json | null
+          id?: string
+          learning_challenges?: string[] | null
+          teacher_id?: string | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          accessibility_needs?: string[] | null
+          created_at?: string | null
+          demographics?: Json | null
+          id?: string
+          learning_challenges?: string[] | null
+          teacher_id?: string | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      performance_records: {
+        Row: {
+          assessment_date: string
+          created_at: string | null
+          id: string
+          learner_id: string
+          notes: string | null
+          score: number
+          subject: string
+        }
+        Insert: {
+          assessment_date: string
+          created_at?: string | null
+          id?: string
+          learner_id: string
+          notes?: string | null
+          score: number
+          subject: string
+        }
+        Update: {
+          assessment_date?: string
+          created_at?: string | null
+          id?: string
+          learner_id?: string
+          notes?: string | null
+          score?: number
+          subject?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "performance_records_learner_id_fkey"
+            columns: ["learner_id"]
+            isOneToOne: false
+            referencedRelation: "learners"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      profiles: {
+        Row: {
+          created_at: string | null
+          first_name: string
+          id: string
+          last_name: string
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          first_name: string
+          id: string
+          last_name: string
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          first_name?: string
+          id?: string
+          last_name?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      recommendations: {
+        Row: {
+          created_at: string | null
+          description: string
+          id: string
+          implemented_at: string | null
+          learner_id: string
+          priority: string | null
+          recommendation_type: string
+          status: string | null
+          teacher_id: string | null
+          title: string
+        }
+        Insert: {
+          created_at?: string | null
+          description: string
+          id?: string
+          implemented_at?: string | null
+          learner_id: string
+          priority?: string | null
+          recommendation_type: string
+          status?: string | null
+          teacher_id?: string | null
+          title: string
+        }
+        Update: {
+          created_at?: string | null
+          description?: string
+          id?: string
+          implemented_at?: string | null
+          learner_id?: string
+          priority?: string | null
+          recommendation_type?: string
+          status?: string | null
+          teacher_id?: string | null
+          title?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "recommendations_learner_id_fkey"
+            columns: ["learner_id"]
+            isOneToOne: false
+            referencedRelation: "learners"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      teacher_training: {
+        Row: {
+          completed: boolean | null
+          completed_at: string | null
+          created_at: string | null
+          id: string
+          teacher_id: string
+          training_description: string | null
+          training_title: string
+        }
+        Insert: {
+          completed?: boolean | null
+          completed_at?: string | null
+          created_at?: string | null
+          id?: string
+          teacher_id: string
+          training_description?: string | null
+          training_title: string
+        }
+        Update: {
+          completed?: boolean | null
+          completed_at?: string | null
+          created_at?: string | null
+          id?: string
+          teacher_id?: string
+          training_description?: string | null
+          training_title?: string
+        }
+        Relationships: []
+      }
+      user_roles: {
+        Row: {
+          created_at: string | null
+          id: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          role?: Database["public"]["Enums"]["app_role"]
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      has_role: {
+        Args: {
+          _role: Database["public"]["Enums"]["app_role"]
+          _user_id: string
+        }
+        Returns: boolean
+      }
     }
     Enums: {
-      [_ in never]: never
+      app_role: "learner" | "teacher" | "admin"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -150,6 +383,8 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      app_role: ["learner", "teacher", "admin"],
+    },
   },
 } as const

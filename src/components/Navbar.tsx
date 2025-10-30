@@ -1,13 +1,31 @@
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { GraduationCap, Menu } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { GraduationCap, LogOut, Menu } from "lucide-react";
 import {
   Sheet,
   SheetContent,
   SheetTrigger,
 } from "@/components/ui/sheet";
+import { useAuth } from "@/hooks/useAuth";
+import { useEffect } from "react";
 
 export const Navbar = () => {
+  const { user, userRole, loading, signOut } = useAuth();
+  const navigate = useNavigate();
+
+  // Redirect authenticated users away from auth page
+  useEffect(() => {
+    if (!loading && user && window.location.pathname === '/auth') {
+      navigate('/');
+    }
+  }, [user, loading, navigate]);
+
+  const handleSignOut = async () => {
+    await signOut();
+    navigate('/');
+  };
+
   return (
     <nav className="border-b bg-card/50 backdrop-blur-sm sticky top-0 z-40">
       <div className="container mx-auto px-4">
@@ -22,16 +40,45 @@ export const Navbar = () => {
 
           {/* Desktop Navigation */}
           <div className="hidden md:flex items-center gap-6">
-            <Link to="/learner" className="text-sm font-medium hover:text-primary transition-colors">
-              Learner
-            </Link>
-            <Link to="/teacher" className="text-sm font-medium hover:text-primary transition-colors">
-              Teacher
-            </Link>
-            <Link to="/admin" className="text-sm font-medium hover:text-primary transition-colors">
-              Administrator
-            </Link>
-            <Button size="sm">Sign In</Button>
+            {!loading && (
+              <>
+                {user ? (
+                  <>
+                    {userRole && (
+                      <Badge variant="secondary" className="capitalize">
+                        {userRole}
+                      </Badge>
+                    )}
+                    <Link to="/" className="text-sm font-medium hover:text-primary transition-colors">
+                      Home
+                    </Link>
+                    {userRole === 'learner' && (
+                      <Link to="/learner" className="text-sm font-medium hover:text-primary transition-colors">
+                        Dashboard
+                      </Link>
+                    )}
+                    {userRole === 'teacher' && (
+                      <Link to="/teacher" className="text-sm font-medium hover:text-primary transition-colors">
+                        Dashboard
+                      </Link>
+                    )}
+                    {userRole === 'admin' && (
+                      <Link to="/admin" className="text-sm font-medium hover:text-primary transition-colors">
+                        Dashboard
+                      </Link>
+                    )}
+                    <Button size="sm" variant="outline" onClick={handleSignOut}>
+                      <LogOut className="h-4 w-4 mr-2" />
+                      Sign Out
+                    </Button>
+                  </>
+                ) : (
+                  <Link to="/auth">
+                    <Button size="sm">Sign In</Button>
+                  </Link>
+                )}
+              </>
+            )}
           </div>
 
           {/* Mobile Navigation */}
@@ -43,16 +90,45 @@ export const Navbar = () => {
             </SheetTrigger>
             <SheetContent>
               <div className="flex flex-col gap-4 mt-8">
-                <Link to="/learner" className="text-lg font-medium hover:text-primary transition-colors">
-                  Learner Dashboard
-                </Link>
-                <Link to="/teacher" className="text-lg font-medium hover:text-primary transition-colors">
-                  Teacher Dashboard
-                </Link>
-                <Link to="/admin" className="text-lg font-medium hover:text-primary transition-colors">
-                  Administrator Dashboard
-                </Link>
-                <Button className="w-full mt-4">Sign In</Button>
+                {!loading && (
+                  <>
+                    {user ? (
+                      <>
+                        {userRole && (
+                          <Badge variant="secondary" className="capitalize w-fit">
+                            {userRole}
+                          </Badge>
+                        )}
+                        <Link to="/" className="text-lg font-medium hover:text-primary transition-colors">
+                          Home
+                        </Link>
+                        {userRole === 'learner' && (
+                          <Link to="/learner" className="text-lg font-medium hover:text-primary transition-colors">
+                            Dashboard
+                          </Link>
+                        )}
+                        {userRole === 'teacher' && (
+                          <Link to="/teacher" className="text-lg font-medium hover:text-primary transition-colors">
+                            Dashboard
+                          </Link>
+                        )}
+                        {userRole === 'admin' && (
+                          <Link to="/admin" className="text-lg font-medium hover:text-primary transition-colors">
+                            Dashboard
+                          </Link>
+                        )}
+                        <Button className="w-full mt-4" variant="outline" onClick={handleSignOut}>
+                          <LogOut className="h-4 w-4 mr-2" />
+                          Sign Out
+                        </Button>
+                      </>
+                    ) : (
+                      <Link to="/auth">
+                        <Button className="w-full mt-4">Sign In</Button>
+                      </Link>
+                    )}
+                  </>
+                )}
               </div>
             </SheetContent>
           </Sheet>

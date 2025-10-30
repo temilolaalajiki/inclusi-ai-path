@@ -1,18 +1,35 @@
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Navbar } from "@/components/Navbar";
 import { AccessibilityToolbar } from "@/components/AccessibilityToolbar";
 import { GraduationCap, Users, Brain, TrendingUp, BookOpen, Shield } from "lucide-react";
+import { useAuth } from "@/hooks/useAuth";
 import heroImage from "@/assets/hero-education.jpg";
 
 const Index = () => {
+  const { user, userRole, loading } = useAuth();
+  const navigate = useNavigate();
+
+  const handleRoleNavigation = (role: string) => {
+    if (!user) {
+      navigate('/auth');
+      return;
+    }
+    
+    if (userRole !== role) {
+      return; // User doesn't have permission
+    }
+    
+    navigate(`/${role}`);
+  };
+
   const roles = [
     {
       title: "Learner Dashboard",
       description: "Track your progress, receive AI-powered learning recommendations, and access personalized support tools.",
       icon: GraduationCap,
-      link: "/learner",
+      role: "learner",
       color: "text-primary",
       bgColor: "bg-primary/10",
     },
@@ -20,7 +37,7 @@ const Index = () => {
       title: "Teacher Dashboard",
       description: "Upload student data, view AI insights, and implement evidence-based interventions for inclusive education.",
       icon: Users,
-      link: "/teacher",
+      role: "teacher",
       color: "text-secondary",
       bgColor: "bg-secondary/10",
     },
@@ -28,7 +45,7 @@ const Index = () => {
       title: "Administrator Analytics",
       description: "Monitor system-wide metrics, track accessibility improvements, and generate comprehensive reports.",
       icon: TrendingUp,
-      link: "/admin",
+      role: "admin",
       color: "text-success",
       bgColor: "bg-success/10",
     },
@@ -76,11 +93,19 @@ const Index = () => {
               Enhance accessibility and make evidence-based decisions to create truly inclusive learning environments
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <Button size="lg" asChild>
-                <Link to="/learner">Get Started</Link>
-              </Button>
-              <Button size="lg" variant="outline" asChild>
-                <Link to="/admin">View Demo</Link>
+              {!loading && (
+                user ? (
+                  <Button size="lg" onClick={() => handleRoleNavigation(userRole || 'learner')}>
+                    Go to Dashboard
+                  </Button>
+                ) : (
+                  <Button size="lg" asChild>
+                    <Link to="/auth">Get Started</Link>
+                  </Button>
+                )
+              )}
+              <Button size="lg" variant="outline" onClick={() => handleRoleNavigation('admin')}>
+                View Demo
               </Button>
             </div>
           </div>
@@ -108,8 +133,13 @@ const Index = () => {
                   <CardDescription className="text-base">{role.description}</CardDescription>
                 </CardHeader>
                 <CardContent>
-                  <Button variant="outline" className="w-full" asChild>
-                    <Link to={role.link}>Access Dashboard</Link>
+                  <Button 
+                    variant="outline" 
+                    className="w-full" 
+                    onClick={() => handleRoleNavigation(role.role)}
+                    disabled={loading || (user && userRole !== role.role)}
+                  >
+                    {!user ? 'Sign In to Access' : userRole === role.role ? 'Access Dashboard' : 'Restricted Access'}
                   </Button>
                 </CardContent>
               </Card>
@@ -155,12 +185,22 @@ const Index = () => {
               </CardDescription>
             </CardHeader>
             <CardContent className="flex flex-col sm:flex-row gap-4 justify-center">
-              <Button size="lg" asChild>
-                <Link to="/teacher">Start as Teacher</Link>
-              </Button>
-              <Button size="lg" variant="secondary" asChild>
-                <Link to="/learner">Start as Learner</Link>
-              </Button>
+              {!loading && (
+                user ? (
+                  <Button size="lg" onClick={() => handleRoleNavigation(userRole || 'learner')}>
+                    Go to Your Dashboard
+                  </Button>
+                ) : (
+                  <>
+                    <Button size="lg" asChild>
+                      <Link to="/auth">Start as Teacher</Link>
+                    </Button>
+                    <Button size="lg" variant="secondary" asChild>
+                      <Link to="/auth">Start as Learner</Link>
+                    </Button>
+                  </>
+                )
+              )}
             </CardContent>
           </Card>
         </div>
