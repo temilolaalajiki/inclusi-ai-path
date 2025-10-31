@@ -50,10 +50,10 @@ export function useAuth() {
         .from('user_roles')
         .select('role')
         .eq('user_id', userId)
-        .single();
+        .maybeSingle();
 
       if (error) throw error;
-      setUserRole(data.role as UserRole);
+      setUserRole(data?.role as UserRole ?? null);
     } catch (error) {
       console.error('Error fetching user role:', error);
       setUserRole(null);
