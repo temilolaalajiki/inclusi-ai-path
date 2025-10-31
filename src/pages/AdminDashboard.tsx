@@ -5,33 +5,21 @@ import { AccessibilityToolbar } from "@/components/AccessibilityToolbar";
 import { BarChart, Bar, LineChart, Line, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import { Users, BookOpen, TrendingUp, Download, AlertTriangle, CheckCircle } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { useAdminData } from "@/hooks/useAdminData";
 
 const AdminDashboard = () => {
-  const progressData = [
-    { month: 'Jan', progress: 65 },
-    { month: 'Feb', progress: 70 },
-    { month: 'Mar', progress: 75 },
-    { month: 'Apr', progress: 78 },
-    { month: 'May', progress: 82 },
-    { month: 'Jun', progress: 85 },
-  ];
+  const { metrics, barriers, interventions, loading } = useAdminData();
 
-  const barriersData = [
-    { name: 'Visual Impairment', value: 15 },
-    { name: 'Dyslexia', value: 28 },
-    { name: 'ADHD', value: 22 },
-    { name: 'Hearing Impairment', value: 12 },
-    { name: 'Motor Skills', value: 18 },
-    { name: 'Other', value: 5 },
-  ];
-
-  const interventionData = [
-    { intervention: 'Text-to-Speech', success: 92 },
-    { intervention: 'Visual Aids', success: 88 },
-    { intervention: 'Extended Time', success: 85 },
-    { intervention: 'Peer Support', success: 78 },
-    { intervention: 'One-on-One', success: 95 },
-  ];
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-background via-muted/20 to-background">
+        <Navbar />
+        <div className="container mx-auto px-4 py-8">
+          <p className="text-center text-muted-foreground">Loading analytics...</p>
+        </div>
+      </div>
+    );
+  }
 
   const COLORS = ['hsl(var(--chart-1))', 'hsl(var(--chart-2))', 'hsl(var(--chart-3))', 'hsl(var(--chart-4))', 'hsl(var(--chart-5))', 'hsl(var(--muted))'];
 
@@ -64,8 +52,8 @@ const AdminDashboard = () => {
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="text-3xl font-bold text-primary">1,247</div>
-              <p className="text-xs text-muted-foreground mt-1">+12% from last month</p>
+              <div className="text-3xl font-bold text-primary">{metrics.totalLearners}</div>
+              <p className="text-xs text-muted-foreground mt-1">Active in system</p>
             </CardContent>
           </Card>
 
@@ -77,8 +65,8 @@ const AdminDashboard = () => {
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="text-3xl font-bold text-primary">87</div>
-              <p className="text-xs text-muted-foreground mt-1">Across 15 departments</p>
+              <div className="text-3xl font-bold text-primary">{metrics.totalTeachers}</div>
+              <p className="text-xs text-muted-foreground mt-1">Teaching staff</p>
             </CardContent>
           </Card>
 
@@ -86,12 +74,12 @@ const AdminDashboard = () => {
             <CardHeader className="pb-3">
               <CardTitle className="flex items-center gap-2 text-base">
                 <TrendingUp className="h-4 w-4 text-success" />
-                Success Rate
+                Avg Progress
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="text-3xl font-bold text-success">87%</div>
-              <p className="text-xs text-muted-foreground mt-1">Intervention effectiveness</p>
+              <div className="text-3xl font-bold text-success">{metrics.avgProgress}%</div>
+              <p className="text-xs text-muted-foreground mt-1">Overall performance</p>
             </CardContent>
           </Card>
 
@@ -103,7 +91,7 @@ const AdminDashboard = () => {
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="text-3xl font-bold text-success">92</div>
+              <div className="text-3xl font-bold text-success">{metrics.accessibilityScore}</div>
               <p className="text-xs text-muted-foreground mt-1">Out of 100</p>
             </CardContent>
           </Card>
@@ -119,26 +107,26 @@ const AdminDashboard = () => {
           <TabsContent value="trends" className="space-y-6">
             <Card className="shadow-lg">
               <CardHeader>
-                <CardTitle>Learner Progress Trends</CardTitle>
-                <CardDescription>Average progress across all learners over time</CardDescription>
+                <CardTitle>System Metrics</CardTitle>
+                <CardDescription>Key performance indicators</CardDescription>
               </CardHeader>
               <CardContent>
-                <ResponsiveContainer width="100%" height={350}>
-                  <LineChart data={progressData}>
-                    <CartesianGrid strokeDasharray="3 3" />
-                    <XAxis dataKey="month" />
-                    <YAxis />
-                    <Tooltip />
-                    <Legend />
-                    <Line 
-                      type="monotone" 
-                      dataKey="progress" 
-                      stroke="hsl(var(--primary))" 
-                      strokeWidth={3}
-                      name="Progress (%)"
-                    />
-                  </LineChart>
-                </ResponsiveContainer>
+                <div className="space-y-4">
+                  <div className="flex justify-between items-center p-4 border rounded-lg">
+                    <div>
+                      <p className="text-sm text-muted-foreground">Learners Needing Support</p>
+                      <p className="text-2xl font-bold text-warning">{metrics.learnersNeedingSupport}</p>
+                    </div>
+                    <AlertTriangle className="h-8 w-8 text-warning" />
+                  </div>
+                  <div className="flex justify-between items-center p-4 border rounded-lg">
+                    <div>
+                      <p className="text-sm text-muted-foreground">Learners On Track</p>
+                      <p className="text-2xl font-bold text-success">{metrics.learnersOnTrack}</p>
+                    </div>
+                    <CheckCircle className="h-8 w-8 text-success" />
+                  </div>
+                </div>
               </CardContent>
             </Card>
 
@@ -163,16 +151,16 @@ const AdminDashboard = () => {
                 <CardContent>
                   <div className="space-y-3">
                     <div className="flex justify-between">
-                      <span className="text-sm">Daily Active Users</span>
-                      <span className="font-semibold">892</span>
+                      <span className="text-sm">Total Learners</span>
+                      <span className="font-semibold">{metrics.totalLearners}</span>
                     </div>
                     <div className="flex justify-between">
-                      <span className="text-sm">Weekly Reports Generated</span>
-                      <span className="font-semibold">234</span>
+                      <span className="text-sm">Total Teachers</span>
+                      <span className="font-semibold">{metrics.totalTeachers}</span>
                     </div>
                     <div className="flex justify-between">
-                      <span className="text-sm">AI Recommendations</span>
-                      <span className="font-semibold">1,456</span>
+                      <span className="text-sm">Avg Performance</span>
+                      <span className="font-semibold">{metrics.avgProgress}%</span>
                     </div>
                   </div>
                 </CardContent>
@@ -190,16 +178,16 @@ const AdminDashboard = () => {
                 <ResponsiveContainer width="100%" height={350}>
                   <PieChart>
                     <Pie
-                      data={barriersData}
+                      data={barriers}
                       cx="50%"
                       cy="50%"
                       labelLine={false}
-                      label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
+                      label={({ name, value }) => `${name}: ${value}`}
                       outerRadius={120}
                       fill="#8884d8"
                       dataKey="value"
                     >
-                      {barriersData.map((entry, index) => (
+                      {barriers.map((entry, index) => (
                         <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                       ))}
                     </Pie>
@@ -219,14 +207,20 @@ const AdminDashboard = () => {
               </CardHeader>
               <CardContent>
                 <div className="space-y-3">
-                  <div className="p-4 border border-warning/50 rounded-lg bg-warning/5">
-                    <h4 className="font-semibold mb-1">Increase Dyslexia Support Resources</h4>
-                    <p className="text-sm text-muted-foreground">28% of students require specialized dyslexia interventions</p>
-                  </div>
-                  <div className="p-4 border border-warning/50 rounded-lg bg-warning/5">
-                    <h4 className="font-semibold mb-1">ADHD Accommodation Training</h4>
-                    <p className="text-sm text-muted-foreground">Teacher training needed for better ADHD support strategies</p>
-                  </div>
+                  {barriers.slice(0, 2).length > 0 ? (
+                    barriers.slice(0, 2).map((barrier, index) => (
+                      <div key={index} className="p-4 border border-warning/50 rounded-lg bg-warning/5">
+                        <h4 className="font-semibold mb-1">Address {barrier.name}</h4>
+                        <p className="text-sm text-muted-foreground">
+                          {barrier.value} students require support for this challenge
+                        </p>
+                      </div>
+                    ))
+                  ) : (
+                    <p className="text-sm text-muted-foreground text-center py-4">
+                      No significant priority areas identified
+                    </p>
+                  )}
                 </div>
               </CardContent>
             </Card>
@@ -240,13 +234,13 @@ const AdminDashboard = () => {
               </CardHeader>
               <CardContent>
                 <ResponsiveContainer width="100%" height={350}>
-                  <BarChart data={interventionData}>
+                  <BarChart data={interventions}>
                     <CartesianGrid strokeDasharray="3 3" />
-                    <XAxis dataKey="intervention" />
+                    <XAxis dataKey="type" />
                     <YAxis />
                     <Tooltip />
                     <Legend />
-                    <Bar dataKey="success" fill="hsl(var(--primary))" name="Success Rate (%)" />
+                    <Bar dataKey="successRate" fill="hsl(var(--primary))" name="Success Rate (%)" />
                   </BarChart>
                 </ResponsiveContainer>
               </CardContent>
@@ -255,31 +249,49 @@ const AdminDashboard = () => {
             <div className="grid gap-6 md:grid-cols-3">
               <Card className="shadow-lg">
                 <CardHeader>
-                  <CardTitle className="text-base">Top Performing</CardTitle>
+                  <CardTitle className="text-base">Most Common</CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <div className="text-2xl font-bold text-success mb-1">One-on-One Sessions</div>
-                  <p className="text-sm text-muted-foreground">95% success rate</p>
+                  {interventions.length > 0 ? (
+                    <>
+                      <div className="text-2xl font-bold text-primary mb-1">
+                        {interventions[0]?.type || 'N/A'}
+                      </div>
+                      <p className="text-sm text-muted-foreground">
+                        {interventions[0]?.count || 0} recommendations
+                      </p>
+                    </>
+                  ) : (
+                    <p className="text-sm text-muted-foreground">No data</p>
+                  )}
                 </CardContent>
               </Card>
 
               <Card className="shadow-lg">
                 <CardHeader>
-                  <CardTitle className="text-base">Most Used</CardTitle>
+                  <CardTitle className="text-base">Highest Success</CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <div className="text-2xl font-bold text-primary mb-1">Text-to-Speech</div>
-                  <p className="text-sm text-muted-foreground">Used by 342 learners</p>
+                  {interventions.length > 0 ? (
+                    <>
+                      <div className="text-2xl font-bold text-success mb-1">
+                        {Math.round(interventions.reduce((max, i) => i.successRate > max ? i.successRate : max, 0))}%
+                      </div>
+                      <p className="text-sm text-muted-foreground">Success rate</p>
+                    </>
+                  ) : (
+                    <p className="text-sm text-muted-foreground">No data</p>
+                  )}
                 </CardContent>
               </Card>
 
               <Card className="shadow-lg">
                 <CardHeader>
-                  <CardTitle className="text-base">Best Value</CardTitle>
+                  <CardTitle className="text-base">Total Types</CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <div className="text-2xl font-bold text-secondary mb-1">Visual Aids</div>
-                  <p className="text-sm text-muted-foreground">High impact, low cost</p>
+                  <div className="text-2xl font-bold text-secondary mb-1">{interventions.length}</div>
+                  <p className="text-sm text-muted-foreground">Intervention types</p>
                 </CardContent>
               </Card>
             </div>

@@ -8,61 +8,50 @@ import { Input } from "@/components/ui/input";
 import { Progress } from "@/components/ui/progress";
 import { Users, Upload, Brain, TrendingUp, AlertCircle, CheckCircle2 } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { useAuth } from "@/hooks/useAuth";
+import { useTeacherData } from "@/hooks/useTeacherData";
 
 const TeacherDashboard = () => {
   const [activeTab, setActiveTab] = useState("overview");
+  const { user } = useAuth();
+  const { learners, loading, uploadCSV, updateRecommendationStatus } = useTeacherData(user?.id);
 
-  const students = [
-    { 
-      id: 1, 
-      name: "Emma Johnson", 
-      progress: 85, 
-      needs: ["Visual learning support", "Additional reading time"],
-      status: "On Track"
-    },
-    { 
-      id: 2, 
-      name: "Michael Chen", 
-      progress: 72, 
-      needs: ["Dyslexia support", "Text-to-speech tools"],
-      status: "Needs Support"
-    },
-    { 
-      id: 3, 
-      name: "Sarah Williams", 
-      progress: 92, 
-      needs: ["Advanced challenges", "Peer tutoring opportunities"],
-      status: "Excellent"
-    },
-    { 
-      id: 4, 
-      name: "James Rodriguez", 
-      progress: 78, 
-      needs: ["Math support", "One-on-one sessions"],
-      status: "On Track"
-    },
-  ];
+  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      uploadCSV(file);
+    }
+  };
 
-  const aiInsights = [
-    {
-      type: "recommendation",
-      title: "Increase Visual Aids",
-      description: "3 students show improved engagement with visual learning materials. Consider incorporating more diagrams and infographics.",
-      priority: "medium",
-    },
-    {
-      type: "alert",
-      title: "Reading Time Extension Needed",
-      description: "2 students with dyslexia would benefit from extended reading time on assessments.",
-      priority: "high",
-    },
-    {
-      type: "success",
-      title: "Peer Learning Success",
-      description: "Group activities have shown 25% improvement in comprehension scores.",
-      priority: "low",
-    },
-  ];
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-background via-muted/20 to-background">
+        <Navbar />
+        <div className="container mx-auto px-4 py-8">
+          <p className="text-center text-muted-foreground">Loading dashboard...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Calculate metrics
+  const totalStudents = learners.length;
+  const avgProgress = learners.length > 0
+    ? Math.round(
+        learners.reduce((sum, learner) => {
+          const avg = learner.performance_records.length > 0
+            ? learner.performance_records.reduce((s, p) => s + Number(p.score), 0) / learner.performance_records.length
+            : 0;
+          return sum + avg;
+        }, 0) / learners.length
+      )
+    : 0;
+  
+  const needSupport = learners.filter(l => 
+    l.performance_records.some(p => Number(p.score) < 70)
+  ).length;
+  
+  const onTrack = totalStudents - needSupport;
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-muted/20 to-background">
@@ -85,7 +74,7 @@ const TeacherDashboard = () => {
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="text-3xl font-bold text-primary">24</div>
+              <div className="text-3xl font-bold text-primary">{totalStudents}</div>
             </CardContent>
           </Card>
 
@@ -97,7 +86,7 @@ const TeacherDashboard = () => {
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="text-3xl font-bold text-success">82%</div>
+              <div className="text-3xl font-bold text-success">{avgProgress}%</div>
             </CardContent>
           </Card>
 
@@ -109,7 +98,7 @@ const TeacherDashboard = () => {
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="text-3xl font-bold text-warning">5</div>
+              <div className="text-3xl font-bold text-warning">{needSupport}</div>
             </CardContent>
           </Card>
 
@@ -121,7 +110,7 @@ const TeacherDashboard = () => {
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="text-3xl font-bold text-success">19</div>
+              <div className="text-3xl font-bold text-success">{onTrack}</div>
             </CardContent>
           </Card>
         </div>
@@ -146,10 +135,21 @@ const TeacherDashboard = () => {
                     <p className="text-sm text-muted-foreground mb-2">
                       Drag and drop CSV file or click to browse
                     </p>
-                    <Button variant="outline" size="sm">Choose File</Button>
+                    <input
+                      type="file"
+                      accept=".csv"
+                      onChange={handleFileUpload}
+                      className="hidden"
+                      id="csv-upload"
+                    />
+                    <label htmlFor="csv-upload">
+                      <Button variant="outline" size="sm" asChild>
+                        <span>Choose File</span>
+                      </Button>
+                    </label>
                   </div>
                   <p className="text-xs text-muted-foreground">
-                    Supported formats: CSV, Excel. Include student name, grades, and learning needs.
+                    Supported formats: CSV. Include student name, subject, score, and date columns.
                   </p>
                 </CardContent>
               </Card>
@@ -158,26 +158,34 @@ const TeacherDashboard = () => {
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
                     <Brain className="h-5 w-5 text-primary" />
-                    Recent AI Analysis
+                    Recent Recommendations
                   </CardTitle>
-                  <CardDescription>Latest recommendations from the AI system</CardDescription>
+                  <CardDescription>Latest recommendations for your students</CardDescription>
                 </CardHeader>
                 <CardContent>
                   <div className="space-y-3">
-                    {aiInsights.slice(0, 2).map((insight, index) => (
-                      <div key={index} className="p-3 border rounded-lg">
-                        <div className="flex items-start gap-2 mb-1">
-                          <Badge 
-                            variant={insight.priority === "high" ? "destructive" : insight.priority === "medium" ? "default" : "secondary"}
-                          >
-                            {insight.priority}
-                          </Badge>
-                          <h4 className="font-semibold text-sm flex-1">{insight.title}</h4>
+                    {learners.flatMap(l => l.recommendations || []).slice(0, 2).length > 0 ? (
+                      learners.flatMap(l => l.recommendations || []).slice(0, 2).map((rec) => (
+                        <div key={rec.id} className="p-3 border rounded-lg">
+                          <div className="flex items-start gap-2 mb-1">
+                            <Badge 
+                              variant={rec.priority === "high" ? "destructive" : rec.priority === "medium" ? "default" : "secondary"}
+                            >
+                              {rec.priority}
+                            </Badge>
+                            <h4 className="font-semibold text-sm flex-1">{rec.title}</h4>
+                          </div>
+                          <p className="text-xs text-muted-foreground">{rec.description}</p>
                         </div>
-                        <p className="text-xs text-muted-foreground">{insight.description}</p>
-                      </div>
-                    ))}
-                    <Button variant="outline" className="w-full">View All Insights</Button>
+                      ))
+                    ) : (
+                      <p className="text-sm text-muted-foreground text-center py-4">
+                        No recommendations yet
+                      </p>
+                    )}
+                    <Button variant="outline" className="w-full" onClick={() => setActiveTab("insights")}>
+                      View All Insights
+                    </Button>
                   </div>
                 </CardContent>
               </Card>
@@ -197,41 +205,59 @@ const TeacherDashboard = () => {
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
-                  {students.map((student) => (
-                    <div key={student.id} className="border rounded-lg p-4 hover:border-primary transition-colors">
-                      <div className="flex items-start justify-between mb-3">
-                        <div>
-                          <h4 className="font-semibold">{student.name}</h4>
-                          <Badge variant={
-                            student.status === "Excellent" ? "default" : 
-                            student.status === "On Track" ? "secondary" : "outline"
-                          } className="mt-1">
-                            {student.status}
-                          </Badge>
-                        </div>
-                        <Button size="sm" variant="outline">View Details</Button>
-                      </div>
+                  {learners.length > 0 ? (
+                    learners.slice(0, 5).map((learner) => {
+                      const avgScore = learner.performance_records.length > 0
+                        ? Math.round(
+                            learner.performance_records.reduce((sum, p) => sum + Number(p.score), 0) /
+                            learner.performance_records.length
+                          )
+                        : 0;
+                      const status = avgScore >= 85 ? 'Excellent' : avgScore >= 70 ? 'On Track' : 'Needs Support';
                       
-                      <div className="mb-3">
-                        <div className="flex justify-between mb-1 text-sm">
-                          <span className="text-muted-foreground">Overall Progress</span>
-                          <span className="font-medium">{student.progress}%</span>
-                        </div>
-                        <Progress value={student.progress} />
-                      </div>
+                      return (
+                        <div key={learner.id} className="border rounded-lg p-4 hover:border-primary transition-colors">
+                          <div className="flex items-start justify-between mb-3">
+                            <div>
+                              <h4 className="font-semibold">
+                                {learner.profiles?.first_name} {learner.profiles?.last_name}
+                              </h4>
+                              <Badge variant={
+                                status === "Excellent" ? "default" : 
+                                status === "On Track" ? "secondary" : "outline"
+                              } className="mt-1">
+                                {status}
+                              </Badge>
+                            </div>
+                            <Button size="sm" variant="outline">View Details</Button>
+                          </div>
+                          
+                          <div className="mb-3">
+                            <div className="flex justify-between mb-1 text-sm">
+                              <span className="text-muted-foreground">Overall Progress</span>
+                              <span className="font-medium">{avgScore}%</span>
+                            </div>
+                            <Progress value={avgScore} />
+                          </div>
 
-                      <div>
-                        <p className="text-sm font-medium mb-2">Learning Needs:</p>
-                        <div className="flex flex-wrap gap-2">
-                          {student.needs.map((need, idx) => (
-                            <Badge key={idx} variant="outline" className="text-xs">
-                              {need}
-                            </Badge>
-                          ))}
+                          <div>
+                            <p className="text-sm font-medium mb-2">Learning Needs:</p>
+                            <div className="flex flex-wrap gap-2">
+                              {[...(learner.learning_challenges || []), ...(learner.accessibility_needs || [])].map((need, idx) => (
+                                <Badge key={idx} variant="outline" className="text-xs">
+                                  {need}
+                                </Badge>
+                              ))}
+                            </div>
+                          </div>
                         </div>
-                      </div>
-                    </div>
-                  ))}
+                      );
+                    })
+                  ) : (
+                    <p className="text-sm text-muted-foreground text-center py-4">
+                      No students assigned yet.
+                    </p>
+                  )}
                 </div>
               </CardContent>
             </Card>
@@ -248,30 +274,43 @@ const TeacherDashboard = () => {
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
-                  {aiInsights.map((insight, index) => (
-                    <div key={index} className="border rounded-lg p-4">
-                      <div className="flex items-start justify-between mb-2">
-                        <div className="flex items-center gap-2">
-                          <Badge 
-                            variant={insight.priority === "high" ? "destructive" : insight.priority === "medium" ? "default" : "secondary"}
-                          >
-                            {insight.priority} priority
-                          </Badge>
-                          <Badge variant="outline">{insight.type}</Badge>
+                  {learners.flatMap(l => l.recommendations || []).length > 0 ? (
+                    learners.flatMap(l => l.recommendations || []).map((rec) => (
+                      <div key={rec.id} className="border rounded-lg p-4">
+                        <div className="flex items-start justify-between mb-2">
+                          <div className="flex items-center gap-2">
+                            <Badge 
+                              variant={rec.priority === "high" ? "destructive" : rec.priority === "medium" ? "default" : "secondary"}
+                            >
+                              {rec.priority} priority
+                            </Badge>
+                            <Badge 
+                              variant={rec.status === "implemented" ? "default" : "outline"}
+                            >
+                              {rec.status}
+                            </Badge>
+                          </div>
                         </div>
-                        <Button size="sm" variant="ghost">Dismiss</Button>
+                        <h4 className="font-semibold mb-2">{rec.title}</h4>
+                        <p className="text-sm text-muted-foreground mb-3">{rec.description}</p>
+                        <div className="flex gap-2">
+                          <Button 
+                            size="sm" 
+                            variant="default"
+                            onClick={() => updateRecommendationStatus(rec.id, 'implemented')}
+                            disabled={rec.status === 'implemented'}
+                          >
+                            <CheckCircle2 className="h-3 w-3 mr-1" />
+                            Mark as Implemented
+                          </Button>
+                        </div>
                       </div>
-                      <h4 className="font-semibold mb-2">{insight.title}</h4>
-                      <p className="text-sm text-muted-foreground mb-3">{insight.description}</p>
-                      <div className="flex gap-2">
-                        <Button size="sm" variant="default">
-                          <CheckCircle2 className="h-3 w-3 mr-1" />
-                          Mark as Implemented
-                        </Button>
-                        <Button size="sm" variant="outline">Provide Feedback</Button>
-                      </div>
-                    </div>
-                  ))}
+                    ))
+                  ) : (
+                    <p className="text-sm text-muted-foreground text-center py-4">
+                      No recommendations yet. Add recommendations for your students.
+                    </p>
+                  )}
                 </div>
               </CardContent>
             </Card>
