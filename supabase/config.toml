@@ -1,1 +1,10 @@
 project_id = "isfdonwakwobsnsrhcux"
+
+[functions.analyze-learner]
+verify_jwt = false
+
+[functions.suggest-interventions]
+verify_jwt = false
+
+[functions.generate-insights]
+verify_jwt = false

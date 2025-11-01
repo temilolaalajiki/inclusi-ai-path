@@ -1,5 +1,6 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import { Navbar } from "@/components/Navbar";
 import { AccessibilityToolbar } from "@/components/AccessibilityToolbar";
 import { BarChart, Bar, LineChart, Line, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
@@ -8,7 +9,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useAdminData } from "@/hooks/useAdminData";
 
 const AdminDashboard = () => {
-  const { metrics, barriers, interventions, loading } = useAdminData();
+  const { metrics, barriers, interventions, loading, insights, insightsLoading, generateInsights } = useAdminData();
 
   if (loading) {
     return (
@@ -42,6 +43,55 @@ const AdminDashboard = () => {
             </Button>
           </div>
         </div>
+
+        <div className="mb-6 flex justify-between items-center">
+          <div>
+            <h2 className="text-2xl font-bold">AI-Powered Insights</h2>
+            <p className="text-muted-foreground">System-wide analysis and recommendations</p>
+          </div>
+          <Button onClick={generateInsights} disabled={insightsLoading}>
+            {insightsLoading ? 'Generating...' : 'Generate Insights'}
+          </Button>
+        </div>
+
+        {insights && (
+          <Card className="mb-6">
+            <CardHeader>
+              <CardTitle>System Insights</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              <div>
+                <h3 className="font-semibold mb-2">Key Trends</h3>
+                <div className="space-y-3">
+                  {insights.trends?.map((trend: any, idx: number) => (
+                    <div key={idx} className="border-l-4 border-primary pl-4">
+                      <p className="font-medium">{trend.category}</p>
+                      <p className="text-sm text-muted-foreground">{trend.insight}</p>
+                      <p className="text-sm text-primary mt-1">→ {trend.recommendation}</p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+              
+              <div>
+                <h3 className="font-semibold mb-2">Strategic Priorities</h3>
+                <div className="space-y-2">
+                  {insights.priorities?.map((priority: any, idx: number) => (
+                    <div key={idx} className="flex items-start gap-3 p-3 bg-muted/50 rounded-lg">
+                      <Badge variant={priority.impact === 'high' ? 'default' : 'secondary'}>
+                        {priority.impact}
+                      </Badge>
+                      <div>
+                        <p className="font-medium">{priority.area}</p>
+                        <p className="text-sm text-muted-foreground">{priority.action}</p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        )}
 
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4 mb-6">
           <Card className="shadow-lg hover:shadow-xl transition-shadow">

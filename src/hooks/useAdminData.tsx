@@ -129,11 +129,44 @@ export function useAdminData() {
     }
   };
 
+  const [insights, setInsights] = useState<any>(null);
+  const [insightsLoading, setInsightsLoading] = useState(false);
+
+  const generateInsights = async () => {
+    setInsightsLoading(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('generate-insights', {
+        body: {}
+      });
+
+      if (error) throw error;
+
+      setInsights(data.insights);
+      
+      toast({
+        title: 'Insights Generated!',
+        description: `Analysis complete using ${data.source === 'ai' ? 'AI' : 'rule-based analysis'}.`
+      });
+    } catch (error: any) {
+      console.error('Error generating insights:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to generate insights. Please try again.',
+        variant: 'destructive'
+      });
+    } finally {
+      setInsightsLoading(false);
+    }
+  };
+
   return {
     metrics,
     barriers,
     interventions,
     loading,
+    insights,
+    insightsLoading,
+    generateInsights,
     refetch: fetchAdminData
   };
 }

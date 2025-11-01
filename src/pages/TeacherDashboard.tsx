@@ -14,7 +14,7 @@ import { useTeacherData } from "@/hooks/useTeacherData";
 const TeacherDashboard = () => {
   const [activeTab, setActiveTab] = useState("overview");
   const { user } = useAuth();
-  const { learners, loading, uploadCSV, updateRecommendationStatus } = useTeacherData(user?.id);
+  const { learners, loading, uploadCSV, updateRecommendationStatus, analyzeStudent, suggestInterventions } = useTeacherData(user?.id);
 
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -229,7 +229,22 @@ const TeacherDashboard = () => {
                                 {status}
                               </Badge>
                             </div>
-                            <Button size="sm" variant="outline">View Details</Button>
+                            <div className="flex gap-2">
+                              <Button 
+                                size="sm" 
+                                variant="outline"
+                                onClick={() => analyzeStudent(learner.id)}
+                              >
+                                Analyze
+                              </Button>
+                              <Button 
+                                size="sm" 
+                                variant="secondary"
+                                onClick={() => suggestInterventions(learner.id)}
+                              >
+                                Interventions
+                              </Button>
+                            </div>
                           </div>
                           
                           <div className="mb-3">

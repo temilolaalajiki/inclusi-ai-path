@@ -152,11 +152,61 @@ export function useTeacherData(userId: string | undefined) {
     }
   };
 
+  const analyzeStudent = async (learnerId: string) => {
+    try {
+      const { data, error } = await supabase.functions.invoke('analyze-learner', {
+        body: { learnerId }
+      });
+
+      if (error) throw error;
+
+      toast({
+        title: 'Analysis Complete!',
+        description: `Generated ${data.recommendations?.length || 0} new recommendations using ${data.source === 'ai' ? 'AI' : 'rule-based analysis'}.`
+      });
+
+      fetchTeacherData();
+    } catch (error: any) {
+      console.error('Error analyzing student:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to analyze student. Please try again.',
+        variant: 'destructive'
+      });
+    }
+  };
+
+  const suggestInterventions = async (learnerId: string) => {
+    try {
+      const { data, error } = await supabase.functions.invoke('suggest-interventions', {
+        body: { learnerId }
+      });
+
+      if (error) throw error;
+
+      toast({
+        title: 'Interventions Generated!',
+        description: `Created ${data.interventions?.length || 0} intervention strategies using ${data.source === 'ai' ? 'AI' : 'rule-based analysis'}.`
+      });
+
+      fetchTeacherData();
+    } catch (error: any) {
+      console.error('Error generating interventions:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to generate interventions. Please try again.',
+        variant: 'destructive'
+      });
+    }
+  };
+
   return {
     learners,
     loading,
     uploadCSV,
     updateRecommendationStatus,
+    analyzeStudent,
+    suggestInterventions,
     refetch: fetchTeacherData
   };
 }
