@@ -49,6 +49,47 @@ export type Database = {
           },
         ]
       }
+      learner_documents: {
+        Row: {
+          document_name: string
+          document_type: string
+          file_path: string
+          file_size: number | null
+          id: string
+          learner_id: string
+          teacher_id: string
+          uploaded_at: string
+        }
+        Insert: {
+          document_name: string
+          document_type: string
+          file_path: string
+          file_size?: number | null
+          id?: string
+          learner_id: string
+          teacher_id: string
+          uploaded_at?: string
+        }
+        Update: {
+          document_name?: string
+          document_type?: string
+          file_path?: string
+          file_size?: number | null
+          id?: string
+          learner_id?: string
+          teacher_id?: string
+          uploaded_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "learner_documents_learner_id_fkey"
+            columns: ["learner_id"]
+            isOneToOne: false
+            referencedRelation: "learners"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       learners: {
         Row: {
           accessibility_needs: string[] | null
@@ -220,6 +261,77 @@ export type Database = {
           training_title?: string
         }
         Relationships: []
+      }
+      training_resources: {
+        Row: {
+          created_at: string
+          description: string
+          difficulty_level: string | null
+          duration: string
+          id: string
+          resource_url: string | null
+          target_skills: string[]
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          description: string
+          difficulty_level?: string | null
+          duration: string
+          id?: string
+          resource_url?: string | null
+          target_skills?: string[]
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          description?: string
+          difficulty_level?: string | null
+          duration?: string
+          id?: string
+          resource_url?: string | null
+          target_skills?: string[]
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      training_reviews: {
+        Row: {
+          created_at: string
+          id: string
+          rating: number
+          review_text: string | null
+          teacher_id: string
+          training_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          rating: number
+          review_text?: string | null
+          teacher_id: string
+          training_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          rating?: number
+          review_text?: string | null
+          teacher_id?: string
+          training_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "training_reviews_training_id_fkey"
+            columns: ["training_id"]
+            isOneToOne: false
+            referencedRelation: "training_resources"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       user_roles: {
         Row: {
