@@ -4,12 +4,97 @@ import { Badge } from "@/components/ui/badge";
 import { Navbar } from "@/components/Navbar";
 import { AccessibilityToolbar } from "@/components/AccessibilityToolbar";
 import { BarChart, Bar, LineChart, Line, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
-import { Users, BookOpen, TrendingUp, Download, AlertTriangle, CheckCircle } from "lucide-react";
+import { Users, BookOpen, TrendingUp, Download, AlertTriangle, CheckCircle, FileDown, FileSpreadsheet, Calendar } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useAdminData } from "@/hooks/useAdminData";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import jsPDF from 'jspdf';
+import html2canvas from 'html2canvas';
+import * as XLSX from 'xlsx';
 
 const AdminDashboard = () => {
-  const { metrics, barriers, interventions, loading, insights, insightsLoading, generateInsights } = useAdminData();
+  const { 
+    metrics, 
+    barriers, 
+    interventions, 
+    loading, 
+    insights, 
+    insightsLoading, 
+    generateInsights,
+    dateRange,
+    setDateRange,
+    teacherEngagement,
+    predictiveTrend,
+    generateWeeklyReport
+  } = useAdminData();
+
+  const handleExportPDF = async () => {
+    const pdf = new jsPDF('p', 'mm', 'a4');
+    const element = document.getElementById('dashboard-content');
+    
+    if (element) {
+      const canvas = await html2canvas(element);
+      const imgData = canvas.toDataURL('image/png');
+      const imgWidth = 210;
+      const imgHeight = (canvas.height * imgWidth) / canvas.width;
+      
+      pdf.addImage(imgData, 'PNG', 0, 0, imgWidth, imgHeight);
+      pdf.save(`admin-report-${new Date().toISOString().split('T')[0]}.pdf`);
+    }
+  };
+
+  const handleExportExcel = () => {
+    const wb = XLSX.utils.book_new();
+    
+    // Metrics sheet
+    const metricsData = [
+      ['Metric', 'Value'],
+      ['Total Learners', metrics.totalLearners],
+      ['Active Teachers', metrics.totalTeachers],
+      ['Average Progress', `${metrics.avgProgress}%`],
+      ['Accessibility Score', metrics.accessibilityScore],
+      ['Learners Needing Support', metrics.learnersNeedingSupport],
+      ['Learners On Track', metrics.learnersOnTrack]
+    ];
+    const ws1 = XLSX.utils.aoa_to_sheet(metricsData);
+    XLSX.utils.book_append_sheet(wb, ws1, 'Metrics');
+    
+    // Barriers sheet
+    const barriersData = [['Barrier', 'Count'], ...barriers.map(b => [b.name, b.value])];
+    const ws2 = XLSX.utils.aoa_to_sheet(barriersData);
+    XLSX.utils.book_append_sheet(wb, ws2, 'Barriers');
+    
+    // Interventions sheet
+    const interventionsData = [
+      ['Type', 'Count', 'Success Rate'],
+      ...interventions.map(i => [i.type, i.count, `${i.successRate.toFixed(2)}%`])
+    ];
+    const ws3 = XLSX.utils.aoa_to_sheet(interventionsData);
+    XLSX.utils.book_append_sheet(wb, ws3, 'Interventions');
+    
+    XLSX.writeFile(wb, `admin-report-${new Date().toISOString().split('T')[0]}.xlsx`);
+  };
+
+  const handleDateRangeChange = (range: string) => {
+    const endDate = new Date().toISOString();
+    let startDate = '';
+    
+    switch (range) {
+      case 'week':
+        startDate = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
+        break;
+      case 'month':
+        startDate = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString();
+        break;
+      case 'year':
+        startDate = new Date(Date.now() - 365 * 24 * 60 * 60 * 1000).toISOString();
+        break;
+      default:
+        startDate = '2024-01-01';
+    }
+    
+    setDateRange({ startDate, endDate });
+  };
 
   if (loading) {
     return (
@@ -28,19 +113,41 @@ const AdminDashboard = () => {
     <div className="min-h-screen bg-gradient-to-br from-background via-muted/20 to-background">
       <Navbar />
       
-      <div className="container mx-auto px-4 py-8">
+      <div className="container mx-auto px-4 py-8" id="dashboard-content">
         <div className="mb-8">
-          <div className="flex items-center justify-between mb-2">
+          <div className="flex items-center justify-between mb-4">
             <div>
               <h1 className="text-4xl font-bold bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
                 Administrator Analytics
               </h1>
               <p className="text-muted-foreground text-lg">System-wide insights and reporting</p>
             </div>
-            <Button>
-              <Download className="h-4 w-4 mr-2" />
-              Export Report
-            </Button>
+            <div className="flex gap-2">
+              <Select onValueChange={handleDateRangeChange} defaultValue="all">
+                <SelectTrigger className="w-[180px]">
+                  <Calendar className="h-4 w-4 mr-2" />
+                  <SelectValue placeholder="Date Range" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="week">Last Week</SelectItem>
+                  <SelectItem value="month">Last Month</SelectItem>
+                  <SelectItem value="year">Last Year</SelectItem>
+                  <SelectItem value="all">All Time</SelectItem>
+                </SelectContent>
+              </Select>
+              <Button onClick={handleExportPDF} variant="outline">
+                <FileDown className="h-4 w-4 mr-2" />
+                PDF
+              </Button>
+              <Button onClick={handleExportExcel} variant="outline">
+                <FileSpreadsheet className="h-4 w-4 mr-2" />
+                Excel
+              </Button>
+              <Button onClick={generateWeeklyReport}>
+                <Download className="h-4 w-4 mr-2" />
+                Weekly Report
+              </Button>
+            </div>
           </div>
         </div>
 
@@ -187,9 +294,17 @@ const AdminDashboard = () => {
                   <CardDescription>Active teachers using AI recommendations</CardDescription>
                 </CardHeader>
                 <CardContent>
-                  <div className="text-4xl font-bold text-primary mb-2">78%</div>
-                  <p className="text-sm text-muted-foreground mb-4">68 of 87 teachers actively using AI insights</p>
-                  <Button variant="outline" className="w-full">View Details</Button>
+                  <div className="text-4xl font-bold text-primary mb-2">{teacherEngagement.rate}%</div>
+                  <p className="text-sm text-muted-foreground mb-4">
+                    {teacherEngagement.active} of {teacherEngagement.total} teachers actively using AI insights
+                  </p>
+                  {predictiveTrend !== 0 && (
+                    <div className="mt-2 p-2 bg-muted/50 rounded">
+                      <p className="text-xs text-muted-foreground">
+                        Trend: {predictiveTrend > 0 ? '↑' : '↓'} {Math.abs(predictiveTrend)}% per week
+                      </p>
+                    </div>
+                  )}
                 </CardContent>
               </Card>
 

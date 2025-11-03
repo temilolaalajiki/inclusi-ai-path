@@ -34,11 +34,14 @@ export function useAdminData() {
   const [barriers, setBarriers] = useState<BarrierData[]>([]);
   const [interventions, setInterventions] = useState<InterventionData[]>([]);
   const [loading, setLoading] = useState(true);
+  const [dateRange, setDateRange] = useState({ startDate: '2024-01-01', endDate: new Date().toISOString() });
+  const [teacherEngagement, setTeacherEngagement] = useState({ rate: 0, active: 0, total: 0 });
+  const [predictiveTrend, setPredictiveTrend] = useState(0);
   const { toast } = useToast();
 
   useEffect(() => {
     fetchAdminData();
-  }, []);
+  }, [dateRange]);
 
   const fetchAdminData = async () => {
     try {
@@ -53,70 +56,60 @@ export function useAdminData() {
         .select('*', { count: 'exact', head: true })
         .eq('role', 'teacher');
 
-      // Fetch all performance records to calculate average
-      const { data: performanceData } = await supabase
-        .from('performance_records')
-        .select('score');
+      // Use aggregate analytics edge function for advanced metrics
+      const { data: analyticsData, error: analyticsError } = await supabase.functions.invoke('aggregate-analytics', {
+        body: { startDate: dateRange.startDate, endDate: dateRange.endDate }
+      });
 
-      const avgScore = performanceData && performanceData.length > 0
-        ? performanceData.reduce((sum, record) => sum + Number(record.score), 0) / performanceData.length
-        : 0;
+      if (analyticsError) {
+        console.error('Analytics error:', analyticsError);
+        // Fall back to basic data if analytics fails
+        const { data: performanceData } = await supabase
+          .from('performance_records')
+          .select('score')
+          .gte('created_at', dateRange.startDate)
+          .lte('created_at', dateRange.endDate);
 
-      // Fetch learners with their challenges to analyze barriers
-      const { data: learnersData } = await supabase
-        .from('learners')
-        .select('learning_challenges, accessibility_needs');
+        const avgScore = performanceData && performanceData.length > 0
+          ? performanceData.reduce((sum, record) => sum + Number(record.score), 0) / performanceData.length
+          : 0;
 
-      // Analyze barriers
-      const barriersMap: { [key: string]: number } = {};
-      learnersData?.forEach(learner => {
-        [...(learner.learning_challenges || []), ...(learner.accessibility_needs || [])].forEach(challenge => {
-          barriersMap[challenge] = (barriersMap[challenge] || 0) + 1;
+        const needingSupport = performanceData?.filter(p => Number(p.score) < 70).length || 0;
+        const onTrack = (performanceData?.length || 0) - needingSupport;
+
+        setMetrics({
+          totalLearners: learnersCount || 0,
+          totalTeachers: teachersCount || 0,
+          avgProgress: Math.round(avgScore),
+          accessibilityScore: 92,
+          learnersNeedingSupport: needingSupport,
+          learnersOnTrack: onTrack
         });
-      });
+      } else {
+        // Use analytics data
+        const { data: performanceData } = await supabase
+          .from('performance_records')
+          .select('score')
+          .gte('created_at', dateRange.startDate)
+          .lte('created_at', dateRange.endDate);
 
-      const barriersArray = Object.entries(barriersMap).map(([name, value]) => ({
-        name,
-        value
-      }));
+        const needingSupport = performanceData?.filter(p => Number(p.score) < 70).length || 0;
+        const onTrack = (performanceData?.length || 0) - needingSupport;
 
-      // Fetch recommendations by type to analyze interventions
-      const { data: recommendationsData } = await supabase
-        .from('recommendations')
-        .select('recommendation_type, status');
+        setMetrics({
+          totalLearners: learnersCount || 0,
+          totalTeachers: teachersCount || 0,
+          avgProgress: analyticsData.avgProgress,
+          accessibilityScore: 92,
+          learnersNeedingSupport: needingSupport,
+          learnersOnTrack: onTrack
+        });
 
-      const interventionsMap: { [key: string]: { count: number; implemented: number } } = {};
-      recommendationsData?.forEach(rec => {
-        if (!interventionsMap[rec.recommendation_type]) {
-          interventionsMap[rec.recommendation_type] = { count: 0, implemented: 0 };
-        }
-        interventionsMap[rec.recommendation_type].count++;
-        if (rec.status === 'implemented') {
-          interventionsMap[rec.recommendation_type].implemented++;
-        }
-      });
-
-      const interventionsArray = Object.entries(interventionsMap).map(([type, data]) => ({
-        type,
-        count: data.count,
-        successRate: data.count > 0 ? (data.implemented / data.count) * 100 : 0
-      }));
-
-      // Calculate learners needing support vs on track
-      const needingSupport = performanceData?.filter(p => Number(p.score) < 70).length || 0;
-      const onTrack = (performanceData?.length || 0) - needingSupport;
-
-      setMetrics({
-        totalLearners: learnersCount || 0,
-        totalTeachers: teachersCount || 0,
-        avgProgress: Math.round(avgScore),
-        accessibilityScore: 92, // This would be calculated based on various factors
-        learnersNeedingSupport: needingSupport,
-        learnersOnTrack: onTrack
-      });
-
-      setBarriers(barriersArray);
-      setInterventions(interventionsArray);
+        setBarriers(analyticsData.barriers || []);
+        setInterventions(analyticsData.interventions || []);
+        setTeacherEngagement(analyticsData.teacherEngagement || { rate: 0, active: 0, total: 0 });
+        setPredictiveTrend(analyticsData.predictiveTrend || 0);
+      }
     } catch (error: any) {
       console.error('Error fetching admin data:', error);
       toast({
@@ -159,6 +152,46 @@ export function useAdminData() {
     }
   };
 
+  const exportToPDF = async () => {
+    toast({
+      title: 'Generating PDF...',
+      description: 'Please wait while we prepare your report.'
+    });
+    // PDF export will be handled in the component with jsPDF
+  };
+
+  const exportToExcel = () => {
+    toast({
+      title: 'Generating Excel...',
+      description: 'Please wait while we prepare your spreadsheet.'
+    });
+    // Excel export will be handled in the component with XLSX
+  };
+
+  const generateWeeklyReport = async () => {
+    try {
+      const { data, error } = await supabase.functions.invoke('generate-weekly-report', {
+        body: {}
+      });
+
+      if (error) throw error;
+
+      toast({
+        title: 'Weekly Report Generated!',
+        description: 'The report has been created successfully.'
+      });
+
+      return data;
+    } catch (error: any) {
+      console.error('Error generating weekly report:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to generate weekly report.',
+        variant: 'destructive'
+      });
+    }
+  };
+
   return {
     metrics,
     barriers,
@@ -167,6 +200,13 @@ export function useAdminData() {
     insights,
     insightsLoading,
     generateInsights,
-    refetch: fetchAdminData
+    refetch: fetchAdminData,
+    dateRange,
+    setDateRange,
+    teacherEngagement,
+    predictiveTrend,
+    exportToPDF,
+    exportToExcel,
+    generateWeeklyReport
   };
 }
