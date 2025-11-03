@@ -7,6 +7,7 @@ import { AccessibilityToolbar } from "@/components/AccessibilityToolbar";
 import { BookOpen, TrendingUp, Lightbulb, ThumbsUp, ThumbsDown, Award } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useLearnerData } from "@/hooks/useLearnerData";
+import { ProgressTimeline } from "@/components/ProgressTimeline";
 
 const LearnerDashboard = () => {
   const { user } = useAuth();
@@ -124,86 +125,11 @@ const LearnerDashboard = () => {
               <CardTitle>Subject Progress</CardTitle>
               <CardDescription>Your performance across all subjects</CardDescription>
             </CardHeader>
-            <CardContent className="space-y-4">
-              {subjects.length > 0 ? (
-                subjects.map((subject) => (
-                  <div key={subject.name} className="space-y-2">
-                    <div className="flex justify-between items-center">
-                      <span className="font-medium">{subject.name}</span>
-                      <Badge 
-                        variant={subject.status === "Excellent" ? "default" : subject.status === "On Track" ? "secondary" : "outline"}
-                      >
-                        {subject.status}
-                      </Badge>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <Progress value={subject.progress} className="flex-1" />
-                      <span className="text-sm text-muted-foreground w-12 text-right">{subject.progress}%</span>
-                    </div>
-                  </div>
-                ))
-              ) : (
-                <p className="text-sm text-muted-foreground text-center py-4">
-                  No performance data yet. Keep learning!
-                </p>
-              )}
-            </CardContent>
-          </Card>
-
-          <Card className="shadow-lg">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Lightbulb className="h-5 w-5 text-primary" />
-                AI Recommendations
-              </CardTitle>
-              <CardDescription>Personalized suggestions to improve your learning</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              {recommendations.length > 0 ? (
-                recommendations.map((rec) => (
-                  <div key={rec.id} className="border rounded-lg p-4 hover:border-primary transition-colors">
-                    <div className="flex items-start gap-3">
-                      <div className="bg-primary/10 p-2 rounded-lg">
-                        <Lightbulb className="h-5 w-5 text-primary" />
-                      </div>
-                      <div className="flex-1">
-                        <div className="flex items-center justify-between mb-1">
-                          <h4 className="font-semibold">{rec.title}</h4>
-                          <Badge variant="outline" className="text-xs">{rec.recommendation_type}</Badge>
-                        </div>
-                        <p className="text-sm text-muted-foreground mb-3">{rec.description}</p>
-                        <div className="flex gap-2">
-                          <Button 
-                            size="sm" 
-                            variant="ghost" 
-                            className="h-8 px-3"
-                            onClick={() => submitFeedback(rec.id, 'helpful')}
-                          >
-                            <ThumbsUp className="h-3 w-3 mr-1" />
-                            Helpful
-                          </Button>
-                          <Button 
-                            size="sm" 
-                            variant="ghost" 
-                            className="h-8 px-3"
-                            onClick={() => submitFeedback(rec.id, 'not_helpful')}
-                          >
-                            <ThumbsDown className="h-3 w-3 mr-1" />
-                            Not Helpful
-                          </Button>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                ))
-              ) : (
-                <p className="text-sm text-muted-foreground text-center py-4">
-                  No recommendations yet. Your teacher will provide personalized suggestions.
-                </p>
-              )}
-            </CardContent>
+...
           </Card>
         </div>
+
+        <ProgressTimeline performance={performance} />
       </div>
 
       <AccessibilityToolbar />

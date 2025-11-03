@@ -10,6 +10,8 @@ import { Users, Upload, Brain, TrendingUp, AlertCircle, CheckCircle2 } from "luc
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useAuth } from "@/hooks/useAuth";
 import { useTeacherData } from "@/hooks/useTeacherData";
+import { FileUpload } from "@/components/FileUpload";
+import { TrainingRecommendations } from "@/components/TrainingRecommendations";
 
 const TeacherDashboard = () => {
   const [activeTab, setActiveTab] = useState("overview");
@@ -116,43 +118,16 @@ const TeacherDashboard = () => {
         </div>
 
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-          <TabsList className="grid w-full max-w-md grid-cols-3">
+          <TabsList className="grid w-full max-w-2xl grid-cols-4">
             <TabsTrigger value="overview">Overview</TabsTrigger>
             <TabsTrigger value="students">Students</TabsTrigger>
             <TabsTrigger value="insights">AI Insights</TabsTrigger>
+            <TabsTrigger value="training">Training</TabsTrigger>
           </TabsList>
 
           <TabsContent value="overview" className="space-y-6">
             <div className="grid gap-6 md:grid-cols-2">
-              <Card className="shadow-lg">
-                <CardHeader>
-                  <CardTitle>Upload Student Data</CardTitle>
-                  <CardDescription>Import student information and assessment results</CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="border-2 border-dashed border-muted rounded-lg p-8 text-center hover:border-primary transition-colors cursor-pointer">
-                    <Upload className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
-                    <p className="text-sm text-muted-foreground mb-2">
-                      Drag and drop CSV file or click to browse
-                    </p>
-                    <input
-                      type="file"
-                      accept=".csv"
-                      onChange={handleFileUpload}
-                      className="hidden"
-                      id="csv-upload"
-                    />
-                    <label htmlFor="csv-upload">
-                      <Button variant="outline" size="sm" asChild>
-                        <span>Choose File</span>
-                      </Button>
-                    </label>
-                  </div>
-                  <p className="text-xs text-muted-foreground">
-                    Supported formats: CSV. Include student name, subject, score, and date columns.
-                  </p>
-                </CardContent>
-              </Card>
+              <FileUpload onUploadComplete={() => window.location.reload()} />
 
               <Card className="shadow-lg">
                 <CardHeader>
@@ -288,47 +263,13 @@ const TeacherDashboard = () => {
                 <CardDescription>Evidence-based recommendations to improve inclusive education</CardDescription>
               </CardHeader>
               <CardContent>
-                <div className="space-y-4">
-                  {learners.flatMap(l => l.recommendations || []).length > 0 ? (
-                    learners.flatMap(l => l.recommendations || []).map((rec) => (
-                      <div key={rec.id} className="border rounded-lg p-4">
-                        <div className="flex items-start justify-between mb-2">
-                          <div className="flex items-center gap-2">
-                            <Badge 
-                              variant={rec.priority === "high" ? "destructive" : rec.priority === "medium" ? "default" : "secondary"}
-                            >
-                              {rec.priority} priority
-                            </Badge>
-                            <Badge 
-                              variant={rec.status === "implemented" ? "default" : "outline"}
-                            >
-                              {rec.status}
-                            </Badge>
-                          </div>
-                        </div>
-                        <h4 className="font-semibold mb-2">{rec.title}</h4>
-                        <p className="text-sm text-muted-foreground mb-3">{rec.description}</p>
-                        <div className="flex gap-2">
-                          <Button 
-                            size="sm" 
-                            variant="default"
-                            onClick={() => updateRecommendationStatus(rec.id, 'implemented')}
-                            disabled={rec.status === 'implemented'}
-                          >
-                            <CheckCircle2 className="h-3 w-3 mr-1" />
-                            Mark as Implemented
-                          </Button>
-                        </div>
-                      </div>
-                    ))
-                  ) : (
-                    <p className="text-sm text-muted-foreground text-center py-4">
-                      No recommendations yet. Add recommendations for your students.
-                    </p>
-                  )}
-                </div>
+...
               </CardContent>
             </Card>
+          </TabsContent>
+
+          <TabsContent value="training" className="space-y-6">
+            <TrainingRecommendations />
           </TabsContent>
         </Tabs>
       </div>
