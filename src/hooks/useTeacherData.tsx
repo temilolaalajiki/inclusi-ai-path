@@ -41,19 +41,70 @@ export function useTeacherData(userId: string | undefined) {
 
   const fetchTeacherData = async () => {
     try {
-      // Fetch learners assigned to this teacher
-      const { data, error } = await supabase
+      // Fetch learners assigned to this teacher (base rows only)
+      const { data: learnersData, error: learnersError } = await supabase
         .from('learners')
-        .select(`
-          *,
-          profiles!user_id(first_name, last_name),
-          performance_records(subject, score, assessment_date),
-          recommendations(id, title, description, priority, status)
-        `)
+        .select('*')
         .eq('teacher_id', userId);
 
-      if (error) throw error;
-      setLearners(data as any || []);
+      if (learnersError) throw learnersError;
+
+      const learners = learnersData || [];
+      if (learners.length === 0) {
+        setLearners([]);
+        return;
+      }
+
+      // Collect ids for related lookups
+      const learnerIds = learners.map((l: any) => l.id);
+      const userIds = learners.map((l: any) => l.user_id);
+
+      // Fetch related data in parallel to avoid FK-dependent joins
+      const [profilesRes, perfRes, recsRes] = await Promise.all([
+        supabase
+          .from('profiles')
+          .select('id, first_name, last_name')
+          .in('id', userIds as string[]),
+        supabase
+          .from('performance_records')
+          .select('learner_id, subject, score, assessment_date')
+          .in('learner_id', learnerIds as string[]),
+        supabase
+          .from('recommendations')
+          .select('learner_id, id, title, description, priority, status')
+          .in('learner_id', learnerIds as string[]),
+      ]);
+
+      if (profilesRes.error) throw profilesRes.error;
+      if (perfRes.error) throw perfRes.error;
+      if (recsRes.error) throw recsRes.error;
+
+      const profilesByUserId = new Map(
+        (profilesRes.data || []).map(p => [p.id, { first_name: p.first_name, last_name: p.last_name }])
+      );
+
+      const perfByLearnerId = new Map<string, Array<{subject: string; score: number; assessment_date: string}>>();
+      (perfRes.data || []).forEach((r: any) => {
+        const arr = perfByLearnerId.get(r.learner_id) || [];
+        arr.push({ subject: r.subject, score: Number(r.score), assessment_date: r.assessment_date });
+        perfByLearnerId.set(r.learner_id, arr);
+      });
+
+      const recsByLearnerId = new Map<string, Array<{id: string; title: string; description: string; priority: string; status: string}>>();
+      (recsRes.data || []).forEach((r: any) => {
+        const arr = recsByLearnerId.get(r.learner_id) || [];
+        arr.push({ id: r.id, title: r.title, description: r.description, priority: r.priority, status: r.status });
+        recsByLearnerId.set(r.learner_id, arr);
+      });
+
+      const combined = learners.map((l: any) => ({
+        ...l,
+        profiles: profilesByUserId.get(l.user_id) || { first_name: '', last_name: '' },
+        performance_records: perfByLearnerId.get(l.id) || [],
+        recommendations: recsByLearnerId.get(l.id) || [],
+      }));
+
+      setLearners(combined as any);
     } catch (error: any) {
       console.error('Error fetching teacher data:', error);
       toast({
