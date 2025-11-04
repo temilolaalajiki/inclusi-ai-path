@@ -46,7 +46,7 @@ export function useTeacherData(userId: string | undefined) {
         .from('learners')
         .select(`
           *,
-          profiles!learners_user_id_fkey(first_name, last_name),
+          profiles!user_id(first_name, last_name),
           performance_records(subject, score, assessment_date),
           recommendations(id, title, description, priority, status)
         `)
