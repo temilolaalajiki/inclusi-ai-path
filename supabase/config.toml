@@ -17,3 +17,6 @@ verify_jwt = false
 
 [functions.recommend-training]
 verify_jwt = false
+
+[functions.create-learner]
+verify_jwt = true

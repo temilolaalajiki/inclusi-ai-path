@@ -66,56 +66,24 @@ export const CreateLearnerForm = ({ onSuccess, onBulkUploadClick }: CreateLearne
   const onSubmit = async (values: LearnerFormValues) => {
     setIsSubmitting(true);
     try {
-      // Get current user
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) throw new Error("Not authenticated");
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) throw new Error("Not authenticated");
 
-      // Create auth user for the learner
-      const { data: authData, error: authError } = await supabase.auth.admin.createUser({
-        email: values.email,
-        email_confirm: true,
-        user_metadata: {
-          first_name: values.firstName,
-          last_name: values.lastName,
+      // Call edge function to create learner
+      const { data, error } = await supabase.functions.invoke('create-learner', {
+        body: {
+          firstName: values.firstName,
+          lastName: values.lastName,
+          email: values.email,
+          age: values.age,
+          grade: values.grade,
+          learningChallenges: values.learningChallenges,
+          accessibilityNeeds: values.accessibilityNeeds,
         },
       });
 
-      if (authError) throw authError;
-      if (!authData.user) throw new Error("Failed to create user");
-
-      // Create profile
-      const { error: profileError } = await supabase
-        .from("profiles")
-        .insert({
-          id: authData.user.id,
-          first_name: values.firstName,
-          last_name: values.lastName,
-        });
-
-      if (profileError) throw profileError;
-
-      // Create user role
-      const { error: roleError } = await supabase
-        .from("user_roles")
-        .insert({
-          user_id: authData.user.id,
-          role: "learner",
-        });
-
-      if (roleError) throw roleError;
-
-      // Create learner record
-      const { error: learnerError } = await supabase
-        .from("learners")
-        .insert({
-          user_id: authData.user.id,
-          teacher_id: user.id,
-          demographics: { age: values.age, grade: values.grade },
-          learning_challenges: values.learningChallenges,
-          accessibility_needs: values.accessibilityNeeds,
-        });
-
-      if (learnerError) throw learnerError;
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
 
       toast({
         title: "Success",
