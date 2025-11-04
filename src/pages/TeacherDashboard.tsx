@@ -8,15 +8,18 @@ import { Input } from "@/components/ui/input";
 import { Progress } from "@/components/ui/progress";
 import { Users, Upload, Brain, TrendingUp, AlertCircle, CheckCircle2 } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useAuth } from "@/hooks/useAuth";
 import { useTeacherData } from "@/hooks/useTeacherData";
 import { FileUpload } from "@/components/FileUpload";
 import { TrainingRecommendations } from "@/components/TrainingRecommendations";
+import { CreateLearnerForm } from "@/components/CreateLearnerForm";
 
 const TeacherDashboard = () => {
   const [activeTab, setActiveTab] = useState("overview");
+  const [bulkUploadOpen, setBulkUploadOpen] = useState(false);
   const { user } = useAuth();
-  const { learners, loading, uploadCSV, updateRecommendationStatus, analyzeStudent, suggestInterventions } = useTeacherData(user?.id);
+  const { learners, loading, uploadCSV, updateRecommendationStatus, analyzeStudent, suggestInterventions, refetch } = useTeacherData(user?.id);
 
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -127,7 +130,10 @@ const TeacherDashboard = () => {
 
           <TabsContent value="overview" className="space-y-6">
             <div className="grid gap-6 md:grid-cols-2">
-              <FileUpload onUploadComplete={() => window.location.reload()} />
+              <CreateLearnerForm 
+                onSuccess={refetch}
+                onBulkUploadClick={() => setBulkUploadOpen(true)}
+              />
 
               <Card className="shadow-lg">
                 <CardHeader>
@@ -273,6 +279,18 @@ const TeacherDashboard = () => {
           </TabsContent>
         </Tabs>
       </div>
+
+      <Dialog open={bulkUploadOpen} onOpenChange={setBulkUploadOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Bulk Upload Learners</DialogTitle>
+          </DialogHeader>
+          <FileUpload onUploadComplete={() => {
+            setBulkUploadOpen(false);
+            refetch();
+          }} />
+        </DialogContent>
+      </Dialog>
 
       <AccessibilityToolbar />
     </div>
