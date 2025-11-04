@@ -61,12 +61,7 @@ serve(async (req) => {
 
     const learnerUserId = authData.user.id;
 
-    // Create profile
-    const { error: profileError } = await supabaseAdmin
-      .from('profiles')
-      .insert({ id: learnerUserId, first_name: firstName, last_name: lastName });
-    if (profileError) throw profileError;
-
+    // Profile is automatically created by the handle_new_user trigger
     // Assign learner role
     const { error: roleInsertError } = await supabaseAdmin
       .from('user_roles')
