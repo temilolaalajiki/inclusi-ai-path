@@ -5,6 +5,7 @@ import { useToast } from '@/hooks/use-toast';
 export interface LearnerWithProgress {
   id: string;
   user_id: string;
+  teacher_id: string | null;
   learning_challenges: string[];
   accessibility_needs: string[];
   profiles: {

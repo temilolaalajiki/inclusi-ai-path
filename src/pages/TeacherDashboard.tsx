@@ -1,25 +1,56 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Navbar } from "@/components/Navbar";
 import { AccessibilityToolbar } from "@/components/AccessibilityToolbar";
-import { Input } from "@/components/ui/input";
 import { Progress } from "@/components/ui/progress";
-import { Users, Upload, Brain, TrendingUp, AlertCircle, CheckCircle2 } from "lucide-react";
+import { Users, Brain, TrendingUp, AlertCircle, CheckCircle2 } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useAuth } from "@/hooks/useAuth";
-import { useTeacherData } from "@/hooks/useTeacherData";
+import { useTeacherData, LearnerWithProgress } from "@/hooks/useTeacherData";
 import { FileUpload } from "@/components/FileUpload";
+import { supabase } from "@/integrations/supabase/client";
 import { TrainingRecommendations } from "@/components/TrainingRecommendations";
 import { CreateLearnerForm } from "@/components/CreateLearnerForm";
+import { StudentListTable } from "@/components/StudentListTable";
+import { StudentDetailsDialog } from "@/components/StudentDetailsDialog";
 
 const TeacherDashboard = () => {
   const [activeTab, setActiveTab] = useState("overview");
   const [bulkUploadOpen, setBulkUploadOpen] = useState(false);
+  const [selectedStudent, setSelectedStudent] = useState<LearnerWithProgress | null>(null);
+  const [studentDialogOpen, setStudentDialogOpen] = useState(false);
   const { user } = useAuth();
   const { learners, loading, uploadCSV, updateRecommendationStatus, analyzeStudent, suggestInterventions, refetch } = useTeacherData(user?.id);
+
+  // Set up real-time updates for learners
+  useEffect(() => {
+    const channel = supabase
+      .channel('learners-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'learners'
+        },
+        () => {
+          refetch();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [refetch]);
+
+  const handleViewStudent = (student: LearnerWithProgress) => {
+    setSelectedStudent(student);
+    setStudentDialogOpen(true);
+  };
 
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -176,85 +207,16 @@ const TeacherDashboard = () => {
           <TabsContent value="students" className="space-y-6">
             <Card className="shadow-lg">
               <CardHeader>
-                <div className="flex items-center justify-between">
-                  <div>
-                    <CardTitle>Student List</CardTitle>
-                    <CardDescription>View and manage individual student profiles</CardDescription>
-                  </div>
-                  <Input placeholder="Search students..." className="max-w-xs" />
-                </div>
+                <CardTitle>Student List</CardTitle>
+                <CardDescription>View and manage all student profiles</CardDescription>
               </CardHeader>
               <CardContent>
-                <div className="space-y-4">
-                  {learners.length > 0 ? (
-                    learners.slice(0, 5).map((learner) => {
-                      const avgScore = learner.performance_records.length > 0
-                        ? Math.round(
-                            learner.performance_records.reduce((sum, p) => sum + Number(p.score), 0) /
-                            learner.performance_records.length
-                          )
-                        : 0;
-                      const status = avgScore >= 85 ? 'Excellent' : avgScore >= 70 ? 'On Track' : 'Needs Support';
-                      
-                      return (
-                        <div key={learner.id} className="border rounded-lg p-4 hover:border-primary transition-colors">
-                          <div className="flex items-start justify-between mb-3">
-                            <div>
-                              <h4 className="font-semibold">
-                                {learner.profiles?.first_name} {learner.profiles?.last_name}
-                              </h4>
-                              <Badge variant={
-                                status === "Excellent" ? "default" : 
-                                status === "On Track" ? "secondary" : "outline"
-                              } className="mt-1">
-                                {status}
-                              </Badge>
-                            </div>
-                            <div className="flex gap-2">
-                              <Button 
-                                size="sm" 
-                                variant="outline"
-                                onClick={() => analyzeStudent(learner.id)}
-                              >
-                                Analyze
-                              </Button>
-                              <Button 
-                                size="sm" 
-                                variant="secondary"
-                                onClick={() => suggestInterventions(learner.id)}
-                              >
-                                Interventions
-                              </Button>
-                            </div>
-                          </div>
-                          
-                          <div className="mb-3">
-                            <div className="flex justify-between mb-1 text-sm">
-                              <span className="text-muted-foreground">Overall Progress</span>
-                              <span className="font-medium">{avgScore}%</span>
-                            </div>
-                            <Progress value={avgScore} />
-                          </div>
-
-                          <div>
-                            <p className="text-sm font-medium mb-2">Learning Needs:</p>
-                            <div className="flex flex-wrap gap-2">
-                              {[...(learner.learning_challenges || []), ...(learner.accessibility_needs || [])].map((need, idx) => (
-                                <Badge key={idx} variant="outline" className="text-xs">
-                                  {need}
-                                </Badge>
-                              ))}
-                            </div>
-                          </div>
-                        </div>
-                      );
-                    })
-                  ) : (
-                    <p className="text-sm text-muted-foreground text-center py-4">
-                      No students assigned yet.
-                    </p>
-                  )}
-                </div>
+                <StudentListTable
+                  learners={learners}
+                  onViewStudent={handleViewStudent}
+                  onAnalyze={analyzeStudent}
+                  onSuggestInterventions={suggestInterventions}
+                />
               </CardContent>
             </Card>
           </TabsContent>
@@ -291,6 +253,13 @@ const TeacherDashboard = () => {
           }} />
         </DialogContent>
       </Dialog>
+
+      <StudentDetailsDialog
+        student={selectedStudent}
+        open={studentDialogOpen}
+        onOpenChange={setStudentDialogOpen}
+        onUpdate={refetch}
+      />
 
       <AccessibilityToolbar />
     </div>
