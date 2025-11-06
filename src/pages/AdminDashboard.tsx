@@ -4,6 +4,7 @@ import { Badge } from "@/components/ui/badge";
 import { Navbar } from "@/components/Navbar";
 import { AccessibilityToolbar } from "@/components/AccessibilityToolbar";
 import { CreateLearnerForm } from "@/components/CreateLearnerForm";
+import { CreateTeacherForm } from "@/components/CreateTeacherForm";
 import { BarChart, Bar, LineChart, Line, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import { Users, BookOpen, TrendingUp, Download, AlertTriangle, CheckCircle, FileDown, FileSpreadsheet, Calendar } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -465,22 +466,22 @@ const AdminDashboard = () => {
           </TabsContent>
 
           <TabsContent value="management" className="space-y-6">
-            <Card className="shadow-lg">
-              <CardHeader>
-                <CardTitle>User Management</CardTitle>
-                <CardDescription>Create and manage learners and teachers</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <CreateLearnerForm 
-                  onSuccess={() => {
-                    // Refresh dashboard data if needed
-                  }}
-                  onBulkUploadClick={() => {
-                    // Handle bulk upload
-                  }}
-                />
-              </CardContent>
-            </Card>
+            <div className="grid gap-6 md:grid-cols-2">
+              <CreateTeacherForm 
+                onSuccess={() => {
+                  // Refresh dashboard data if needed
+                }}
+              />
+              
+              <CreateLearnerForm 
+                onSuccess={() => {
+                  // Refresh dashboard data if needed
+                }}
+                onBulkUploadClick={() => {
+                  // Handle bulk upload
+                }}
+              />
+            </div>
           </TabsContent>
         </Tabs>
       </div>
