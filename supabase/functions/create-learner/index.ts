@@ -33,21 +33,21 @@ serve(async (req) => {
       );
     }
 
-    // Ensure requester has teacher or admin role
+    // Ensure requester has admin role only
     const { data: roleData, error: roleFetchError } = await supabaseAdmin
       .from('user_roles')
       .select('role')
       .eq('user_id', requester.id)
       .single();
 
-    if (roleFetchError || !roleData || (roleData.role !== 'teacher' && roleData.role !== 'admin')) {
+    if (roleFetchError || !roleData || roleData.role !== 'admin') {
       return new Response(
-        JSON.stringify({ error: 'Insufficient permissions' }),
+        JSON.stringify({ error: 'Insufficient permissions. Only admins can create learners.' }),
         { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
-    const { firstName, lastName, email, age, grade, learningChallenges, accessibilityNeeds } = await req.json();
+    const { firstName, lastName, email, age, grade, learningChallenges, accessibilityNeeds, teacherId } = await req.json();
 
     // Create auth user for the learner
     const { data: authData, error: authCreateError } = await supabaseAdmin.auth.admin.createUser({
@@ -73,7 +73,7 @@ serve(async (req) => {
       .from('learners')
       .insert({
         user_id: learnerUserId,
-        teacher_id: requester.id,
+        teacher_id: teacherId,
         demographics: { age, grade },
         learning_challenges: learningChallenges,
         accessibility_needs: accessibilityNeeds,

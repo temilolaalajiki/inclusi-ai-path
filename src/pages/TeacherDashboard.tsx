@@ -10,20 +10,17 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useAuth } from "@/hooks/useAuth";
 import { useTeacherData, LearnerWithProgress } from "@/hooks/useTeacherData";
-import { FileUpload } from "@/components/FileUpload";
 import { supabase } from "@/integrations/supabase/client";
 import { TrainingRecommendations } from "@/components/TrainingRecommendations";
-import { CreateLearnerForm } from "@/components/CreateLearnerForm";
 import { StudentListTable } from "@/components/StudentListTable";
 import { StudentDetailsDialog } from "@/components/StudentDetailsDialog";
 
 const TeacherDashboard = () => {
   const [activeTab, setActiveTab] = useState("overview");
-  const [bulkUploadOpen, setBulkUploadOpen] = useState(false);
   const [selectedStudent, setSelectedStudent] = useState<LearnerWithProgress | null>(null);
   const [studentDialogOpen, setStudentDialogOpen] = useState(false);
   const { user } = useAuth();
-  const { learners, loading, uploadCSV, updateRecommendationStatus, analyzeStudent, suggestInterventions, refetch } = useTeacherData(user?.id);
+  const { learners, loading, updateRecommendationStatus, analyzeStudent, suggestInterventions, refetch } = useTeacherData(user?.id);
 
   // Set up real-time updates for learners
   useEffect(() => {
@@ -50,13 +47,6 @@ const TeacherDashboard = () => {
   const handleViewStudent = (student: LearnerWithProgress) => {
     setSelectedStudent(student);
     setStudentDialogOpen(true);
-  };
-
-  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      uploadCSV(file);
-    }
   };
 
   if (loading) {
@@ -160,12 +150,7 @@ const TeacherDashboard = () => {
           </TabsList>
 
           <TabsContent value="overview" className="space-y-6">
-            <div className="grid gap-6 md:grid-cols-2">
-              <CreateLearnerForm 
-                onSuccess={refetch}
-                onBulkUploadClick={() => setBulkUploadOpen(true)}
-              />
-
+            <div className="grid gap-6">
               <Card className="shadow-lg">
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
@@ -241,18 +226,6 @@ const TeacherDashboard = () => {
           </TabsContent>
         </Tabs>
       </div>
-
-      <Dialog open={bulkUploadOpen} onOpenChange={setBulkUploadOpen}>
-        <DialogContent className="sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle>Bulk Upload Learners</DialogTitle>
-          </DialogHeader>
-          <FileUpload onUploadComplete={() => {
-            setBulkUploadOpen(false);
-            refetch();
-          }} />
-        </DialogContent>
-      </Dialog>
 
       <StudentDetailsDialog
         student={selectedStudent}

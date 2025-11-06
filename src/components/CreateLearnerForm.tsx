@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { UserPlus, Upload } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
@@ -17,6 +18,7 @@ const learnerSchema = z.object({
   email: z.string().email("Invalid email address"),
   age: z.string().min(1, "Age is required"),
   grade: z.string().min(1, "Grade/Class is required"),
+  teacherId: z.string().min(1, "Teacher assignment is required"),
   learningChallenges: z.array(z.string()).default([]),
   accessibilityNeeds: z.array(z.string()).default([]),
 });
@@ -48,6 +50,7 @@ interface CreateLearnerFormProps {
 
 export const CreateLearnerForm = ({ onSuccess, onBulkUploadClick }: CreateLearnerFormProps) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [teachers, setTeachers] = useState<{ id: string; name: string }[]>([]);
   const { toast } = useToast();
 
   const form = useForm<LearnerFormValues>({
@@ -58,10 +61,35 @@ export const CreateLearnerForm = ({ onSuccess, onBulkUploadClick }: CreateLearne
       email: "",
       age: "",
       grade: "",
+      teacherId: "",
       learningChallenges: [],
       accessibilityNeeds: [],
     },
   });
+
+  // Fetch list of teachers
+  useEffect(() => {
+    const fetchTeachers = async () => {
+      const { data, error } = await supabase
+        .from('user_roles')
+        .select('user_id, profiles(first_name, last_name)')
+        .eq('role', 'teacher');
+
+      if (error) {
+        console.error('Error fetching teachers:', error);
+        return;
+      }
+
+      const teacherList = data.map((item: any) => ({
+        id: item.user_id,
+        name: `${item.profiles.first_name} ${item.profiles.last_name}`.trim() || 'Unknown Teacher',
+      }));
+
+      setTeachers(teacherList);
+    };
+
+    fetchTeachers();
+  }, []);
 
   const onSubmit = async (values: LearnerFormValues) => {
     setIsSubmitting(true);
@@ -77,6 +105,7 @@ export const CreateLearnerForm = ({ onSuccess, onBulkUploadClick }: CreateLearne
           email: values.email,
           age: values.age,
           grade: values.grade,
+          teacherId: values.teacherId,
           learningChallenges: values.learningChallenges,
           accessibilityNeeds: values.accessibilityNeeds,
         },
@@ -176,11 +205,36 @@ export const CreateLearnerForm = ({ onSuccess, onBulkUploadClick }: CreateLearne
                 control={form.control}
                 name="grade"
                 render={({ field }) => (
-                  <FormItem className="md:col-span-2">
+                  <FormItem>
                     <FormLabel>Grade/Class</FormLabel>
                     <FormControl>
                       <Input placeholder="7th Grade" {...field} />
                     </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="teacherId"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Assign Teacher</FormLabel>
+                    <Select onValueChange={field.onChange} value={field.value}>
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select a teacher" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        {teachers.map((teacher) => (
+                          <SelectItem key={teacher.id} value={teacher.id}>
+                            {teacher.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                     <FormMessage />
                   </FormItem>
                 )}

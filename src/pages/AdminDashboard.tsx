@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Navbar } from "@/components/Navbar";
 import { AccessibilityToolbar } from "@/components/AccessibilityToolbar";
+import { CreateLearnerForm } from "@/components/CreateLearnerForm";
 import { BarChart, Bar, LineChart, Line, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import { Users, BookOpen, TrendingUp, Download, AlertTriangle, CheckCircle, FileDown, FileSpreadsheet, Calendar } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -255,10 +256,11 @@ const AdminDashboard = () => {
         </div>
 
         <Tabs defaultValue="trends" className="space-y-6">
-          <TabsList className="grid w-full max-w-2xl grid-cols-3">
+          <TabsList className="grid w-full max-w-2xl grid-cols-4">
             <TabsTrigger value="trends">Trends</TabsTrigger>
             <TabsTrigger value="barriers">Barriers</TabsTrigger>
             <TabsTrigger value="interventions">Interventions</TabsTrigger>
+            <TabsTrigger value="management">Management</TabsTrigger>
           </TabsList>
 
           <TabsContent value="trends" className="space-y-6">
@@ -460,6 +462,25 @@ const AdminDashboard = () => {
                 </CardContent>
               </Card>
             </div>
+          </TabsContent>
+
+          <TabsContent value="management" className="space-y-6">
+            <Card className="shadow-lg">
+              <CardHeader>
+                <CardTitle>User Management</CardTitle>
+                <CardDescription>Create and manage learners and teachers</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <CreateLearnerForm 
+                  onSuccess={() => {
+                    // Refresh dashboard data if needed
+                  }}
+                  onBulkUploadClick={() => {
+                    // Handle bulk upload
+                  }}
+                />
+              </CardContent>
+            </Card>
           </TabsContent>
         </Tabs>
       </div>
