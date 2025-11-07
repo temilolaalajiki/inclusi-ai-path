@@ -5,11 +5,18 @@ import { Navbar } from "@/components/Navbar";
 import { AccessibilityToolbar } from "@/components/AccessibilityToolbar";
 import { CreateLearnerForm } from "@/components/CreateLearnerForm";
 import { CreateTeacherForm } from "@/components/CreateTeacherForm";
+import { StudentListTable } from "@/components/StudentListTable";
+import { StudentDetailsDialog } from "@/components/StudentDetailsDialog";
+import { TeacherListTable } from "@/components/TeacherListTable";
 import { BarChart, Bar, LineChart, Line, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import { Users, BookOpen, TrendingUp, Download, AlertTriangle, CheckCircle, FileDown, FileSpreadsheet, Calendar } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useAdminData } from "@/hooks/useAdminData";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
+import { useState, useEffect } from "react";
+import { LearnerWithProgress } from "@/hooks/useTeacherData";
 import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
 import * as XLSX from 'xlsx';
@@ -29,6 +36,134 @@ const AdminDashboard = () => {
     predictiveTrend,
     generateWeeklyReport
   } = useAdminData();
+  
+  const [learners, setLearners] = useState<LearnerWithProgress[]>([]);
+  const [teachers, setTeachers] = useState<any[]>([]);
+  const [selectedStudent, setSelectedStudent] = useState<LearnerWithProgress | null>(null);
+  const [detailsDialogOpen, setDetailsDialogOpen] = useState(false);
+  const [learnersLoading, setLearnersLoading] = useState(false);
+  const { toast } = useToast();
+
+  useEffect(() => {
+    fetchLearners();
+    fetchTeachers();
+  }, []);
+
+  const fetchLearners = async () => {
+    setLearnersLoading(true);
+    try {
+      const { data, error } = await supabase
+        .from('learners')
+        .select(`
+          *,
+          profiles!learners_user_id_fkey(first_name, last_name),
+          performance_records(*),
+          recommendations(*)
+        `);
+
+      if (error) throw error;
+      setLearners(data as any || []);
+    } catch (error: any) {
+      console.error('Error fetching learners:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to load learners data.',
+        variant: 'destructive'
+      });
+    } finally {
+      setLearnersLoading(false);
+    }
+  };
+
+  const fetchTeachers = async () => {
+    try {
+      const { data: rolesData } = await supabase
+        .from('user_roles')
+        .select('user_id')
+        .eq('role', 'teacher');
+
+      if (rolesData && rolesData.length > 0) {
+        const teacherIds = rolesData.map(r => r.user_id);
+        
+        const { data: profilesData } = await supabase
+          .from('profiles')
+          .select('id, first_name, last_name')
+          .in('id', teacherIds);
+
+        const { data: learnersCount } = await supabase
+          .from('learners')
+          .select('teacher_id');
+
+        const teachersWithDetails = profilesData?.map(profile => {
+            const assignedCount = learnersCount?.filter(l => l.teacher_id === profile.id).length || 0;
+            
+            return {
+              id: profile.id,
+              first_name: profile.first_name,
+              last_name: profile.last_name,
+              assigned_learners_count: assignedCount
+            };
+          }) || [];
+
+        setTeachers(teachersWithDetails);
+      }
+    } catch (error: any) {
+      console.error('Error fetching teachers:', error);
+    }
+  };
+
+  const handleViewStudent = (student: LearnerWithProgress) => {
+    setSelectedStudent(student);
+    setDetailsDialogOpen(true);
+  };
+
+  const handleAnalyze = async (learnerId: string) => {
+    try {
+      const { data, error } = await supabase.functions.invoke('analyze-learner', {
+        body: { learnerId }
+      });
+
+      if (error) throw error;
+
+      toast({
+        title: 'Analysis Complete!',
+        description: 'Learner analysis has been generated successfully.'
+      });
+
+      fetchLearners();
+    } catch (error: any) {
+      console.error('Error analyzing learner:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to analyze learner.',
+        variant: 'destructive'
+      });
+    }
+  };
+
+  const handleSuggestInterventions = async (learnerId: string) => {
+    try {
+      const { data, error } = await supabase.functions.invoke('suggest-interventions', {
+        body: { learnerId }
+      });
+
+      if (error) throw error;
+
+      toast({
+        title: 'Interventions Suggested!',
+        description: 'New intervention recommendations have been created.'
+      });
+
+      fetchLearners();
+    } catch (error: any) {
+      console.error('Error suggesting interventions:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to suggest interventions.',
+        variant: 'destructive'
+      });
+    }
+  };
 
   const handleExportPDF = async () => {
     const pdf = new jsPDF('p', 'mm', 'a4');
@@ -257,10 +392,11 @@ const AdminDashboard = () => {
         </div>
 
         <Tabs defaultValue="trends" className="space-y-6">
-          <TabsList className="grid w-full max-w-2xl grid-cols-4">
+          <TabsList className="grid w-full max-w-3xl grid-cols-5">
             <TabsTrigger value="trends">Trends</TabsTrigger>
             <TabsTrigger value="barriers">Barriers</TabsTrigger>
             <TabsTrigger value="interventions">Interventions</TabsTrigger>
+            <TabsTrigger value="users">Users</TabsTrigger>
             <TabsTrigger value="management">Management</TabsTrigger>
           </TabsList>
 
@@ -465,6 +601,43 @@ const AdminDashboard = () => {
             </div>
           </TabsContent>
 
+          <TabsContent value="users" className="space-y-6">
+            <Card className="shadow-lg">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Users className="h-5 w-5" />
+                  All Learners
+                </CardTitle>
+                <CardDescription>View and manage all learners in the system</CardDescription>
+              </CardHeader>
+              <CardContent>
+                {learnersLoading ? (
+                  <p className="text-center text-muted-foreground py-8">Loading learners...</p>
+                ) : (
+                  <StudentListTable 
+                    learners={learners}
+                    onViewStudent={handleViewStudent}
+                    onAnalyze={handleAnalyze}
+                    onSuggestInterventions={handleSuggestInterventions}
+                  />
+                )}
+              </CardContent>
+            </Card>
+
+            <Card className="shadow-lg">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <BookOpen className="h-5 w-5" />
+                  All Teachers
+                </CardTitle>
+                <CardDescription>View all teachers and their assigned learners</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <TeacherListTable teachers={teachers} />
+              </CardContent>
+            </Card>
+          </TabsContent>
+
           <TabsContent value="management" className="space-y-6">
             <div className="grid gap-6 md:grid-cols-2">
               <CreateTeacherForm 
@@ -485,6 +658,13 @@ const AdminDashboard = () => {
           </TabsContent>
         </Tabs>
       </div>
+
+      <StudentDetailsDialog
+        student={selectedStudent}
+        open={detailsDialogOpen}
+        onOpenChange={setDetailsDialogOpen}
+        onUpdate={fetchLearners}
+      />
 
       <AccessibilityToolbar />
     </div>
