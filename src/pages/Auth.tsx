@@ -89,13 +89,23 @@ export default function Auth() {
         if (learnerError) throw learnerError;
       }
 
+      // Determine redirect path based on role
+      let redirectPath = '/';
+      if (signUpData.role === 'learner') {
+        redirectPath = '/learner';
+      } else if (signUpData.role === 'teacher') {
+        redirectPath = '/teacher';
+      } else if (signUpData.role === 'admin') {
+        redirectPath = '/admin';
+      }
+
       toast({
         title: 'Success!',
         description: 'Account created successfully. Redirecting...'
       });
 
       setTimeout(() => {
-        navigate('/');
+        navigate(redirectPath);
       }, 1000);
 
     } catch (error: any) {
@@ -131,12 +141,33 @@ export default function Auth() {
       // Validate input
       signInSchema.parse(signInData);
 
-      const { error } = await supabase.auth.signInWithPassword({
+      const { data: authData, error } = await supabase.auth.signInWithPassword({
         email: signInData.email,
         password: signInData.password
       });
 
       if (error) throw error;
+      if (!authData.user) throw new Error('No user returned from signin');
+
+      // Fetch user role to redirect appropriately
+      const { data: roleData, error: roleError } = await supabase
+        .from('user_roles')
+        .select('role')
+        .eq('user_id', authData.user.id)
+        .maybeSingle();
+
+      if (roleError) throw roleError;
+
+      const role = roleData?.role;
+      let redirectPath = '/';
+
+      if (role === 'learner') {
+        redirectPath = '/learner';
+      } else if (role === 'teacher') {
+        redirectPath = '/teacher';
+      } else if (role === 'admin') {
+        redirectPath = '/admin';
+      }
 
       toast({
         title: 'Success!',
@@ -144,7 +175,7 @@ export default function Auth() {
       });
 
       setTimeout(() => {
-        navigate('/');
+        navigate(redirectPath);
       }, 1000);
 
     } catch (error: any) {
