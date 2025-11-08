@@ -20,6 +20,7 @@ import { LearnerWithProgress } from "@/hooks/useTeacherData";
 import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
 import * as XLSX from 'xlsx';
+import { LoadingScreen } from "@/components/LoadingScreen";
 
 const AdminDashboard = () => {
   const { 
@@ -233,15 +234,8 @@ const AdminDashboard = () => {
     setDateRange({ startDate, endDate });
   };
 
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-background via-muted/20 to-background">
-        <Navbar />
-        <div className="container mx-auto px-4 py-8">
-          <p className="text-center text-muted-foreground">Loading analytics...</p>
-        </div>
-      </div>
-    );
+  if (loading || learnersLoading) {
+    return <LoadingScreen />;
   }
 
   const COLORS = ['hsl(var(--chart-1))', 'hsl(var(--chart-2))', 'hsl(var(--chart-3))', 'hsl(var(--chart-4))', 'hsl(var(--chart-5))', 'hsl(var(--muted))'];

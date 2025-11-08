@@ -8,20 +8,14 @@ import { BookOpen, TrendingUp, Lightbulb, ThumbsUp, ThumbsDown, Award } from "lu
 import { useAuth } from "@/hooks/useAuth";
 import { useLearnerData } from "@/hooks/useLearnerData";
 import { ProgressTimeline } from "@/components/ProgressTimeline";
+import { LoadingScreen } from "@/components/LoadingScreen";
 
 const LearnerDashboard = () => {
   const { user } = useAuth();
   const { learner, performance, recommendations, loading, submitFeedback } = useLearnerData(user?.id);
 
   if (loading) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-background via-muted/20 to-background">
-        <Navbar />
-        <div className="container mx-auto px-4 py-8">
-          <p className="text-center text-muted-foreground">Loading your dashboard...</p>
-        </div>
-      </div>
-    );
+    return <LoadingScreen />;
   }
 
   if (!learner) {

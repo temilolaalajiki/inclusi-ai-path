@@ -14,6 +14,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { TrainingRecommendations } from "@/components/TrainingRecommendations";
 import { StudentListTable } from "@/components/StudentListTable";
 import { StudentDetailsDialog } from "@/components/StudentDetailsDialog";
+import { LoadingScreen } from "@/components/LoadingScreen";
 
 const TeacherDashboard = () => {
   const [activeTab, setActiveTab] = useState("overview");
@@ -50,14 +51,7 @@ const TeacherDashboard = () => {
   };
 
   if (loading) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-background via-muted/20 to-background">
-        <Navbar />
-        <div className="container mx-auto px-4 py-8">
-          <p className="text-center text-muted-foreground">Loading dashboard...</p>
-        </div>
-      </div>
-    );
+    return <LoadingScreen />;
   }
 
   // Calculate metrics

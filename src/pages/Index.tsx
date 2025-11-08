@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Navbar } from "@/components/Navbar";
 import { AccessibilityToolbar } from "@/components/AccessibilityToolbar";
+import { LoadingScreen } from "@/components/LoadingScreen";
 import { GraduationCap, Users, Brain, TrendingUp, BookOpen, Shield } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import heroImage from "@/assets/hero-education.jpg";
@@ -68,6 +69,10 @@ const Index = () => {
       description: "Secure, encrypted data storage following international educational data protection standards.",
     },
   ];
+
+  if (loading) {
+    return <LoadingScreen />;
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-muted/20 to-background">
