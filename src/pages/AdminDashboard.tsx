@@ -53,17 +53,34 @@ const AdminDashboard = () => {
   const fetchLearners = async () => {
     setLearnersLoading(true);
     try {
-      const { data, error } = await supabase
+      const { data: learnersData, error } = await supabase
         .from('learners')
         .select(`
           *,
-          profiles!learners_user_id_fkey(first_name, last_name),
           performance_records(*),
           recommendations(*)
         `);
 
       if (error) throw error;
-      setLearners(data as any || []);
+
+      // Fetch profiles separately
+      if (learnersData && learnersData.length > 0) {
+        const userIds = learnersData.map(l => l.user_id);
+        const { data: profilesData } = await supabase
+          .from('profiles')
+          .select('id, first_name, last_name')
+          .in('id', userIds);
+
+        // Merge profiles with learners
+        const enrichedLearners = learnersData.map(learner => ({
+          ...learner,
+          profiles: profilesData?.find(p => p.id === learner.user_id) || null
+        }));
+
+        setLearners(enrichedLearners as any || []);
+      } else {
+        setLearners([]);
+      }
     } catch (error: any) {
       console.error('Error fetching learners:', error);
       toast({
