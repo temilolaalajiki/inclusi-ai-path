@@ -8,6 +8,7 @@ interface TeacherData {
   id: string;
   first_name: string;
   last_name: string;
+  email?: string;
   assigned_learners_count?: number;
 }
 
@@ -50,6 +51,7 @@ export function TeacherListTable({ teachers }: TeacherListTableProps) {
           <TableHeader>
             <TableRow>
               <TableHead>Name</TableHead>
+              <TableHead>Email</TableHead>
               <TableHead>Assigned Learners</TableHead>
               <TableHead>Status</TableHead>
             </TableRow>
@@ -60,6 +62,9 @@ export function TeacherListTable({ teachers }: TeacherListTableProps) {
                 <TableRow key={teacher.id} className="hover:bg-muted/50">
                   <TableCell className="font-medium">
                     {teacher.first_name} {teacher.last_name}
+                  </TableCell>
+                  <TableCell className="text-muted-foreground">
+                    {teacher.email || 'N/A'}
                   </TableCell>
                   <TableCell>
                     <div className="flex items-center gap-2">
@@ -76,7 +81,7 @@ export function TeacherListTable({ teachers }: TeacherListTableProps) {
               ))
             ) : (
               <TableRow>
-                <TableCell colSpan={3} className="text-center py-8 text-muted-foreground">
+                <TableCell colSpan={4} className="text-center py-8 text-muted-foreground">
                   {searchQuery ? 'No teachers found matching your search' : 'No teachers in the system yet'}
                 </TableCell>
               </TableRow>

@@ -91,6 +91,16 @@ const AdminDashboard = () => {
           .select('id, first_name, last_name')
           .in('id', teacherIds);
 
+        // Fetch email addresses from auth.users
+        const { data: { users }, error: usersError } = await supabase.auth.admin.listUsers();
+        
+        const emailMap = new Map<string, string>();
+        if (!usersError && users) {
+          users.forEach((user: any) => {
+            emailMap.set(user.id, user.email || 'N/A');
+          });
+        }
+
         const { data: learnersCount } = await supabase
           .from('learners')
           .select('teacher_id');
@@ -102,6 +112,7 @@ const AdminDashboard = () => {
               id: profile.id,
               first_name: profile.first_name,
               last_name: profile.last_name,
+              email: emailMap.get(profile.id) || 'N/A',
               assigned_learners_count: assignedCount
             };
           }) || [];
