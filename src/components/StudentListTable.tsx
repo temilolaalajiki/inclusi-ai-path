@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -6,6 +6,7 @@ import { Progress } from "@/components/ui/progress";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { LearnerWithProgress } from "@/hooks/useTeacherData";
 import { Eye, Search } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
 
 interface StudentListTableProps {
   learners: LearnerWithProgress[];
@@ -16,6 +17,29 @@ interface StudentListTableProps {
 
 export function StudentListTable({ learners, onViewStudent, onAnalyze, onSuggestInterventions }: StudentListTableProps) {
   const [searchQuery, setSearchQuery] = useState("");
+  const [teacherNames, setTeacherNames] = useState<Record<string, string>>({});
+
+  useEffect(() => {
+    const fetchTeacherNames = async () => {
+      const teacherIds = [...new Set(learners.map(l => l.teacher_id).filter(Boolean))];
+      if (teacherIds.length === 0) return;
+
+      const { data: profilesData } = await supabase
+        .from('profiles')
+        .select('id, first_name, last_name')
+        .in('id', teacherIds);
+
+      if (profilesData) {
+        const names: Record<string, string> = {};
+        profilesData.forEach(p => {
+          names[p.id] = `${p.first_name} ${p.last_name}`;
+        });
+        setTeacherNames(names);
+      }
+    };
+
+    fetchTeacherNames();
+  }, [learners]);
 
   const filteredLearners = useMemo(() => {
     if (!searchQuery) return learners;
@@ -83,7 +107,7 @@ export function StudentListTable({ learners, onViewStudent, onAnalyze, onSuggest
                       <Badge variant={status.variant}>{status.label}</Badge>
                     </TableCell>
                     <TableCell className="text-sm text-muted-foreground">
-                      {learner.teacher_id ? 'Assigned' : 'Not assigned'}
+                      {learner.teacher_id ? (teacherNames[learner.teacher_id] || 'Loading...') : 'Not assigned'}
                     </TableCell>
                     <TableCell>
                       <div className="w-32">
