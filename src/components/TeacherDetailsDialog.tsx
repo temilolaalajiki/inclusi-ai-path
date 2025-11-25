@@ -62,30 +62,41 @@ export function TeacherDetailsDialog({ teacher, open, onOpenChange }: TeacherDet
           id,
           user_id,
           learning_challenges,
-          profiles!learners_user_id_fkey(first_name, last_name),
           performance_records(score)
         `)
         .eq('teacher_id', teacher.id);
 
       if (error) throw error;
 
-      const processedLearners = learnersData?.map((learner: any) => {
-        const scores = learner.performance_records?.map((p: any) => Number(p.score)) || [];
-        const avgScore = scores.length > 0 
-          ? scores.reduce((sum: number, score: number) => sum + score, 0) / scores.length 
-          : 0;
+      // Fetch profiles separately
+      if (learnersData && learnersData.length > 0) {
+        const userIds = learnersData.map(l => l.user_id);
+        const { data: profilesData } = await supabase
+          .from('profiles')
+          .select('id, first_name, last_name')
+          .in('id', userIds);
 
-        return {
-          id: learner.id,
-          first_name: learner.profiles?.first_name || 'N/A',
-          last_name: learner.profiles?.last_name || 'N/A',
-          avgScore: Math.round(avgScore),
-          totalAssessments: scores.length,
-          learning_challenges: learner.learning_challenges || []
-        };
-      }) || [];
+        const processedLearners = learnersData.map((learner: any) => {
+          const profile = profilesData?.find(p => p.id === learner.user_id);
+          const scores = learner.performance_records?.map((p: any) => Number(p.score)) || [];
+          const avgScore = scores.length > 0 
+            ? scores.reduce((sum: number, score: number) => sum + score, 0) / scores.length 
+            : 0;
 
-      setAssignedLearners(processedLearners);
+          return {
+            id: learner.id,
+            first_name: profile?.first_name || 'N/A',
+            last_name: profile?.last_name || 'N/A',
+            avgScore: Math.round(avgScore),
+            totalAssessments: scores.length,
+            learning_challenges: learner.learning_challenges || []
+          };
+        });
+
+        setAssignedLearners(processedLearners);
+      } else {
+        setAssignedLearners([]);
+      }
     } catch (error: any) {
       console.error('Error fetching assigned learners:', error);
       toast({
