@@ -2,6 +2,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } f
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Mail, Users, BookOpen, TrendingUp } from "lucide-react";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
@@ -24,6 +25,12 @@ interface AssignedLearner {
   learning_challenges?: string[];
 }
 
+interface Teacher {
+  id: string;
+  first_name: string;
+  last_name: string;
+}
+
 interface TeacherDetailsDialogProps {
   teacher: TeacherData | null;
   open: boolean;
@@ -32,12 +39,15 @@ interface TeacherDetailsDialogProps {
 
 export function TeacherDetailsDialog({ teacher, open, onOpenChange }: TeacherDetailsDialogProps) {
   const [assignedLearners, setAssignedLearners] = useState<AssignedLearner[]>([]);
+  const [allTeachers, setAllTeachers] = useState<Teacher[]>([]);
   const [loading, setLoading] = useState(false);
+  const [reassigning, setReassigning] = useState<string | null>(null);
   const { toast } = useToast();
 
   useEffect(() => {
     if (open && teacher) {
       fetchAssignedLearners();
+      fetchAllTeachers();
     }
   }, [open, teacher]);
 
@@ -85,6 +95,60 @@ export function TeacherDetailsDialog({ teacher, open, onOpenChange }: TeacherDet
       });
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchAllTeachers = async () => {
+    try {
+      const { data: teachersData, error } = await supabase
+        .from('user_roles')
+        .select('user_id')
+        .eq('role', 'teacher');
+
+      if (error) throw error;
+
+      const teacherIds = teachersData?.map(t => t.user_id) || [];
+      
+      const { data: profilesData, error: profilesError } = await supabase
+        .from('profiles')
+        .select('id, first_name, last_name')
+        .in('id', teacherIds);
+
+      if (profilesError) throw profilesError;
+
+      setAllTeachers(profilesData || []);
+    } catch (error: any) {
+      console.error('Error fetching teachers:', error);
+    }
+  };
+
+  const handleReassignStudent = async (learnerId: string, newTeacherId: string) => {
+    if (newTeacherId === teacher?.id) return;
+
+    setReassigning(learnerId);
+    try {
+      const { error } = await supabase
+        .from('learners')
+        .update({ teacher_id: newTeacherId })
+        .eq('id', learnerId);
+
+      if (error) throw error;
+
+      toast({
+        title: 'Success',
+        description: 'Student reassigned successfully.',
+      });
+
+      await fetchAssignedLearners();
+    } catch (error: any) {
+      console.error('Error reassigning student:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to reassign student.',
+        variant: 'destructive'
+      });
+    } finally {
+      setReassigning(null);
     }
   };
 
@@ -156,6 +220,7 @@ export function TeacherDetailsDialog({ teacher, open, onOpenChange }: TeacherDet
                         <TableHead>Assessments</TableHead>
                         <TableHead>Average Score</TableHead>
                         <TableHead>Learning Challenges</TableHead>
+                        <TableHead>Reassign To</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
@@ -192,6 +257,25 @@ export function TeacherDetailsDialog({ teacher, open, onOpenChange }: TeacherDet
                                 <span className="text-sm text-muted-foreground">None</span>
                               )}
                             </div>
+                          </TableCell>
+                          <TableCell>
+                            <Select
+                              disabled={reassigning === learner.id}
+                              onValueChange={(value) => handleReassignStudent(learner.id, value)}
+                            >
+                              <SelectTrigger className="w-[180px]">
+                                <SelectValue placeholder="Select teacher..." />
+                              </SelectTrigger>
+                              <SelectContent>
+                                {allTeachers
+                                  .filter(t => t.id !== teacher.id)
+                                  .map((t) => (
+                                    <SelectItem key={t.id} value={t.id}>
+                                      {t.first_name} {t.last_name}
+                                    </SelectItem>
+                                  ))}
+                              </SelectContent>
+                            </Select>
                           </TableCell>
                         </TableRow>
                       ))}
