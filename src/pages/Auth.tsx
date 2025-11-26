@@ -6,7 +6,6 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
 import { z } from 'zod';
 import { Navbar } from '@/components/Navbar';
@@ -15,8 +14,8 @@ const signUpSchema = z.object({
   email: z.string().email('Invalid email address'),
   password: z.string().min(6, 'Password must be at least 6 characters'),
   firstName: z.string().min(1, 'First name is required'),
-  lastName: z.string().min(1, 'Last name is required'),
-  role: z.enum(['learner', 'teacher', 'admin'])
+  lastName: z.string().min(1, 'Last name is required')
+  // Role is always 'learner' for self-registration
 });
 
 const signInSchema = z.object({
@@ -33,8 +32,7 @@ export default function Auth() {
     email: '',
     password: '',
     firstName: '',
-    lastName: '',
-    role: 'learner' as 'learner' | 'teacher' | 'admin'
+    lastName: ''
   });
 
   const [signInData, setSignInData] = useState({
@@ -68,36 +66,27 @@ export default function Auth() {
       if (authError) throw authError;
       if (!authData.user) throw new Error('No user returned from signup');
 
-      // Insert user role
+      // Insert user role - always 'learner' for self-registration
       const { error: roleError } = await supabase
         .from('user_roles')
         .insert({
           user_id: authData.user.id,
-          role: signUpData.role
+          role: 'learner'
         });
 
       if (roleError) throw roleError;
 
-      // If role is learner, create learner record
-      if (signUpData.role === 'learner') {
-        const { error: learnerError } = await supabase
-          .from('learners')
-          .insert({
-            user_id: authData.user.id
-          });
+      // Create learner record for all self-registrations
+      const { error: learnerError } = await supabase
+        .from('learners')
+        .insert({
+          user_id: authData.user.id
+        });
 
-        if (learnerError) throw learnerError;
-      }
+      if (learnerError) throw learnerError;
 
-      // Determine redirect path based on role
-      let redirectPath = '/';
-      if (signUpData.role === 'learner') {
-        redirectPath = '/learner';
-      } else if (signUpData.role === 'teacher') {
-        redirectPath = '/teacher';
-      } else if (signUpData.role === 'admin') {
-        redirectPath = '/admin';
-      }
+      // All self-registrations redirect to learner dashboard
+      const redirectPath = '/learner';
 
       toast({
         title: 'Success!',
@@ -294,24 +283,6 @@ export default function Auth() {
                       onChange={(e) => setSignUpData({ ...signUpData, password: e.target.value })}
                       required
                     />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="role">Role</Label>
-                    <Select
-                      value={signUpData.role}
-                      onValueChange={(value: 'learner' | 'teacher' | 'admin') => 
-                        setSignUpData({ ...signUpData, role: value })
-                      }
-                    >
-                      <SelectTrigger id="role">
-                        <SelectValue placeholder="Select your role" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="learner">Learner</SelectItem>
-                        <SelectItem value="teacher">Teacher</SelectItem>
-                        <SelectItem value="admin">Administrator</SelectItem>
-                      </SelectContent>
-                    </Select>
                   </div>
                   <Button type="submit" className="w-full" disabled={loading}>
                     {loading ? 'Creating account...' : 'Create Account'}
