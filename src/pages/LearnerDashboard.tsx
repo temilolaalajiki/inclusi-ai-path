@@ -4,15 +4,19 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Navbar } from "@/components/Navbar";
 import { EnhancedAccessibilityToolbar } from "@/components/EnhancedAccessibilityToolbar";
-import { BookOpen, TrendingUp, Lightbulb, ThumbsUp, ThumbsDown, Award } from "lucide-react";
+import { BookOpen, TrendingUp, Lightbulb, ThumbsUp, ThumbsDown, Award, Calendar } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useLearnerData } from "@/hooks/useLearnerData";
 import { ProgressTimeline } from "@/components/ProgressTimeline";
 import { LoadingScreen } from "@/components/LoadingScreen";
+import { LearnerAttendanceView } from "@/components/LearnerAttendanceView";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { useState } from "react";
 
 const LearnerDashboard = () => {
   const { user } = useAuth();
   const { learner, performance, recommendations, loading, submitFeedback } = useLearnerData(user?.id);
+  const [activeTab, setActiveTab] = useState("progress");
 
   if (loading) {
     return <LoadingScreen />;
@@ -113,17 +117,30 @@ const LearnerDashboard = () => {
           </Card>
         </div>
 
-        <div className="grid gap-6 md:grid-cols-2 mb-6">
-          <Card className="shadow-lg">
-            <CardHeader>
-              <CardTitle>Subject Progress</CardTitle>
-              <CardDescription>Your performance across all subjects</CardDescription>
-            </CardHeader>
-...
-          </Card>
-        </div>
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
+          <TabsList className="grid w-full max-w-md grid-cols-2">
+            <TabsTrigger value="progress">Progress & Performance</TabsTrigger>
+            <TabsTrigger value="attendance">Attendance</TabsTrigger>
+          </TabsList>
 
-        <ProgressTimeline performance={performance} />
+          <TabsContent value="progress" className="space-y-6">
+            <div className="grid gap-6 md:grid-cols-2">
+              <Card className="shadow-lg">
+                <CardHeader>
+                  <CardTitle>Subject Progress</CardTitle>
+                  <CardDescription>Your performance across all subjects</CardDescription>
+                </CardHeader>
+...
+              </Card>
+            </div>
+
+            <ProgressTimeline performance={performance} />
+          </TabsContent>
+
+          <TabsContent value="attendance" className="space-y-6">
+            {learner && <LearnerAttendanceView learnerId={learner.id} />}
+          </TabsContent>
+        </Tabs>
       </div>
 
       <EnhancedAccessibilityToolbar />
