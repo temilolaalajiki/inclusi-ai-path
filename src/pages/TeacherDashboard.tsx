@@ -3,7 +3,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Navbar } from "@/components/Navbar";
-import { AccessibilityToolbar } from "@/components/AccessibilityToolbar";
+import { EnhancedAccessibilityToolbar } from "@/components/EnhancedAccessibilityToolbar";
 import { Progress } from "@/components/ui/progress";
 import { Users, Brain, TrendingUp, AlertCircle, CheckCircle2 } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -228,7 +228,7 @@ const TeacherDashboard = () => {
         onUpdate={refetch}
       />
 
-      <AccessibilityToolbar />
+      <EnhancedAccessibilityToolbar />
     </div>
   );
 };
