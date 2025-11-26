@@ -41,6 +41,62 @@ export type Database = {
         }
         Relationships: []
       }
+      accessibility_profiles: {
+        Row: {
+          assistive_devices_available: string[] | null
+          assistive_devices_needed: string[] | null
+          auditory_needs: string[] | null
+          cognitive_needs: string[] | null
+          created_at: string
+          environmental_accommodations: string[] | null
+          id: string
+          language_support_needs: string[] | null
+          learner_id: string
+          notes: string | null
+          physical_needs: string[] | null
+          updated_at: string
+          visual_needs: string[] | null
+        }
+        Insert: {
+          assistive_devices_available?: string[] | null
+          assistive_devices_needed?: string[] | null
+          auditory_needs?: string[] | null
+          cognitive_needs?: string[] | null
+          created_at?: string
+          environmental_accommodations?: string[] | null
+          id?: string
+          language_support_needs?: string[] | null
+          learner_id: string
+          notes?: string | null
+          physical_needs?: string[] | null
+          updated_at?: string
+          visual_needs?: string[] | null
+        }
+        Update: {
+          assistive_devices_available?: string[] | null
+          assistive_devices_needed?: string[] | null
+          auditory_needs?: string[] | null
+          cognitive_needs?: string[] | null
+          created_at?: string
+          environmental_accommodations?: string[] | null
+          id?: string
+          language_support_needs?: string[] | null
+          learner_id?: string
+          notes?: string | null
+          physical_needs?: string[] | null
+          updated_at?: string
+          visual_needs?: string[] | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "accessibility_profiles_learner_id_fkey"
+            columns: ["learner_id"]
+            isOneToOne: true
+            referencedRelation: "learners"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       attendance_records: {
         Row: {
           created_at: string
@@ -141,6 +197,71 @@ export type Database = {
           },
         ]
       }
+      learner_demographics: {
+        Row: {
+          access_to_technology: string | null
+          created_at: string
+          distance_to_school_km: number | null
+          family_income_bracket: string | null
+          guardian_education_level: string | null
+          has_electricity: boolean | null
+          has_internet_access: boolean | null
+          household_size: number | null
+          id: string
+          learner_id: string
+          lga: string | null
+          location_type: string | null
+          meals_per_day: number | null
+          state: string | null
+          transportation_method: string | null
+          updated_at: string
+        }
+        Insert: {
+          access_to_technology?: string | null
+          created_at?: string
+          distance_to_school_km?: number | null
+          family_income_bracket?: string | null
+          guardian_education_level?: string | null
+          has_electricity?: boolean | null
+          has_internet_access?: boolean | null
+          household_size?: number | null
+          id?: string
+          learner_id: string
+          lga?: string | null
+          location_type?: string | null
+          meals_per_day?: number | null
+          state?: string | null
+          transportation_method?: string | null
+          updated_at?: string
+        }
+        Update: {
+          access_to_technology?: string | null
+          created_at?: string
+          distance_to_school_km?: number | null
+          family_income_bracket?: string | null
+          guardian_education_level?: string | null
+          has_electricity?: boolean | null
+          has_internet_access?: boolean | null
+          household_size?: number | null
+          id?: string
+          learner_id?: string
+          lga?: string | null
+          location_type?: string | null
+          meals_per_day?: number | null
+          state?: string | null
+          transportation_method?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "learner_demographics_learner_id_fkey"
+            columns: ["learner_id"]
+            isOneToOne: true
+            referencedRelation: "learners"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       learner_documents: {
         Row: {
           document_name: string
@@ -214,6 +335,53 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      nigerian_learning_contexts: {
+        Row: {
+          community_support_level: string | null
+          created_at: string
+          cultural_considerations: string[] | null
+          home_languages: string[] | null
+          id: string
+          language_proficiency: Json | null
+          learner_id: string
+          primary_language: string
+          resource_constraints: string[] | null
+          updated_at: string
+        }
+        Insert: {
+          community_support_level?: string | null
+          created_at?: string
+          cultural_considerations?: string[] | null
+          home_languages?: string[] | null
+          id?: string
+          language_proficiency?: Json | null
+          learner_id: string
+          primary_language?: string
+          resource_constraints?: string[] | null
+          updated_at?: string
+        }
+        Update: {
+          community_support_level?: string | null
+          created_at?: string
+          cultural_considerations?: string[] | null
+          home_languages?: string[] | null
+          id?: string
+          language_proficiency?: Json | null
+          learner_id?: string
+          primary_language?: string
+          resource_constraints?: string[] | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "nigerian_learning_contexts_learner_id_fkey"
+            columns: ["learner_id"]
+            isOneToOne: true
+            referencedRelation: "learners"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       performance_records: {
         Row: {

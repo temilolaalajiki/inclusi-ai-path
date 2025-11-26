@@ -38,3 +38,6 @@ verify_jwt = false
 
 [functions.recommend-visual-materials]
 verify_jwt = false
+
+[functions.analyze-nigerian-context]
+verify_jwt = false

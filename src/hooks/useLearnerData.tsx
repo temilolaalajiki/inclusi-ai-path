@@ -24,6 +24,9 @@ export function useLearnerData(userId: string | undefined) {
   const [learner, setLearner] = useState<any>(null);
   const [performance, setPerformance] = useState<PerformanceRecord[]>([]);
   const [recommendations, setRecommendations] = useState<Recommendation[]>([]);
+  const [nigerianContext, setNigerianContext] = useState<any>(null);
+  const [demographics, setDemographics] = useState<any>(null);
+  const [accessibilityProfile, setAccessibilityProfile] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const { toast } = useToast();
 
@@ -69,6 +72,30 @@ export function useLearnerData(userId: string | undefined) {
 
         if (recommendationsError) throw recommendationsError;
         setRecommendations(recommendationsData || []);
+
+        // Fetch Nigerian learning context
+        const { data: contextData } = await supabase
+          .from('nigerian_learning_contexts')
+          .select('*')
+          .eq('learner_id', learnerData.id)
+          .maybeSingle();
+        setNigerianContext(contextData);
+
+        // Fetch demographics
+        const { data: demoData } = await supabase
+          .from('learner_demographics')
+          .select('*')
+          .eq('learner_id', learnerData.id)
+          .maybeSingle();
+        setDemographics(demoData);
+
+        // Fetch accessibility profile
+        const { data: accessData } = await supabase
+          .from('accessibility_profiles')
+          .select('*')
+          .eq('learner_id', learnerData.id)
+          .maybeSingle();
+        setAccessibilityProfile(accessData);
       }
     } catch (error: any) {
       console.error('Error fetching learner data:', error);
@@ -113,6 +140,9 @@ export function useLearnerData(userId: string | undefined) {
     learner,
     performance,
     recommendations,
+    nigerianContext,
+    demographics,
+    accessibilityProfile,
     loading,
     submitFeedback,
     refetch: fetchLearnerData

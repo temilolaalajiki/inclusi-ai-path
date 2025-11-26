@@ -12,6 +12,7 @@ import { useToast } from "@/hooks/use-toast";
 import { LearnerWithProgress } from "@/hooks/useTeacherData";
 import { User, BarChart3, BookOpen, AlertCircle } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { EnhancedLearnerProfile } from "@/components/EnhancedLearnerProfile";
 
 interface StudentDetailsDialogProps {
   student: LearnerWithProgress | null;
@@ -24,6 +25,9 @@ export function StudentDetailsDialog({ student, open, onOpenChange, onUpdate }: 
   const [editing, setEditing] = useState(false);
   const [loading, setLoading] = useState(false);
   const [teachers, setTeachers] = useState<Array<{ id: string; name: string }>>([]);
+  const [nigerianContext, setNigerianContext] = useState<any>(null);
+  const [demographics, setDemographics] = useState<any>(null);
+  const [accessibilityProfile, setAccessibilityProfile] = useState<any>(null);
   const [formData, setFormData] = useState({
     firstName: "",
     lastName: "",
@@ -43,8 +47,27 @@ export function StudentDetailsDialog({ student, open, onOpenChange, onUpdate }: 
         accessibilityNeeds: student.accessibility_needs || []
       });
       fetchTeachers();
+      fetchEnhancedData();
     }
   }, [student, open]);
+
+  const fetchEnhancedData = async () => {
+    if (!student) return;
+
+    try {
+      const [contextRes, demoRes, accessRes] = await Promise.all([
+        supabase.from('nigerian_learning_contexts').select('*').eq('learner_id', student.id).maybeSingle(),
+        supabase.from('learner_demographics').select('*').eq('learner_id', student.id).maybeSingle(),
+        supabase.from('accessibility_profiles').select('*').eq('learner_id', student.id).maybeSingle()
+      ]);
+
+      setNigerianContext(contextRes.data);
+      setDemographics(demoRes.data);
+      setAccessibilityProfile(accessRes.data);
+    } catch (error) {
+      console.error('Error fetching enhanced data:', error);
+    }
+  };
 
   const fetchTeachers = async () => {
     try {
@@ -145,8 +168,9 @@ export function StudentDetailsDialog({ student, open, onOpenChange, onUpdate }: 
         </DialogHeader>
 
         <Tabs defaultValue="details" className="w-full">
-          <TabsList className="grid w-full grid-cols-3">
+          <TabsList className="grid w-full grid-cols-4">
             <TabsTrigger value="details">Details</TabsTrigger>
+            <TabsTrigger value="enhanced">Enhanced Profile</TabsTrigger>
             <TabsTrigger value="progress">Progress</TabsTrigger>
             <TabsTrigger value="recommendations">Recommendations</TabsTrigger>
           </TabsList>
@@ -255,6 +279,15 @@ export function StudentDetailsDialog({ student, open, onOpenChange, onUpdate }: 
                 </div>
               </CardContent>
             </Card>
+          </TabsContent>
+
+          <TabsContent value="enhanced" className="space-y-4">
+            <EnhancedLearnerProfile
+              learnerId={student.id}
+              nigerianContext={nigerianContext}
+              demographics={demographics}
+              accessibilityProfile={accessibilityProfile}
+            />
           </TabsContent>
 
           <TabsContent value="progress" className="space-y-4">

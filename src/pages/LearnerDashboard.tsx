@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Navbar } from "@/components/Navbar";
 import { EnhancedAccessibilityToolbar } from "@/components/EnhancedAccessibilityToolbar";
+import { EnhancedLearnerProfile } from "@/components/EnhancedLearnerProfile";
 import { BookOpen, TrendingUp, Lightbulb, ThumbsUp, ThumbsDown, Award, Calendar } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useLearnerData } from "@/hooks/useLearnerData";
@@ -15,7 +16,16 @@ import { useState } from "react";
 
 const LearnerDashboard = () => {
   const { user } = useAuth();
-  const { learner, performance, recommendations, loading, submitFeedback } = useLearnerData(user?.id);
+  const { 
+    learner, 
+    performance, 
+    recommendations, 
+    nigerianContext, 
+    demographics, 
+    accessibilityProfile, 
+    loading, 
+    submitFeedback 
+  } = useLearnerData(user?.id);
   const [activeTab, setActiveTab] = useState("progress");
 
   if (loading) {
@@ -118,8 +128,9 @@ const LearnerDashboard = () => {
         </div>
 
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-          <TabsList className="grid w-full max-w-md grid-cols-2">
+          <TabsList className="grid w-full max-w-2xl grid-cols-3">
             <TabsTrigger value="progress">Progress & Performance</TabsTrigger>
+            <TabsTrigger value="profile">My Profile</TabsTrigger>
             <TabsTrigger value="attendance">Attendance</TabsTrigger>
           </TabsList>
 
@@ -135,6 +146,15 @@ const LearnerDashboard = () => {
             </div>
 
             <ProgressTimeline performance={performance} />
+          </TabsContent>
+
+          <TabsContent value="profile" className="space-y-6">
+            <EnhancedLearnerProfile
+              learnerId={learner.id}
+              nigerianContext={nigerianContext}
+              demographics={demographics}
+              accessibilityProfile={accessibilityProfile}
+            />
           </TabsContent>
 
           <TabsContent value="attendance" className="space-y-6">
