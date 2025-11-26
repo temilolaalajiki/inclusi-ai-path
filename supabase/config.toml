@@ -44,3 +44,6 @@ verify_jwt = false
 
 [functions.seed-nigerian-standards]
 verify_jwt = false
+
+[functions.calculate-equity-metrics]
+verify_jwt = false

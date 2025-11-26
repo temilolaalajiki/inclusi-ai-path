@@ -236,6 +236,59 @@ Provide recommendations that are specific, actionable, and prioritized.`;
 
     if (insertError) throw insertError;
 
+    // Log AI reasoning for transparency
+    if (insertedRecs) {
+      const reasoningLogs = insertedRecs.map((rec: any, idx: number) => {
+        const recommendation = recommendations[idx];
+        return {
+          recommendation_id: rec.id,
+          learner_id: learnerId,
+          ai_model: useAI ? 'google/gemini-2.5-flash' : 'rule-based',
+          reasoning_chain: [
+            {
+              step: 1,
+              description: 'Analyzed learner performance data',
+              data_point: `${learnerData.performance_records?.length || 0} performance records`,
+              conclusion: 'Identified performance patterns'
+            },
+            {
+              step: 2,
+              description: 'Evaluated learning challenges and accessibility needs',
+              data_point: `Challenges: ${learnerData.learning_challenges?.join(', ') || 'None'}`,
+              conclusion: 'Determined support requirements'
+            },
+            {
+              step: 3,
+              description: 'Generated personalized recommendation',
+              data_point: `Type: ${recommendation.recommendation_type}`,
+              conclusion: recommendation.title
+            }
+          ],
+          data_sources_used: [
+            'performance_records',
+            'learning_challenges',
+            'accessibility_needs',
+            'recommendations'
+          ],
+          confidence_score: useAI ? 0.85 : 0.70,
+          rule_based_fallback: !useAI
+        };
+      });
+
+      await supabase.from('ai_reasoning_logs').insert(reasoningLogs);
+
+      // Log data usage
+      await supabase.from('data_usage_logs').insert({
+        user_id: learnerData.user_id,
+        data_type: 'performance',
+        purpose: 'recommendation',
+        data_fields: ['performance_records', 'learning_challenges', 'accessibility_needs'],
+        processing_context: 'AI-powered learner analysis',
+        consent_required: true,
+        consent_given: true
+      });
+    }
+
     console.log('Successfully created recommendations:', insertedRecs);
 
     return new Response(

@@ -97,6 +97,57 @@ export type Database = {
           },
         ]
       }
+      ai_reasoning_logs: {
+        Row: {
+          ai_model: string
+          confidence_score: number | null
+          created_at: string
+          data_sources_used: Json
+          id: string
+          learner_id: string
+          reasoning_chain: Json
+          recommendation_id: string | null
+          rule_based_fallback: boolean | null
+        }
+        Insert: {
+          ai_model: string
+          confidence_score?: number | null
+          created_at?: string
+          data_sources_used?: Json
+          id?: string
+          learner_id: string
+          reasoning_chain?: Json
+          recommendation_id?: string | null
+          rule_based_fallback?: boolean | null
+        }
+        Update: {
+          ai_model?: string
+          confidence_score?: number | null
+          created_at?: string
+          data_sources_used?: Json
+          id?: string
+          learner_id?: string
+          reasoning_chain?: Json
+          recommendation_id?: string | null
+          rule_based_fallback?: boolean | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ai_reasoning_logs_learner_id_fkey"
+            columns: ["learner_id"]
+            isOneToOne: false
+            referencedRelation: "learners"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ai_reasoning_logs_recommendation_id_fkey"
+            columns: ["recommendation_id"]
+            isOneToOne: false
+            referencedRelation: "recommendations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       assessment_frameworks: {
         Row: {
           assessment_components: Json
@@ -249,6 +300,123 @@ export type Database = {
           name?: string
           subject?: string
           updated_at?: string
+        }
+        Relationships: []
+      }
+      data_usage_logs: {
+        Row: {
+          consent_given: boolean | null
+          consent_required: boolean | null
+          created_at: string
+          data_fields: string[]
+          data_type: string
+          id: string
+          processing_context: string | null
+          purpose: string
+          user_id: string
+        }
+        Insert: {
+          consent_given?: boolean | null
+          consent_required?: boolean | null
+          created_at?: string
+          data_fields: string[]
+          data_type: string
+          id?: string
+          processing_context?: string | null
+          purpose: string
+          user_id: string
+        }
+        Update: {
+          consent_given?: boolean | null
+          consent_required?: boolean | null
+          created_at?: string
+          data_fields?: string[]
+          data_type?: string
+          id?: string
+          processing_context?: string | null
+          purpose?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      equity_metrics: {
+        Row: {
+          avg_recommendation_priority: number | null
+          created_at: string
+          demographic_category: string
+          demographic_value: string
+          id: string
+          interventions_implemented: number
+          metric_date: string
+          recommendations_count: number
+          resource_allocation_score: number | null
+          success_rate: number | null
+          total_learners: number
+          updated_at: string
+        }
+        Insert: {
+          avg_recommendation_priority?: number | null
+          created_at?: string
+          demographic_category: string
+          demographic_value: string
+          id?: string
+          interventions_implemented?: number
+          metric_date?: string
+          recommendations_count?: number
+          resource_allocation_score?: number | null
+          success_rate?: number | null
+          total_learners?: number
+          updated_at?: string
+        }
+        Update: {
+          avg_recommendation_priority?: number | null
+          created_at?: string
+          demographic_category?: string
+          demographic_value?: string
+          id?: string
+          interventions_implemented?: number
+          metric_date?: string
+          recommendations_count?: number
+          resource_allocation_score?: number | null
+          success_rate?: number | null
+          total_learners?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      ethical_compliance_checks: {
+        Row: {
+          actions_taken: Json | null
+          check_date: string
+          check_type: string
+          created_at: string
+          findings: Json | null
+          id: string
+          resolved_at: string | null
+          reviewed_by: string | null
+          status: string
+        }
+        Insert: {
+          actions_taken?: Json | null
+          check_date?: string
+          check_type: string
+          created_at?: string
+          findings?: Json | null
+          id?: string
+          resolved_at?: string | null
+          reviewed_by?: string | null
+          status?: string
+        }
+        Update: {
+          actions_taken?: Json | null
+          check_date?: string
+          check_type?: string
+          created_at?: string
+          findings?: Json | null
+          id?: string
+          resolved_at?: string | null
+          reviewed_by?: string | null
+          status?: string
         }
         Relationships: []
       }
@@ -800,6 +968,42 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      user_data_consent: {
+        Row: {
+          ai_processing_consent: boolean | null
+          analytics_consent: boolean | null
+          consent_date: string | null
+          created_at: string
+          demographic_sharing_consent: boolean | null
+          id: string
+          research_participation_consent: boolean | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          ai_processing_consent?: boolean | null
+          analytics_consent?: boolean | null
+          consent_date?: string | null
+          created_at?: string
+          demographic_sharing_consent?: boolean | null
+          id?: string
+          research_participation_consent?: boolean | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          ai_processing_consent?: boolean | null
+          analytics_consent?: boolean | null
+          consent_date?: string | null
+          created_at?: string
+          demographic_sharing_consent?: boolean | null
+          id?: string
+          research_participation_consent?: boolean | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
       }
       user_roles: {
         Row: {
