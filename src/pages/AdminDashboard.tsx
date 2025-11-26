@@ -9,7 +9,7 @@ import { StudentListTable } from "@/components/StudentListTable";
 import { StudentDetailsDialog } from "@/components/StudentDetailsDialog";
 import { TeacherListTable } from "@/components/TeacherListTable";
 import { BarChart, Bar, LineChart, Line, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
-import { Users, BookOpen, TrendingUp, Download, AlertTriangle, CheckCircle, FileDown, FileSpreadsheet, Calendar } from "lucide-react";
+import { Users, BookOpen, TrendingUp, Download, AlertTriangle, CheckCircle, FileDown, FileSpreadsheet, Calendar, Brain, UserCheck, Eye } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useAdminData } from "@/hooks/useAdminData";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -194,6 +194,87 @@ const AdminDashboard = () => {
     }
   };
 
+  const handlePerformanceAnalysis = async () => {
+    try {
+      toast({
+        title: 'Analyzing Performance...',
+        description: 'Checking for learners needing intervention.'
+      });
+
+      const { data, error } = await supabase.functions.invoke('analyze-performance');
+
+      if (error) throw error;
+
+      toast({
+        title: 'Performance Analysis Complete',
+        description: `Created ${data.interventions_created} low performance interventions.`
+      });
+
+      fetchLearners();
+    } catch (error: any) {
+      console.error('Error analyzing performance:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to analyze performance.',
+        variant: 'destructive'
+      });
+    }
+  };
+
+  const handleCapacityCheck = async () => {
+    try {
+      toast({
+        title: 'Checking Class Capacity...',
+        description: 'Analyzing class sizes and overcrowding.'
+      });
+
+      const { data, error } = await supabase.functions.invoke('check-class-capacity');
+
+      if (error) throw error;
+
+      toast({
+        title: 'Capacity Check Complete',
+        description: `Created ${data.alerts_created} capacity alerts.`
+      });
+
+      fetchLearners();
+    } catch (error: any) {
+      console.error('Error checking capacity:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to check class capacity.',
+        variant: 'destructive'
+      });
+    }
+  };
+
+  const handleVisualMaterialsRecommendation = async () => {
+    try {
+      toast({
+        title: 'Generating Recommendations...',
+        description: 'Analyzing visual impairment support needs.'
+      });
+
+      const { data, error } = await supabase.functions.invoke('recommend-visual-materials');
+
+      if (error) throw error;
+
+      toast({
+        title: 'Recommendations Complete',
+        description: `Created ${data.recommendations_created} visual material recommendations.`
+      });
+
+      fetchLearners();
+    } catch (error: any) {
+      console.error('Error recommending visual materials:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to recommend visual materials.',
+        variant: 'destructive'
+      });
+    }
+  };
+
   const handleExportPDF = async () => {
     const pdf = new jsPDF('p', 'mm', 'a4');
     const element = document.getElementById('dashboard-content');
@@ -310,14 +391,31 @@ const AdminDashboard = () => {
           </div>
         </div>
 
-        <div className="mb-6 flex justify-between items-center">
-          <div>
-            <h2 className="text-2xl font-bold">AI-Powered Insights</h2>
-            <p className="text-muted-foreground">System-wide analysis and recommendations</p>
+        <div className="mb-6">
+          <div className="flex justify-between items-center mb-4">
+            <div>
+              <h2 className="text-2xl font-bold">AI-Powered Insights</h2>
+              <p className="text-muted-foreground">System-wide analysis and recommendations</p>
+            </div>
+            <Button onClick={generateInsights} disabled={insightsLoading}>
+              {insightsLoading ? 'Generating...' : 'Generate Insights'}
+            </Button>
           </div>
-          <Button onClick={generateInsights} disabled={insightsLoading}>
-            {insightsLoading ? 'Generating...' : 'Generate Insights'}
-          </Button>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+            <Button onClick={handlePerformanceAnalysis} variant="outline" className="w-full">
+              <Brain className="h-4 w-4 mr-2" />
+              Analyze Low Performance
+            </Button>
+            <Button onClick={handleCapacityCheck} variant="outline" className="w-full">
+              <UserCheck className="h-4 w-4 mr-2" />
+              Check Class Capacity
+            </Button>
+            <Button onClick={handleVisualMaterialsRecommendation} variant="outline" className="w-full">
+              <Eye className="h-4 w-4 mr-2" />
+              Visual Support Materials
+            </Button>
+          </div>
         </div>
 
         {insights && (

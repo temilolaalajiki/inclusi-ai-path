@@ -79,6 +79,33 @@ export type Database = {
           },
         ]
       }
+      class_capacity: {
+        Row: {
+          created_at: string
+          current_count: number
+          id: string
+          max_capacity: number
+          teacher_id: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          current_count?: number
+          id?: string
+          max_capacity?: number
+          teacher_id: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          current_count?: number
+          id?: string
+          max_capacity?: number
+          teacher_id?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       feedback: {
         Row: {
           comment: string | null
@@ -256,6 +283,7 @@ export type Database = {
           description: string
           id: string
           implemented_at: string | null
+          intervention_triggered: boolean | null
           learner_id: string
           priority: string | null
           recommendation_type: string
@@ -268,6 +296,7 @@ export type Database = {
           description: string
           id?: string
           implemented_at?: string | null
+          intervention_triggered?: boolean | null
           learner_id: string
           priority?: string | null
           recommendation_type: string
@@ -280,6 +309,7 @@ export type Database = {
           description?: string
           id?: string
           implemented_at?: string | null
+          intervention_triggered?: boolean | null
           learner_id?: string
           priority?: string | null
           recommendation_type?: string
@@ -437,6 +467,16 @@ export type Database = {
           total_days: number
         }[]
       }
+      get_overcrowded_classes: {
+        Args: never
+        Returns: {
+          current_count: number
+          max_capacity: number
+          overflow: number
+          teacher_id: string
+          utilization_rate: number
+        }[]
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
@@ -444,6 +484,7 @@ export type Database = {
         }
         Returns: boolean
       }
+      update_class_counts: { Args: never; Returns: undefined }
     }
     Enums: {
       app_role: "learner" | "teacher" | "admin"

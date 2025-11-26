@@ -29,3 +29,12 @@ verify_jwt = true
 
 [functions.check-attendance-alerts]
 verify_jwt = false
+
+[functions.analyze-performance]
+verify_jwt = false
+
+[functions.check-class-capacity]
+verify_jwt = false
+
+[functions.recommend-visual-materials]
+verify_jwt = false
