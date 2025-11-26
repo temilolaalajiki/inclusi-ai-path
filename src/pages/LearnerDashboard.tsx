@@ -5,6 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { Navbar } from "@/components/Navbar";
 import { EnhancedAccessibilityToolbar } from "@/components/EnhancedAccessibilityToolbar";
 import { EnhancedLearnerProfile } from "@/components/EnhancedLearnerProfile";
+import { CurriculumStandardsView } from "@/components/CurriculumStandardsView";
 import { BookOpen, TrendingUp, Lightbulb, ThumbsUp, ThumbsDown, Award, Calendar } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useLearnerData } from "@/hooks/useLearnerData";
@@ -12,7 +13,8 @@ import { ProgressTimeline } from "@/components/ProgressTimeline";
 import { LoadingScreen } from "@/components/LoadingScreen";
 import { LearnerAttendanceView } from "@/components/LearnerAttendanceView";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { supabase } from "@/integrations/supabase/client";
 
 const LearnerDashboard = () => {
   const { user } = useAuth();
@@ -27,6 +29,27 @@ const LearnerDashboard = () => {
     submitFeedback 
   } = useLearnerData(user?.id);
   const [activeTab, setActiveTab] = useState("progress");
+  const [curriculumAlignments, setCurriculumAlignments] = useState<any[]>([]);
+
+  useEffect(() => {
+    if (learner?.id) {
+      fetchCurriculumAlignments();
+    }
+  }, [learner?.id]);
+
+  const fetchCurriculumAlignments = async () => {
+    if (!learner) return;
+    
+    const { data } = await supabase
+      .from('learner_curriculum_alignment')
+      .select(`
+        *,
+        curriculum_standards(*)
+      `)
+      .eq('learner_id', learner.id);
+    
+    setCurriculumAlignments(data || []);
+  };
 
   if (loading) {
     return <LoadingScreen />;
@@ -128,9 +151,10 @@ const LearnerDashboard = () => {
         </div>
 
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-          <TabsList className="grid w-full max-w-2xl grid-cols-3">
-            <TabsTrigger value="progress">Progress & Performance</TabsTrigger>
-            <TabsTrigger value="profile">My Profile</TabsTrigger>
+          <TabsList className="grid w-full max-w-3xl grid-cols-4">
+            <TabsTrigger value="progress">Progress</TabsTrigger>
+            <TabsTrigger value="standards">Standards</TabsTrigger>
+            <TabsTrigger value="profile">Profile</TabsTrigger>
             <TabsTrigger value="attendance">Attendance</TabsTrigger>
           </TabsList>
 
@@ -146,6 +170,10 @@ const LearnerDashboard = () => {
             </div>
 
             <ProgressTimeline performance={performance} />
+          </TabsContent>
+
+          <TabsContent value="standards" className="space-y-6">
+            <CurriculumStandardsView alignments={curriculumAlignments} />
           </TabsContent>
 
           <TabsContent value="profile" className="space-y-6">

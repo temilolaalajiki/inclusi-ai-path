@@ -8,6 +8,7 @@ import { CreateTeacherForm } from "@/components/CreateTeacherForm";
 import { StudentListTable } from "@/components/StudentListTable";
 import { StudentDetailsDialog } from "@/components/StudentDetailsDialog";
 import { TeacherListTable } from "@/components/TeacherListTable";
+import { NigerianEducationOverview } from "@/components/NigerianEducationOverview";
 import { BarChart, Bar, LineChart, Line, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import { Users, BookOpen, TrendingUp, Download, AlertTriangle, CheckCircle, FileDown, FileSpreadsheet, Calendar, Brain, UserCheck, Eye } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -275,6 +276,31 @@ const AdminDashboard = () => {
     }
   };
 
+  const seedNigerianStandards = async () => {
+    try {
+      toast({
+        title: 'Seeding Standards...',
+        description: 'Loading WAEC/NECO curriculum standards and policies.'
+      });
+
+      const { data, error } = await supabase.functions.invoke('seed-nigerian-standards');
+
+      if (error) throw error;
+
+      toast({
+        title: 'Standards Seeded Successfully',
+        description: `Added ${data.inserted.standards} standards, ${data.inserted.policies} policies, ${data.inserted.frameworks} frameworks.`
+      });
+    } catch (error: any) {
+      console.error('Error seeding standards:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to seed Nigerian standards.',
+        variant: 'destructive'
+      });
+    }
+  };
+
   const handleExportPDF = async () => {
     const pdf = new jsPDF('p', 'mm', 'a4');
     const element = document.getElementById('dashboard-content');
@@ -416,6 +442,13 @@ const AdminDashboard = () => {
               Visual Support Materials
             </Button>
           </div>
+
+          <div className="mt-3">
+            <Button onClick={seedNigerianStandards} variant="secondary" className="w-full">
+              <BookOpen className="h-4 w-4 mr-2" />
+              Seed WAEC/NECO Standards
+            </Button>
+          </div>
         </div>
 
         {insights && (
@@ -512,10 +545,11 @@ const AdminDashboard = () => {
         </div>
 
         <Tabs defaultValue="trends" className="space-y-6">
-          <TabsList className="grid w-full max-w-3xl grid-cols-5">
+          <TabsList className="grid w-full max-w-4xl grid-cols-6">
             <TabsTrigger value="trends">Trends</TabsTrigger>
             <TabsTrigger value="barriers">Barriers</TabsTrigger>
             <TabsTrigger value="interventions">Interventions</TabsTrigger>
+            <TabsTrigger value="standards">Standards</TabsTrigger>
             <TabsTrigger value="users">Users</TabsTrigger>
             <TabsTrigger value="management">Management</TabsTrigger>
           </TabsList>
@@ -719,6 +753,10 @@ const AdminDashboard = () => {
                 </CardContent>
               </Card>
             </div>
+          </TabsContent>
+
+          <TabsContent value="standards" className="space-y-6">
+            <NigerianEducationOverview />
           </TabsContent>
 
           <TabsContent value="users" className="space-y-6">

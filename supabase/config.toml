@@ -41,3 +41,6 @@ verify_jwt = false
 
 [functions.analyze-nigerian-context]
 verify_jwt = false
+
+[functions.seed-nigerian-standards]
+verify_jwt = false
