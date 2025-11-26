@@ -97,6 +97,54 @@ export type Database = {
           },
         ]
       }
+      assessment_frameworks: {
+        Row: {
+          assessment_components: Json
+          created_at: string
+          examination_body: string | null
+          excellence_mark: number
+          framework_type: string
+          grade_levels: string[]
+          grading_scale: Json
+          id: string
+          name: string
+          pass_mark: number
+          subjects: string[]
+          updated_at: string
+          weighting: Json
+        }
+        Insert: {
+          assessment_components?: Json
+          created_at?: string
+          examination_body?: string | null
+          excellence_mark?: number
+          framework_type: string
+          grade_levels: string[]
+          grading_scale?: Json
+          id?: string
+          name: string
+          pass_mark?: number
+          subjects: string[]
+          updated_at?: string
+          weighting?: Json
+        }
+        Update: {
+          assessment_components?: Json
+          created_at?: string
+          examination_body?: string | null
+          excellence_mark?: number
+          framework_type?: string
+          grade_levels?: string[]
+          grading_scale?: Json
+          id?: string
+          name?: string
+          pass_mark?: number
+          subjects?: string[]
+          updated_at?: string
+          weighting?: Json
+        }
+        Relationships: []
+      }
       attendance_records: {
         Row: {
           created_at: string
@@ -162,6 +210,48 @@ export type Database = {
         }
         Relationships: []
       }
+      curriculum_standards: {
+        Row: {
+          assessment_criteria: Json
+          code: string
+          competency_areas: string[] | null
+          created_at: string
+          examination_body: string
+          grade_level: string
+          id: string
+          learning_objectives: Json
+          name: string
+          subject: string
+          updated_at: string
+        }
+        Insert: {
+          assessment_criteria?: Json
+          code: string
+          competency_areas?: string[] | null
+          created_at?: string
+          examination_body: string
+          grade_level: string
+          id?: string
+          learning_objectives?: Json
+          name: string
+          subject: string
+          updated_at?: string
+        }
+        Update: {
+          assessment_criteria?: Json
+          code?: string
+          competency_areas?: string[] | null
+          created_at?: string
+          examination_body?: string
+          grade_level?: string
+          id?: string
+          learning_objectives?: Json
+          name?: string
+          subject?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       feedback: {
         Row: {
           comment: string | null
@@ -193,6 +283,63 @@ export type Database = {
             columns: ["recommendation_id"]
             isOneToOne: false
             referencedRelation: "recommendations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      learner_curriculum_alignment: {
+        Row: {
+          alignment_status: string | null
+          competency_progress: Json | null
+          created_at: string
+          curriculum_standard_id: string
+          grade_level: string
+          id: string
+          last_assessment_date: string | null
+          learner_id: string
+          next_assessment_date: string | null
+          notes: string | null
+          updated_at: string
+        }
+        Insert: {
+          alignment_status?: string | null
+          competency_progress?: Json | null
+          created_at?: string
+          curriculum_standard_id: string
+          grade_level: string
+          id?: string
+          last_assessment_date?: string | null
+          learner_id: string
+          next_assessment_date?: string | null
+          notes?: string | null
+          updated_at?: string
+        }
+        Update: {
+          alignment_status?: string | null
+          competency_progress?: Json | null
+          created_at?: string
+          curriculum_standard_id?: string
+          grade_level?: string
+          id?: string
+          last_assessment_date?: string | null
+          learner_id?: string
+          next_assessment_date?: string | null
+          notes?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "learner_curriculum_alignment_curriculum_standard_id_fkey"
+            columns: ["curriculum_standard_id"]
+            isOneToOne: false
+            referencedRelation: "curriculum_standards"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "learner_curriculum_alignment_learner_id_fkey"
+            columns: ["learner_id"]
+            isOneToOne: false
+            referencedRelation: "learners"
             referencedColumns: ["id"]
           },
         ]
@@ -386,7 +533,11 @@ export type Database = {
       performance_records: {
         Row: {
           assessment_date: string
+          competency_scores: Json | null
           created_at: string | null
+          curriculum_standard_id: string | null
+          examination_body: string | null
+          grade_level: string | null
           id: string
           learner_id: string
           notes: string | null
@@ -395,7 +546,11 @@ export type Database = {
         }
         Insert: {
           assessment_date: string
+          competency_scores?: Json | null
           created_at?: string | null
+          curriculum_standard_id?: string | null
+          examination_body?: string | null
+          grade_level?: string | null
           id?: string
           learner_id: string
           notes?: string | null
@@ -404,7 +559,11 @@ export type Database = {
         }
         Update: {
           assessment_date?: string
+          competency_scores?: Json | null
           created_at?: string | null
+          curriculum_standard_id?: string | null
+          examination_body?: string | null
+          grade_level?: string | null
           id?: string
           learner_id?: string
           notes?: string | null
@@ -412,6 +571,13 @@ export type Database = {
           subject?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "performance_records_curriculum_standard_id_fkey"
+            columns: ["curriculum_standard_id"]
+            isOneToOne: false
+            referencedRelation: "curriculum_standards"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "performance_records_learner_id_fkey"
             columns: ["learner_id"]
@@ -494,6 +660,45 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      state_education_policies: {
+        Row: {
+          created_at: string
+          description: string
+          effective_date: string | null
+          id: string
+          implementation_guidelines: string | null
+          policy_name: string
+          policy_type: string
+          requirements: Json | null
+          state: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          description: string
+          effective_date?: string | null
+          id?: string
+          implementation_guidelines?: string | null
+          policy_name: string
+          policy_type: string
+          requirements?: Json | null
+          state: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          description?: string
+          effective_date?: string | null
+          id?: string
+          implementation_guidelines?: string | null
+          policy_name?: string
+          policy_type?: string
+          requirements?: Json | null
+          state?: string
+          updated_at?: string
+        }
+        Relationships: []
       }
       teacher_training: {
         Row: {
