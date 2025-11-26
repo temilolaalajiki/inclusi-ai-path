@@ -5,7 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { Navbar } from "@/components/Navbar";
 import { EnhancedAccessibilityToolbar } from "@/components/EnhancedAccessibilityToolbar";
 import { Progress } from "@/components/ui/progress";
-import { Users, Brain, TrendingUp, AlertCircle, CheckCircle2 } from "lucide-react";
+import { Users, Brain, TrendingUp, AlertCircle, CheckCircle2, Calendar } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useAuth } from "@/hooks/useAuth";
@@ -15,11 +15,14 @@ import { TrainingRecommendations } from "@/components/TrainingRecommendations";
 import { StudentListTable } from "@/components/StudentListTable";
 import { StudentDetailsDialog } from "@/components/StudentDetailsDialog";
 import { LoadingScreen } from "@/components/LoadingScreen";
+import { AttendanceTracker } from "@/components/AttendanceTracker";
+import { AttendanceAnalytics } from "@/components/AttendanceAnalytics";
 
 const TeacherDashboard = () => {
   const [activeTab, setActiveTab] = useState("overview");
   const [selectedStudent, setSelectedStudent] = useState<LearnerWithProgress | null>(null);
   const [studentDialogOpen, setStudentDialogOpen] = useState(false);
+  const [attendanceRecords, setAttendanceRecords] = useState<any[]>([]);
   const { user } = useAuth();
   const { learners, loading, updateRecommendationStatus, analyzeStudent, suggestInterventions, refetch } = useTeacherData(user?.id);
 
@@ -44,6 +47,27 @@ const TeacherDashboard = () => {
       supabase.removeChannel(channel);
     };
   }, [refetch]);
+
+  // Fetch attendance records
+  const fetchAttendanceRecords = async () => {
+    if (!user?.id) return;
+
+    const { data, error } = await supabase
+      .from('attendance_records')
+      .select('*')
+      .in('learner_id', learners.map(l => l.id))
+      .order('date', { ascending: false });
+
+    if (!error && data) {
+      setAttendanceRecords(data);
+    }
+  };
+
+  useEffect(() => {
+    if (learners.length > 0) {
+      fetchAttendanceRecords();
+    }
+  }, [learners, user?.id]);
 
   const handleViewStudent = (student: LearnerWithProgress) => {
     setSelectedStudent(student);
@@ -136,9 +160,10 @@ const TeacherDashboard = () => {
         </div>
 
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-          <TabsList className="grid w-full max-w-2xl grid-cols-4">
+          <TabsList className="grid w-full max-w-3xl grid-cols-5">
             <TabsTrigger value="overview">Overview</TabsTrigger>
             <TabsTrigger value="students">Students</TabsTrigger>
+            <TabsTrigger value="attendance">Attendance</TabsTrigger>
             <TabsTrigger value="insights">AI Insights</TabsTrigger>
             <TabsTrigger value="training">Training</TabsTrigger>
           </TabsList>
@@ -217,6 +242,32 @@ const TeacherDashboard = () => {
 
           <TabsContent value="training" className="space-y-6">
             <TrainingRecommendations />
+          </TabsContent>
+
+          <TabsContent value="attendance" className="space-y-6">
+            <div className="grid gap-6 lg:grid-cols-2">
+              <AttendanceTracker 
+                learners={learners}
+                onAttendanceRecorded={fetchAttendanceRecords}
+              />
+              
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Calendar className="h-5 w-5" aria-hidden="true" />
+                    Attendance Overview
+                  </CardTitle>
+                  <CardDescription>
+                    Track and analyze attendance patterns
+                  </CardDescription>
+                </CardHeader>
+              </Card>
+            </div>
+
+            <AttendanceAnalytics 
+              learners={learners}
+              attendanceRecords={attendanceRecords}
+            />
           </TabsContent>
         </Tabs>
       </div>
