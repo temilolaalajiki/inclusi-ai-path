@@ -14,6 +14,33 @@ export type Database = {
   }
   public: {
     Tables: {
+      accessibility_logs: {
+        Row: {
+          created_at: string
+          feature_type: string
+          feature_value: string | null
+          id: string
+          page_url: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          feature_type: string
+          feature_value?: string | null
+          id?: string
+          page_url?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          feature_type?: string
+          feature_value?: string | null
+          id?: string
+          page_url?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       feedback: {
         Row: {
           comment: string | null
