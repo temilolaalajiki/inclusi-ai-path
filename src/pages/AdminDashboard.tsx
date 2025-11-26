@@ -10,6 +10,7 @@ import { StudentDetailsDialog } from "@/components/StudentDetailsDialog";
 import { TeacherListTable } from "@/components/TeacherListTable";
 import { NigerianEducationOverview } from "@/components/NigerianEducationOverview";
 import { BiasMonitoringDashboard } from "@/components/BiasMonitoringDashboard";
+import { TeacherAnalyticsDashboard } from "@/components/TeacherAnalyticsDashboard";
 import { BarChart, Bar, LineChart, Line, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import { Users, BookOpen, TrendingUp, Download, AlertTriangle, CheckCircle, FileDown, FileSpreadsheet, Calendar, Brain, UserCheck, Eye } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -610,10 +611,11 @@ const AdminDashboard = () => {
         </div>
 
         <Tabs defaultValue="trends" className="space-y-6">
-          <TabsList className="grid w-full max-w-5xl grid-cols-7">
+          <TabsList className="grid w-full max-w-6xl grid-cols-8">
             <TabsTrigger value="trends">Trends</TabsTrigger>
             <TabsTrigger value="barriers">Barriers</TabsTrigger>
             <TabsTrigger value="interventions">Interventions</TabsTrigger>
+            <TabsTrigger value="analytics">Teachers</TabsTrigger>
             <TabsTrigger value="standards">Standards</TabsTrigger>
             <TabsTrigger value="equity">Equity</TabsTrigger>
             <TabsTrigger value="users">Users</TabsTrigger>
@@ -819,6 +821,10 @@ const AdminDashboard = () => {
                 </CardContent>
               </Card>
             </div>
+          </TabsContent>
+
+          <TabsContent value="analytics" className="space-y-6">
+            <TeacherAnalyticsDashboard />
           </TabsContent>
 
           <TabsContent value="standards" className="space-y-6">
