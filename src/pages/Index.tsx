@@ -2,7 +2,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Navbar } from "@/components/Navbar";
-import { AccessibilityToolbar } from "@/components/AccessibilityToolbar";
+import { EnhancedAccessibilityToolbar } from "@/components/EnhancedAccessibilityToolbar";
 import { LoadingScreen } from "@/components/LoadingScreen";
 import { GraduationCap, Users, Brain, TrendingUp, BookOpen, Shield } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
@@ -79,6 +79,7 @@ const Index = () => {
       <Navbar />
       
       {/* Hero Section */}
+      <main id="main-content">
       <section className="relative py-20 px-4 overflow-hidden">
         <div className="absolute inset-0 z-0">
           <img 
@@ -132,7 +133,7 @@ const Index = () => {
               <Card key={role.title} className="shadow-lg hover:shadow-xl transition-all hover:-translate-y-1">
                 <CardHeader>
                   <div className={`${role.bgColor} w-12 h-12 rounded-lg flex items-center justify-center mb-4`}>
-                    <role.icon className={`h-6 w-6 ${role.color}`} />
+                    <role.icon className={`h-6 w-6 ${role.color}`} aria-hidden="true" />
                   </div>
                   <CardTitle>{role.title}</CardTitle>
                   <CardDescription className="text-base">{role.description}</CardDescription>
@@ -167,7 +168,7 @@ const Index = () => {
             {features.map((feature) => (
               <div key={feature.title} className="text-center">
                 <div className="bg-primary/10 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
-                  <feature.icon className="h-8 w-8 text-primary" />
+                  <feature.icon className="h-8 w-8 text-primary" aria-hidden="true" />
                 </div>
                 <h3 className="text-xl font-semibold mb-2">{feature.title}</h3>
                 <p className="text-muted-foreground">{feature.description}</p>
@@ -211,7 +212,9 @@ const Index = () => {
         </div>
       </section>
 
-      <AccessibilityToolbar />
+      </main>
+
+      <EnhancedAccessibilityToolbar />
     </div>
   );
 };

@@ -2,7 +2,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Navbar } from "@/components/Navbar";
-import { AccessibilityToolbar } from "@/components/AccessibilityToolbar";
+import { EnhancedAccessibilityToolbar } from "@/components/EnhancedAccessibilityToolbar";
 import { CreateLearnerForm } from "@/components/CreateLearnerForm";
 import { CreateTeacherForm } from "@/components/CreateTeacherForm";
 import { StudentListTable } from "@/components/StudentListTable";
@@ -688,7 +688,7 @@ const AdminDashboard = () => {
         onUpdate={fetchLearners}
       />
 
-      <AccessibilityToolbar />
+      <EnhancedAccessibilityToolbar />
     </div>
   );
 };

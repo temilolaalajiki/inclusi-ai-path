@@ -3,7 +3,7 @@ import { Progress } from "@/components/ui/progress";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Navbar } from "@/components/Navbar";
-import { AccessibilityToolbar } from "@/components/AccessibilityToolbar";
+import { EnhancedAccessibilityToolbar } from "@/components/EnhancedAccessibilityToolbar";
 import { BookOpen, TrendingUp, Lightbulb, ThumbsUp, ThumbsDown, Award } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useLearnerData } from "@/hooks/useLearnerData";
@@ -126,7 +126,7 @@ const LearnerDashboard = () => {
         <ProgressTimeline performance={performance} />
       </div>
 
-      <AccessibilityToolbar />
+      <EnhancedAccessibilityToolbar />
     </div>
   );
 };

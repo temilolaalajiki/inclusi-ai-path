@@ -30,9 +30,9 @@ export const Navbar = () => {
     <nav className="border-b bg-card/50 backdrop-blur-sm sticky top-0 z-40">
       <div className="container mx-auto px-4">
         <div className="flex h-16 items-center justify-between">
-          <Link to="/" className="flex items-center gap-2 font-bold text-xl">
+          <Link to="/" className="flex items-center gap-2 font-bold text-xl" aria-label="Go to home page">
             <div className="bg-primary rounded-lg p-2">
-              <GraduationCap className="h-6 w-6 text-primary-foreground" />
+              <GraduationCap className="h-6 w-6 text-primary-foreground" aria-hidden="true" />
             </div>
             <span className="hidden sm:inline">Inclusive Education AI</span>
             <span className="sm:hidden">IEAI</span>
@@ -67,8 +67,8 @@ export const Navbar = () => {
                         Dashboard
                       </Link>
                     )}
-                    <Button size="sm" variant="outline" onClick={handleSignOut}>
-                      <LogOut className="h-4 w-4 mr-2" />
+                    <Button size="sm" variant="outline" onClick={handleSignOut} aria-label="Sign out of your account">
+                      <LogOut className="h-4 w-4 mr-2" aria-hidden="true" />
                       Sign Out
                     </Button>
                   </>
@@ -84,8 +84,8 @@ export const Navbar = () => {
           {/* Mobile Navigation */}
           <Sheet>
             <SheetTrigger asChild className="md:hidden">
-              <Button variant="ghost" size="icon">
-                <Menu className="h-6 w-6" />
+              <Button variant="ghost" size="icon" aria-label="Open navigation menu">
+                <Menu className="h-6 w-6" aria-hidden="true" />
               </Button>
             </SheetTrigger>
             <SheetContent>
@@ -117,8 +117,8 @@ export const Navbar = () => {
                             Dashboard
                           </Link>
                         )}
-                        <Button className="w-full mt-4" variant="outline" onClick={handleSignOut}>
-                          <LogOut className="h-4 w-4 mr-2" />
+                        <Button className="w-full mt-4" variant="outline" onClick={handleSignOut} aria-label="Sign out of your account">
+                          <LogOut className="h-4 w-4 mr-2" aria-hidden="true" />
                           Sign Out
                         </Button>
                       </>
