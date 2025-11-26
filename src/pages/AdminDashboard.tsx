@@ -302,6 +302,35 @@ const AdminDashboard = () => {
     }
   };
 
+  const seedTestData = async () => {
+    try {
+      toast({
+        title: 'Starting Test Data Seeding',
+        description: 'Creating 5 diverse learner profiles with performance, attendance, and demographics...',
+      });
+
+      const { data, error } = await supabase.functions.invoke('seed-test-data');
+      
+      if (error) throw error;
+      
+      toast({
+        title: 'Test Data Seeded Successfully!',
+        description: `Created ${data?.learners_created || 0} learners with complete profiles, recommendations, and equity metrics.`,
+      });
+
+      // Refresh all data
+      fetchLearners();
+      fetchTeachers();
+    } catch (error: any) {
+      console.error('Error seeding test data:', error);
+      toast({
+        title: 'Error',
+        description: error.message || 'Failed to seed test data. Please try again.',
+        variant: 'destructive'
+      });
+    }
+  };
+
   const calculateEquityMetrics = async () => {
     try {
       toast({
@@ -469,17 +498,20 @@ const AdminDashboard = () => {
             </Button>
           </div>
 
-          <div className="mt-3">
+          <div className="mt-3 grid grid-cols-1 md:grid-cols-2 gap-3">
             <Button onClick={seedNigerianStandards} variant="secondary" className="w-full">
               <BookOpen className="h-4 w-4 mr-2" />
               Seed WAEC/NECO Standards
             </Button>
-          </div>
-
-          <div className="mt-3">
             <Button onClick={calculateEquityMetrics} variant="secondary" className="w-full">
               <Brain className="h-4 w-4 mr-2" />
               Calculate Equity Metrics
+            </Button>
+          </div>
+
+          <div className="mt-3">
+            <Button onClick={seedTestData} variant="outline" className="w-full border-2 border-primary">
+              🧪 Seed Complete Test Data (5 Diverse Learners)
             </Button>
           </div>
         </div>
