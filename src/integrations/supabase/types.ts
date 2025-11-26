@@ -41,6 +41,44 @@ export type Database = {
         }
         Relationships: []
       }
+      attendance_records: {
+        Row: {
+          created_at: string
+          date: string
+          id: string
+          learner_id: string
+          notes: string | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          date: string
+          id?: string
+          learner_id: string
+          notes?: string | null
+          status: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          date?: string
+          id?: string
+          learner_id?: string
+          notes?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "attendance_records_learner_id_fkey"
+            columns: ["learner_id"]
+            isOneToOne: false
+            referencedRelation: "learners"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       feedback: {
         Row: {
           comment: string | null
@@ -386,6 +424,19 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      calculate_attendance_rate: {
+        Args: { _days?: number; _learner_id: string }
+        Returns: number
+      }
+      get_low_attendance_learners: {
+        Args: { _days?: number; _teacher_id: string; _threshold?: number }
+        Returns: {
+          absent_days: number
+          attendance_rate: number
+          learner_id: string
+          total_days: number
+        }[]
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
