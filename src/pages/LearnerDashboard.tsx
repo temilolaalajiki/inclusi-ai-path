@@ -6,6 +6,8 @@ import { Navbar } from "@/components/Navbar";
 import { EnhancedAccessibilityToolbar } from "@/components/EnhancedAccessibilityToolbar";
 import { EnhancedLearnerProfile } from "@/components/EnhancedLearnerProfile";
 import { CurriculumStandardsView } from "@/components/CurriculumStandardsView";
+import { ExplainableAIView } from "@/components/ExplainableAIView";
+import { DataTransparencyView } from "@/components/DataTransparencyView";
 import { BookOpen, TrendingUp, Lightbulb, ThumbsUp, ThumbsDown, Award, Calendar } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useLearnerData } from "@/hooks/useLearnerData";
@@ -151,10 +153,12 @@ const LearnerDashboard = () => {
         </div>
 
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-          <TabsList className="grid w-full max-w-3xl grid-cols-4">
+          <TabsList className="grid w-full max-w-5xl grid-cols-6">
             <TabsTrigger value="progress">Progress</TabsTrigger>
             <TabsTrigger value="standards">Standards</TabsTrigger>
             <TabsTrigger value="profile">Profile</TabsTrigger>
+            <TabsTrigger value="ai">AI Reasoning</TabsTrigger>
+            <TabsTrigger value="privacy">Privacy</TabsTrigger>
             <TabsTrigger value="attendance">Attendance</TabsTrigger>
           </TabsList>
 
@@ -183,6 +187,14 @@ const LearnerDashboard = () => {
               demographics={demographics}
               accessibilityProfile={accessibilityProfile}
             />
+          </TabsContent>
+
+          <TabsContent value="ai" className="space-y-6">
+            <ExplainableAIView learnerId={learner.id} />
+          </TabsContent>
+
+          <TabsContent value="privacy" className="space-y-6">
+            {user && <DataTransparencyView userId={user.id} />}
           </TabsContent>
 
           <TabsContent value="attendance" className="space-y-6">

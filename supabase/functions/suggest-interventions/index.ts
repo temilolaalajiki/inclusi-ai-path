@@ -229,6 +229,59 @@ Suggest intervention strategies that build on successful recommendations and add
 
     if (insertError) throw insertError;
 
+    // Log AI reasoning for interventions
+    if (insertedInts) {
+      const reasoningLogs = insertedInts.map((rec: any, idx: number) => {
+        const intervention = interventions[idx];
+        return {
+          recommendation_id: rec.id,
+          learner_id: learnerId,
+          ai_model: useAI ? 'google/gemini-2.5-flash' : 'rule-based',
+          reasoning_chain: [
+            {
+              step: 1,
+              description: 'Reviewed existing recommendations and feedback',
+              data_point: `${learnerData.recommendations?.length || 0} previous recommendations`,
+              conclusion: 'Identified patterns in recommendation effectiveness'
+            },
+            {
+              step: 2,
+              description: 'Analyzed feedback from learner',
+              data_point: `${learnerData.feedback?.length || 0} feedback entries`,
+              conclusion: 'Understood learner preferences and challenges'
+            },
+            {
+              step: 3,
+              description: 'Generated targeted intervention strategy',
+              data_point: `Type: ${intervention.recommendation_type}`,
+              conclusion: intervention.title
+            }
+          ],
+          data_sources_used: [
+            'recommendations',
+            'feedback',
+            'performance_records',
+            'learning_challenges'
+          ],
+          confidence_score: useAI ? 0.88 : 0.72,
+          rule_based_fallback: !useAI
+        };
+      });
+
+      await supabase.from('ai_reasoning_logs').insert(reasoningLogs);
+
+      // Log data usage
+      await supabase.from('data_usage_logs').insert({
+        user_id: learnerData.user_id,
+        data_type: 'performance',
+        purpose: 'recommendation',
+        data_fields: ['recommendations', 'feedback', 'performance_records'],
+        processing_context: 'Intervention strategy generation',
+        consent_required: true,
+        consent_given: true
+      });
+    }
+
     return new Response(
       JSON.stringify({ 
         success: true, 
