@@ -9,7 +9,7 @@ import { CurriculumStandardsView } from "@/components/CurriculumStandardsView";
 import { ExplainableAIView } from "@/components/ExplainableAIView";
 import { DataTransparencyView } from "@/components/DataTransparencyView";
 import { LearnerProfileCompletion } from "@/components/LearnerProfileCompletion";
-import { BookOpen, TrendingUp, Lightbulb, ThumbsUp, ThumbsDown, Award, Calendar, Clock } from "lucide-react";
+import { BookOpen, TrendingUp, Lightbulb, ThumbsUp, ThumbsDown, Award, Calendar, Clock, GraduationCap } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useLearnerData } from "@/hooks/useLearnerData";
 import { ProgressTimeline } from "@/components/ProgressTimeline";
@@ -18,6 +18,7 @@ import { LearnerAttendanceView } from "@/components/LearnerAttendanceView";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { LearnerContentHub } from "@/components/content/LearnerContentHub";
 
 const LearnerDashboard = () => {
   const { user, userProfile } = useAuth();
@@ -190,8 +191,12 @@ const LearnerDashboard = () => {
         </div>
 
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-          <TabsList className="grid w-full max-w-5xl grid-cols-6">
+          <TabsList className="grid w-full max-w-5xl grid-cols-7">
             <TabsTrigger value="progress">Progress</TabsTrigger>
+            <TabsTrigger value="learn" className="flex items-center gap-1">
+              <GraduationCap className="h-3 w-3" />
+              Learn
+            </TabsTrigger>
             <TabsTrigger value="standards">Standards</TabsTrigger>
             <TabsTrigger value="profile">Profile</TabsTrigger>
             <TabsTrigger value="ai">AI Reasoning</TabsTrigger>
@@ -236,6 +241,10 @@ const LearnerDashboard = () => {
 
           <TabsContent value="attendance" className="space-y-6">
             {learner && <LearnerAttendanceView learnerId={learner.id} />}
+          </TabsContent>
+
+          <TabsContent value="learn" className="space-y-6">
+            {learner && <LearnerContentHub learnerId={learner.id} />}
           </TabsContent>
         </Tabs>
       </div>
