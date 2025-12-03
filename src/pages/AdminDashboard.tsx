@@ -12,8 +12,8 @@ import { NigerianEducationOverview } from "@/components/NigerianEducationOvervie
 import { BiasMonitoringDashboard } from "@/components/BiasMonitoringDashboard";
 import { TeacherAnalyticsDashboard } from "@/components/TeacherAnalyticsDashboard";
 import { BarChart, Bar, LineChart, Line, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
-import { Users, BookOpen, TrendingUp, Download, AlertTriangle, CheckCircle, FileDown, FileSpreadsheet, Calendar, Brain, UserCheck, Eye } from "lucide-react";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Users, BookOpen, TrendingUp, Download, AlertTriangle, CheckCircle, FileDown, FileSpreadsheet, Calendar, Brain, UserCheck, Eye, BarChart3, ShieldAlert, Scale, Settings } from "lucide-react";
+import { MobileTabs, MobileTabsList, MobileTabsContent } from "@/components/ui/mobile-tabs";
 import { useAdminData } from "@/hooks/useAdminData";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
@@ -46,6 +46,7 @@ const AdminDashboard = () => {
   const [selectedStudent, setSelectedStudent] = useState<LearnerWithProgress | null>(null);
   const [detailsDialogOpen, setDetailsDialogOpen] = useState(false);
   const [learnersLoading, setLearnersLoading] = useState(false);
+  const [activeTab, setActiveTab] = useState("trends");
   const { toast } = useToast();
 
   useEffect(() => {
@@ -435,39 +436,39 @@ const AdminDashboard = () => {
     <div className="min-h-screen bg-gradient-to-br from-background via-muted/20 to-background">
       <Navbar />
       
-      <div className="container mx-auto px-4 py-8" id="dashboard-content">
-        <div className="mb-8">
-          <div className="flex items-center justify-between mb-4">
+      <div className="container mx-auto px-4 py-4 md:py-8" id="dashboard-content">
+        <div className="mb-6 md:mb-8">
+          <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 mb-4">
             <div>
-              <h1 className="text-4xl font-bold bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
+              <h1 className="text-2xl md:text-4xl font-bold bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
                 Administrator Analytics
               </h1>
-              <p className="text-muted-foreground text-lg">System-wide insights and reporting</p>
+              <p className="text-muted-foreground text-sm md:text-lg">System-wide insights and reporting</p>
             </div>
-            <div className="flex gap-2">
+            <div className="flex flex-wrap gap-2">
               <Select onValueChange={handleDateRangeChange} defaultValue="all">
-                <SelectTrigger className="w-[180px]">
+                <SelectTrigger className="w-full sm:w-[180px] bg-background">
                   <Calendar className="h-4 w-4 mr-2" />
                   <SelectValue placeholder="Date Range" />
                 </SelectTrigger>
-                <SelectContent>
+                <SelectContent className="bg-background z-50">
                   <SelectItem value="week">Last Week</SelectItem>
                   <SelectItem value="month">Last Month</SelectItem>
                   <SelectItem value="year">Last Year</SelectItem>
                   <SelectItem value="all">All Time</SelectItem>
                 </SelectContent>
               </Select>
-              <Button onClick={handleExportPDF} variant="outline">
-                <FileDown className="h-4 w-4 mr-2" />
-                PDF
+              <Button onClick={handleExportPDF} variant="outline" size="sm" className="flex-1 sm:flex-none">
+                <FileDown className="h-4 w-4 sm:mr-2" />
+                <span className="hidden sm:inline">PDF</span>
               </Button>
-              <Button onClick={handleExportExcel} variant="outline">
-                <FileSpreadsheet className="h-4 w-4 mr-2" />
-                Excel
+              <Button onClick={handleExportExcel} variant="outline" size="sm" className="flex-1 sm:flex-none">
+                <FileSpreadsheet className="h-4 w-4 sm:mr-2" />
+                <span className="hidden sm:inline">Excel</span>
               </Button>
-              <Button onClick={generateWeeklyReport}>
-                <Download className="h-4 w-4 mr-2" />
-                Weekly Report
+              <Button onClick={generateWeeklyReport} size="sm" className="flex-1 sm:flex-none">
+                <Download className="h-4 w-4 sm:mr-2" />
+                <span className="hidden sm:inline">Weekly Report</span>
               </Button>
             </div>
           </div>
@@ -556,73 +557,77 @@ const AdminDashboard = () => {
           </Card>
         )}
 
-        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4 mb-6">
+        <div className="grid gap-4 md:gap-6 grid-cols-2 lg:grid-cols-4 mb-6">
           <Card className="shadow-lg hover:shadow-xl transition-shadow">
-            <CardHeader className="pb-3">
-              <CardTitle className="flex items-center gap-2 text-base">
+            <CardHeader className="pb-2 md:pb-3 p-3 md:p-6">
+              <CardTitle className="flex items-center gap-2 text-sm md:text-base">
                 <Users className="h-4 w-4 text-primary" />
-                Total Learners
+                <span className="hidden sm:inline">Total</span> Learners
               </CardTitle>
             </CardHeader>
-            <CardContent>
-              <div className="text-3xl font-bold text-primary">{metrics.totalLearners}</div>
-              <p className="text-xs text-muted-foreground mt-1">Active in system</p>
+            <CardContent className="p-3 md:p-6 pt-0">
+              <div className="text-2xl md:text-3xl font-bold text-primary">{metrics.totalLearners}</div>
+              <p className="text-xs text-muted-foreground mt-1 hidden sm:block">Active in system</p>
             </CardContent>
           </Card>
 
           <Card className="shadow-lg hover:shadow-xl transition-shadow">
-            <CardHeader className="pb-3">
-              <CardTitle className="flex items-center gap-2 text-base">
+            <CardHeader className="pb-2 md:pb-3 p-3 md:p-6">
+              <CardTitle className="flex items-center gap-2 text-sm md:text-base">
                 <BookOpen className="h-4 w-4 text-primary" />
-                Active Teachers
+                <span className="hidden sm:inline">Active</span> Teachers
               </CardTitle>
             </CardHeader>
-            <CardContent>
-              <div className="text-3xl font-bold text-primary">{metrics.totalTeachers}</div>
-              <p className="text-xs text-muted-foreground mt-1">Teaching staff</p>
+            <CardContent className="p-3 md:p-6 pt-0">
+              <div className="text-2xl md:text-3xl font-bold text-primary">{metrics.totalTeachers}</div>
+              <p className="text-xs text-muted-foreground mt-1 hidden sm:block">Teaching staff</p>
             </CardContent>
           </Card>
 
           <Card className="shadow-lg hover:shadow-xl transition-shadow">
-            <CardHeader className="pb-3">
-              <CardTitle className="flex items-center gap-2 text-base">
+            <CardHeader className="pb-2 md:pb-3 p-3 md:p-6">
+              <CardTitle className="flex items-center gap-2 text-sm md:text-base">
                 <TrendingUp className="h-4 w-4 text-success" />
-                Avg Progress
+                <span className="hidden sm:inline">Avg</span> Progress
               </CardTitle>
             </CardHeader>
-            <CardContent>
-              <div className="text-3xl font-bold text-success">{metrics.avgProgress}%</div>
-              <p className="text-xs text-muted-foreground mt-1">Overall performance</p>
+            <CardContent className="p-3 md:p-6 pt-0">
+              <div className="text-2xl md:text-3xl font-bold text-success">{metrics.avgProgress}%</div>
+              <p className="text-xs text-muted-foreground mt-1 hidden sm:block">Overall performance</p>
             </CardContent>
           </Card>
 
           <Card className="shadow-lg hover:shadow-xl transition-shadow">
-            <CardHeader className="pb-3">
-              <CardTitle className="flex items-center gap-2 text-base">
+            <CardHeader className="pb-2 md:pb-3 p-3 md:p-6">
+              <CardTitle className="flex items-center gap-2 text-sm md:text-base">
                 <CheckCircle className="h-4 w-4 text-success" />
-                Accessibility Score
+                <span className="hidden sm:inline">Accessibility</span> Score
               </CardTitle>
             </CardHeader>
-            <CardContent>
-              <div className="text-3xl font-bold text-success">{metrics.accessibilityScore}</div>
-              <p className="text-xs text-muted-foreground mt-1">Out of 100</p>
+            <CardContent className="p-3 md:p-6 pt-0">
+              <div className="text-2xl md:text-3xl font-bold text-success">{metrics.accessibilityScore}</div>
+              <p className="text-xs text-muted-foreground mt-1 hidden sm:block">Out of 100</p>
             </CardContent>
           </Card>
         </div>
 
-        <Tabs defaultValue="trends" className="space-y-6">
-          <TabsList className="grid w-full max-w-6xl grid-cols-8">
-            <TabsTrigger value="trends">Trends</TabsTrigger>
-            <TabsTrigger value="barriers">Barriers</TabsTrigger>
-            <TabsTrigger value="interventions">Interventions</TabsTrigger>
-            <TabsTrigger value="analytics">Teachers</TabsTrigger>
-            <TabsTrigger value="standards">Standards</TabsTrigger>
-            <TabsTrigger value="equity">Equity</TabsTrigger>
-            <TabsTrigger value="users">Users</TabsTrigger>
-            <TabsTrigger value="management">Management</TabsTrigger>
-          </TabsList>
+        <MobileTabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
+          <MobileTabsList
+            value={activeTab}
+            onValueChange={setActiveTab}
+            tabs={[
+              { value: "trends", label: "Trends", icon: <TrendingUp className="h-4 w-4" /> },
+              { value: "barriers", label: "Barriers", icon: <ShieldAlert className="h-4 w-4" /> },
+              { value: "interventions", label: "Interventions", icon: <BarChart3 className="h-4 w-4" /> },
+              { value: "analytics", label: "Teachers", icon: <UserCheck className="h-4 w-4" /> },
+              { value: "standards", label: "Standards", icon: <BookOpen className="h-4 w-4" /> },
+              { value: "equity", label: "Equity", icon: <Scale className="h-4 w-4" /> },
+              { value: "users", label: "Users", icon: <Users className="h-4 w-4" /> },
+              { value: "management", label: "Management", icon: <Settings className="h-4 w-4" /> },
+            ]}
+          />
 
-          <TabsContent value="trends" className="space-y-6">
+          <MobileTabsContent value="trends" className="space-y-6">
             <Card className="shadow-lg">
               <CardHeader>
                 <CardTitle>System Metrics</CardTitle>
@@ -692,9 +697,9 @@ const AdminDashboard = () => {
                 </CardContent>
               </Card>
             </div>
-          </TabsContent>
+          </MobileTabsContent>
 
-          <TabsContent value="barriers" className="space-y-6">
+          <MobileTabsContent value="barriers" className="space-y-6">
             <Card className="shadow-lg">
               <CardHeader>
                 <CardTitle>Common Accessibility Barriers</CardTitle>
@@ -750,9 +755,9 @@ const AdminDashboard = () => {
                 </div>
               </CardContent>
             </Card>
-          </TabsContent>
+          </MobileTabsContent>
 
-          <TabsContent value="interventions" className="space-y-6">
+          <MobileTabsContent value="interventions" className="space-y-6">
             <Card className="shadow-lg">
               <CardHeader>
                 <CardTitle>Intervention Success Rates</CardTitle>
@@ -821,21 +826,21 @@ const AdminDashboard = () => {
                 </CardContent>
               </Card>
             </div>
-          </TabsContent>
+          </MobileTabsContent>
 
-          <TabsContent value="analytics" className="space-y-6">
+          <MobileTabsContent value="analytics" className="space-y-6">
             <TeacherAnalyticsDashboard />
-          </TabsContent>
+          </MobileTabsContent>
 
-          <TabsContent value="standards" className="space-y-6">
+          <MobileTabsContent value="standards" className="space-y-6">
             <NigerianEducationOverview />
-          </TabsContent>
+          </MobileTabsContent>
 
-          <TabsContent value="equity" className="space-y-6">
+          <MobileTabsContent value="equity" className="space-y-6">
             <BiasMonitoringDashboard />
-          </TabsContent>
+          </MobileTabsContent>
 
-          <TabsContent value="users" className="space-y-6">
+          <MobileTabsContent value="users" className="space-y-6">
             <Card className="shadow-lg">
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
@@ -870,9 +875,9 @@ const AdminDashboard = () => {
                 <TeacherListTable teachers={teachers} />
               </CardContent>
             </Card>
-          </TabsContent>
+          </MobileTabsContent>
 
-          <TabsContent value="management" className="space-y-6">
+          <MobileTabsContent value="management" className="space-y-6">
             <div className="grid gap-6 md:grid-cols-2">
               <CreateTeacherForm 
                 onSuccess={() => {
@@ -889,8 +894,8 @@ const AdminDashboard = () => {
                 }}
               />
             </div>
-          </TabsContent>
-        </Tabs>
+          </MobileTabsContent>
+        </MobileTabs>
       </div>
 
       <StudentDetailsDialog
