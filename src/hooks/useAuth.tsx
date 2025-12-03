@@ -4,10 +4,16 @@ import { supabase } from '@/integrations/supabase/client';
 
 export type UserRole = 'learner' | 'teacher' | 'admin';
 
+export interface UserProfile {
+  firstName: string | null;
+  lastName: string | null;
+}
+
 export function useAuth() {
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [userRole, setUserRole] = useState<UserRole | null>(null);
+  const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -17,13 +23,15 @@ export function useAuth() {
         setSession(session);
         setUser(session?.user ?? null);
         
-        // Fetch user role when session changes
+        // Fetch user role and profile when session changes
         if (session?.user) {
           setTimeout(() => {
             fetchUserRole(session.user.id);
+            fetchUserProfile(session.user.id);
           }, 0);
         } else {
           setUserRole(null);
+          setUserProfile(null);
           setLoading(false);
         }
       }
@@ -36,6 +44,7 @@ export function useAuth() {
       
       if (session?.user) {
         fetchUserRole(session.user.id);
+        fetchUserProfile(session.user.id);
       } else {
         setLoading(false);
       }
@@ -62,9 +71,28 @@ export function useAuth() {
     }
   };
 
+  const fetchUserProfile = async (userId: string) => {
+    try {
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('first_name, last_name')
+        .eq('id', userId)
+        .maybeSingle();
+
+      if (error) throw error;
+      setUserProfile({
+        firstName: data?.first_name ?? null,
+        lastName: data?.last_name ?? null,
+      });
+    } catch (error) {
+      console.error('Error fetching user profile:', error);
+      setUserProfile(null);
+    }
+  };
+
   const signOut = async () => {
     await supabase.auth.signOut();
   };
 
-  return { user, session, userRole, loading, signOut };
+  return { user, session, userRole, userProfile, loading, signOut };
 }

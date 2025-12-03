@@ -1,6 +1,7 @@
 import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { GraduationCap, LogOut, Menu } from "lucide-react";
 import {
   Sheet,
@@ -11,7 +12,21 @@ import { useAuth } from "@/hooks/useAuth";
 import { useEffect } from "react";
 
 export const Navbar = () => {
-  const { user, userRole, loading, signOut } = useAuth();
+  const { user, userRole, userProfile, loading, signOut } = useAuth();
+
+  const getInitials = () => {
+    if (userProfile?.firstName || userProfile?.lastName) {
+      return `${userProfile.firstName?.[0] ?? ''}${userProfile.lastName?.[0] ?? ''}`.toUpperCase();
+    }
+    return user?.email?.[0]?.toUpperCase() ?? '?';
+  };
+
+  const getDisplayName = () => {
+    if (userProfile?.firstName || userProfile?.lastName) {
+      return `${userProfile.firstName ?? ''} ${userProfile.lastName ?? ''}`.trim();
+    }
+    return user?.email?.split('@')[0] ?? '';
+  };
   const navigate = useNavigate();
 
   // Redirect authenticated users away from auth page
@@ -43,17 +58,25 @@ export const Navbar = () => {
             {!loading && (
               <>
                 {user ? (
-                  <>
-                    {userRole && (
-                      <Badge variant="secondary" className="capitalize">
-                        {userRole}
-                      </Badge>
-                    )}
+                  <div className="flex items-center gap-3">
+                    <Avatar className="h-8 w-8">
+                      <AvatarFallback className="bg-primary text-primary-foreground text-xs">
+                        {getInitials()}
+                      </AvatarFallback>
+                    </Avatar>
+                    <div className="flex flex-col items-start">
+                      <span className="text-sm font-medium">{getDisplayName()}</span>
+                      {userRole && (
+                        <Badge variant="secondary" className="capitalize text-xs py-0">
+                          {userRole}
+                        </Badge>
+                      )}
+                    </div>
                     <Button size="sm" variant="outline" onClick={handleSignOut} aria-label="Sign out of your account">
                       <LogOut className="h-4 w-4 mr-2" aria-hidden="true" />
                       Sign Out
                     </Button>
-                  </>
+                  </div>
                 ) : (
                   <Link to="/auth">
                     <Button size="sm">Sign In</Button>
@@ -75,17 +98,27 @@ export const Navbar = () => {
                 {!loading && (
                   <>
                     {user ? (
-                      <>
-                        {userRole && (
-                          <Badge variant="secondary" className="capitalize w-fit">
-                            {userRole}
-                          </Badge>
-                        )}
-                        <Button className="w-full mt-4" variant="outline" onClick={handleSignOut} aria-label="Sign out of your account">
+                      <div className="flex flex-col gap-4">
+                        <div className="flex items-center gap-3">
+                          <Avatar className="h-10 w-10">
+                            <AvatarFallback className="bg-primary text-primary-foreground">
+                              {getInitials()}
+                            </AvatarFallback>
+                          </Avatar>
+                          <div className="flex flex-col">
+                            <span className="font-medium">{getDisplayName()}</span>
+                            {userRole && (
+                              <Badge variant="secondary" className="capitalize w-fit text-xs py-0">
+                                {userRole}
+                              </Badge>
+                            )}
+                          </div>
+                        </div>
+                        <Button className="w-full" variant="outline" onClick={handleSignOut} aria-label="Sign out of your account">
                           <LogOut className="h-4 w-4 mr-2" aria-hidden="true" />
                           Sign Out
                         </Button>
-                      </>
+                      </div>
                     ) : (
                       <Link to="/auth">
                         <Button className="w-full mt-4">Sign In</Button>
