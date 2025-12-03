@@ -8,7 +8,8 @@ import { EnhancedLearnerProfile } from "@/components/EnhancedLearnerProfile";
 import { CurriculumStandardsView } from "@/components/CurriculumStandardsView";
 import { ExplainableAIView } from "@/components/ExplainableAIView";
 import { DataTransparencyView } from "@/components/DataTransparencyView";
-import { BookOpen, TrendingUp, Lightbulb, ThumbsUp, ThumbsDown, Award, Calendar } from "lucide-react";
+import { LearnerProfileCompletion } from "@/components/LearnerProfileCompletion";
+import { BookOpen, TrendingUp, Lightbulb, ThumbsUp, ThumbsDown, Award, Calendar, Clock } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useLearnerData } from "@/hooks/useLearnerData";
 import { ProgressTimeline } from "@/components/ProgressTimeline";
@@ -32,6 +33,7 @@ const LearnerDashboard = () => {
   } = useLearnerData(user?.id);
   const [activeTab, setActiveTab] = useState("progress");
   const [curriculumAlignments, setCurriculumAlignments] = useState<any[]>([]);
+  const [refreshKey, setRefreshKey] = useState(0);
 
   useEffect(() => {
     if (learner?.id) {
@@ -53,24 +55,59 @@ const LearnerDashboard = () => {
     setCurriculumAlignments(data || []);
   };
 
+  const handleProfileComplete = () => {
+    // Trigger a refresh by updating the key
+    setRefreshKey(prev => prev + 1);
+    window.location.reload();
+  };
+
   if (loading) {
     return <LoadingScreen />;
   }
 
-  if (!learner) {
+  // Show profile completion form if no learner record exists
+  if (!learner && user) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-background via-muted/20 to-background">
         <Navbar />
         <div className="container mx-auto px-4 py-8">
-          <Card>
-            <CardHeader>
-              <CardTitle>No Learner Profile</CardTitle>
-              <CardDescription>Please contact your teacher to set up your learner profile.</CardDescription>
-            </CardHeader>
-          </Card>
+          <LearnerProfileCompletion userId={user.id} onComplete={handleProfileComplete} />
         </div>
+        <EnhancedAccessibilityToolbar />
       </div>
     );
+  }
+
+  // Show pending teacher assignment message if learner exists but no teacher assigned
+  if (learner && !learner.teacher_id) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-background via-muted/20 to-background">
+        <Navbar />
+        <div className="container mx-auto px-4 py-8">
+          <Card className="max-w-2xl mx-auto">
+            <CardHeader className="text-center">
+              <div className="mx-auto w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mb-4">
+                <Clock className="h-8 w-8 text-primary" />
+              </div>
+              <CardTitle>Pending Teacher Assignment</CardTitle>
+              <CardDescription className="text-base">
+                Your profile has been submitted successfully! An administrator will assign you to a teacher soon.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="text-center">
+              <p className="text-muted-foreground">
+                Please check back later. You'll have full access to your dashboard once a teacher has been assigned.
+              </p>
+            </CardContent>
+          </Card>
+        </div>
+        <EnhancedAccessibilityToolbar />
+      </div>
+    );
+  }
+
+  if (!learner) {
+    return <LoadingScreen />;
   }
 
   // Calculate subject progress from performance records
