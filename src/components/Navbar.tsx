@@ -49,24 +49,6 @@ export const Navbar = () => {
                         {userRole}
                       </Badge>
                     )}
-                    <Link to="/" className="text-sm font-medium hover:text-primary transition-colors">
-                      Home
-                    </Link>
-                    {userRole === 'learner' && (
-                      <Link to="/learner" className="text-sm font-medium hover:text-primary transition-colors">
-                        Dashboard
-                      </Link>
-                    )}
-                    {userRole === 'teacher' && (
-                      <Link to="/teacher" className="text-sm font-medium hover:text-primary transition-colors">
-                        Dashboard
-                      </Link>
-                    )}
-                    {userRole === 'admin' && (
-                      <Link to="/admin" className="text-sm font-medium hover:text-primary transition-colors">
-                        Dashboard
-                      </Link>
-                    )}
                     <Button size="sm" variant="outline" onClick={handleSignOut} aria-label="Sign out of your account">
                       <LogOut className="h-4 w-4 mr-2" aria-hidden="true" />
                       Sign Out
@@ -98,24 +80,6 @@ export const Navbar = () => {
                           <Badge variant="secondary" className="capitalize w-fit">
                             {userRole}
                           </Badge>
-                        )}
-                        <Link to="/" className="text-lg font-medium hover:text-primary transition-colors">
-                          Home
-                        </Link>
-                        {userRole === 'learner' && (
-                          <Link to="/learner" className="text-lg font-medium hover:text-primary transition-colors">
-                            Dashboard
-                          </Link>
-                        )}
-                        {userRole === 'teacher' && (
-                          <Link to="/teacher" className="text-lg font-medium hover:text-primary transition-colors">
-                            Dashboard
-                          </Link>
-                        )}
-                        {userRole === 'admin' && (
-                          <Link to="/admin" className="text-lg font-medium hover:text-primary transition-colors">
-                            Dashboard
-                          </Link>
                         )}
                         <Button className="w-full mt-4" variant="outline" onClick={handleSignOut} aria-label="Sign out of your account">
                           <LogOut className="h-4 w-4 mr-2" aria-hidden="true" />
