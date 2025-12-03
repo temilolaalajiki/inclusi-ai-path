@@ -698,6 +698,50 @@ export type Database = {
           },
         ]
       }
+      notifications: {
+        Row: {
+          category: string
+          created_at: string
+          id: string
+          is_read: boolean
+          message: string
+          related_learner_id: string | null
+          title: string
+          type: string
+          user_id: string
+        }
+        Insert: {
+          category: string
+          created_at?: string
+          id?: string
+          is_read?: boolean
+          message: string
+          related_learner_id?: string | null
+          title: string
+          type?: string
+          user_id: string
+        }
+        Update: {
+          category?: string
+          created_at?: string
+          id?: string
+          is_read?: boolean
+          message?: string
+          related_learner_id?: string | null
+          title?: string
+          type?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "notifications_related_learner_id_fkey"
+            columns: ["related_learner_id"]
+            isOneToOne: false
+            referencedRelation: "learners"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       performance_records: {
         Row: {
           assessment_date: string
