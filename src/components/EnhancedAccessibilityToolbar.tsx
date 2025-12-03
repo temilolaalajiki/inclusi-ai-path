@@ -94,8 +94,12 @@ export const EnhancedAccessibilityToolbar = () => {
       setIsSpeaking(false);
     };
     
-    utterance.onerror = () => {
+    utterance.onerror = (event) => {
       setIsSpeaking(false);
+      // Don't show error for cancellation (user clicked stop)
+      if (event.error === 'canceled' || event.error === 'interrupted') {
+        return;
+      }
       toast({
         title: "Error",
         description: "Failed to read the text.",
