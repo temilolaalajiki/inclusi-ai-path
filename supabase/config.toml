@@ -50,3 +50,6 @@ verify_jwt = false
 
 [functions.seed-test-data]
 verify_jwt = true
+
+[functions.generate-quiz-questions]
+verify_jwt = true
