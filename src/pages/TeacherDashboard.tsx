@@ -5,8 +5,8 @@ import { Badge } from "@/components/ui/badge";
 import { Navbar } from "@/components/Navbar";
 import { EnhancedAccessibilityToolbar } from "@/components/EnhancedAccessibilityToolbar";
 import { Progress } from "@/components/ui/progress";
-import { Users, Brain, TrendingUp, AlertCircle, CheckCircle2, Calendar } from "lucide-react";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Users, Brain, TrendingUp, AlertCircle, CheckCircle2, Calendar, LayoutDashboard, GraduationCap, Lightbulb } from "lucide-react";
+import { MobileTabs, MobileTabsList, MobileTabsContent } from "@/components/ui/mobile-tabs";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useAuth } from "@/hooks/useAuth";
 import { useTeacherData, LearnerWithProgress } from "@/hooks/useTeacherData";
@@ -101,74 +101,78 @@ const TeacherDashboard = () => {
     <div className="min-h-screen bg-gradient-to-br from-background via-muted/20 to-background">
       <Navbar />
       
-      <div className="container mx-auto px-4 py-8">
-        <div className="mb-8">
-          <h1 className="text-4xl font-bold bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent mb-2">
+      <div className="container mx-auto px-4 py-4 md:py-8">
+        <div className="mb-6 md:mb-8">
+          <h1 className="text-2xl md:text-4xl font-bold bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent mb-2">
             Teacher Dashboard
           </h1>
-          <p className="text-muted-foreground text-lg">Manage your students and access AI-powered insights</p>
+          <p className="text-muted-foreground text-sm md:text-lg">Manage your students and access AI-powered insights</p>
         </div>
 
-        <div className="grid gap-6 md:grid-cols-4 mb-6">
+        <div className="grid gap-4 md:gap-6 grid-cols-2 md:grid-cols-4 mb-6">
           <Card className="shadow-lg hover:shadow-xl transition-shadow">
-            <CardHeader className="pb-3">
-              <CardTitle className="flex items-center gap-2 text-base">
+            <CardHeader className="pb-2 md:pb-3 p-3 md:p-6">
+              <CardTitle className="flex items-center gap-2 text-sm md:text-base">
                 <Users className="h-4 w-4 text-primary" />
-                Total Students
+                <span className="hidden sm:inline">Total</span> Students
               </CardTitle>
             </CardHeader>
-            <CardContent>
-              <div className="text-3xl font-bold text-primary">{totalStudents}</div>
+            <CardContent className="p-3 md:p-6 pt-0">
+              <div className="text-2xl md:text-3xl font-bold text-primary">{totalStudents}</div>
             </CardContent>
           </Card>
 
           <Card className="shadow-lg hover:shadow-xl transition-shadow">
-            <CardHeader className="pb-3">
-              <CardTitle className="flex items-center gap-2 text-base">
+            <CardHeader className="pb-2 md:pb-3 p-3 md:p-6">
+              <CardTitle className="flex items-center gap-2 text-sm md:text-base">
                 <TrendingUp className="h-4 w-4 text-success" />
-                Avg. Progress
+                <span className="hidden sm:inline">Avg.</span> Progress
               </CardTitle>
             </CardHeader>
-            <CardContent>
-              <div className="text-3xl font-bold text-success">{avgProgress}%</div>
+            <CardContent className="p-3 md:p-6 pt-0">
+              <div className="text-2xl md:text-3xl font-bold text-success">{avgProgress}%</div>
             </CardContent>
           </Card>
 
           <Card className="shadow-lg hover:shadow-xl transition-shadow">
-            <CardHeader className="pb-3">
-              <CardTitle className="flex items-center gap-2 text-base">
+            <CardHeader className="pb-2 md:pb-3 p-3 md:p-6">
+              <CardTitle className="flex items-center gap-2 text-sm md:text-base">
                 <AlertCircle className="h-4 w-4 text-warning" />
                 Need Support
               </CardTitle>
             </CardHeader>
-            <CardContent>
-              <div className="text-3xl font-bold text-warning">{needSupport}</div>
+            <CardContent className="p-3 md:p-6 pt-0">
+              <div className="text-2xl md:text-3xl font-bold text-warning">{needSupport}</div>
             </CardContent>
           </Card>
 
           <Card className="shadow-lg hover:shadow-xl transition-shadow">
-            <CardHeader className="pb-3">
-              <CardTitle className="flex items-center gap-2 text-base">
+            <CardHeader className="pb-2 md:pb-3 p-3 md:p-6">
+              <CardTitle className="flex items-center gap-2 text-sm md:text-base">
                 <CheckCircle2 className="h-4 w-4 text-success" />
                 On Track
               </CardTitle>
             </CardHeader>
-            <CardContent>
-              <div className="text-3xl font-bold text-success">{onTrack}</div>
+            <CardContent className="p-3 md:p-6 pt-0">
+              <div className="text-2xl md:text-3xl font-bold text-success">{onTrack}</div>
             </CardContent>
           </Card>
         </div>
 
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-          <TabsList className="grid w-full max-w-3xl grid-cols-5">
-            <TabsTrigger value="overview">Overview</TabsTrigger>
-            <TabsTrigger value="students">Students</TabsTrigger>
-            <TabsTrigger value="attendance">Attendance</TabsTrigger>
-            <TabsTrigger value="insights">AI Insights</TabsTrigger>
-            <TabsTrigger value="training">Training</TabsTrigger>
-          </TabsList>
+        <MobileTabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
+          <MobileTabsList
+            value={activeTab}
+            onValueChange={setActiveTab}
+            tabs={[
+              { value: "overview", label: "Overview", icon: <LayoutDashboard className="h-4 w-4" /> },
+              { value: "students", label: "Students", icon: <GraduationCap className="h-4 w-4" /> },
+              { value: "attendance", label: "Attendance", icon: <Calendar className="h-4 w-4" /> },
+              { value: "insights", label: "AI Insights", icon: <Brain className="h-4 w-4" /> },
+              { value: "training", label: "Training", icon: <Lightbulb className="h-4 w-4" /> },
+            ]}
+          />
 
-          <TabsContent value="overview" className="space-y-6">
+          <MobileTabsContent value="overview" className="space-y-6">
             <div className="grid gap-6">
               <Card className="shadow-lg">
                 <CardHeader>
@@ -206,9 +210,9 @@ const TeacherDashboard = () => {
                 </CardContent>
               </Card>
             </div>
-          </TabsContent>
+          </MobileTabsContent>
 
-          <TabsContent value="students" className="space-y-6">
+          <MobileTabsContent value="students" className="space-y-6">
             <Card className="shadow-lg">
               <CardHeader>
                 <CardTitle>Student List</CardTitle>
@@ -223,9 +227,9 @@ const TeacherDashboard = () => {
                 />
               </CardContent>
             </Card>
-          </TabsContent>
+          </MobileTabsContent>
 
-          <TabsContent value="insights" className="space-y-6">
+          <MobileTabsContent value="insights" className="space-y-6">
             <Card className="shadow-lg">
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
@@ -238,13 +242,13 @@ const TeacherDashboard = () => {
 ...
               </CardContent>
             </Card>
-          </TabsContent>
+          </MobileTabsContent>
 
-          <TabsContent value="training" className="space-y-6">
+          <MobileTabsContent value="training" className="space-y-6">
             <TrainingRecommendations />
-          </TabsContent>
+          </MobileTabsContent>
 
-          <TabsContent value="attendance" className="space-y-6">
+          <MobileTabsContent value="attendance" className="space-y-6">
             <div className="grid gap-6 lg:grid-cols-2">
               <AttendanceTracker 
                 learners={learners}
@@ -268,8 +272,8 @@ const TeacherDashboard = () => {
               learners={learners}
               attendanceRecords={attendanceRecords}
             />
-          </TabsContent>
-        </Tabs>
+          </MobileTabsContent>
+        </MobileTabs>
       </div>
 
       <StudentDetailsDialog
