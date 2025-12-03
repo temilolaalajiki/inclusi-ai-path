@@ -64,14 +64,11 @@ export const Navbar = () => {
                         {getInitials()}
                       </AvatarFallback>
                     </Avatar>
-                    <div className="flex flex-col items-start">
-                      <span className="text-sm font-medium">{getDisplayName()}</span>
-                      {userRole && (
-                        <Badge variant="secondary" className="capitalize text-xs py-0">
-                          {userRole}
-                        </Badge>
-                      )}
-                    </div>
+                    {userRole && (
+                      <Badge variant="secondary" className="capitalize text-xs py-0">
+                        {userRole}
+                      </Badge>
+                    )}
                     <Button size="sm" variant="outline" onClick={handleSignOut} aria-label="Sign out of your account">
                       <LogOut className="h-4 w-4 mr-2" aria-hidden="true" />
                       Sign Out
@@ -105,14 +102,11 @@ export const Navbar = () => {
                               {getInitials()}
                             </AvatarFallback>
                           </Avatar>
-                          <div className="flex flex-col">
-                            <span className="font-medium">{getDisplayName()}</span>
-                            {userRole && (
-                              <Badge variant="secondary" className="capitalize w-fit text-xs py-0">
-                                {userRole}
-                              </Badge>
-                            )}
-                          </div>
+                          {userRole && (
+                            <Badge variant="secondary" className="capitalize w-fit text-xs py-0">
+                              {userRole}
+                            </Badge>
+                          )}
                         </div>
                         <Button className="w-full" variant="outline" onClick={handleSignOut} aria-label="Sign out of your account">
                           <LogOut className="h-4 w-4 mr-2" aria-hidden="true" />
