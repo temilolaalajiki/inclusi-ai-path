@@ -10,11 +10,12 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Switch } from '@/components/ui/switch';
 import { Separator } from '@/components/ui/separator';
-import { Plus, Loader2, FileQuestion, ArrowLeft } from 'lucide-react';
+import { Plus, Loader2, FileQuestion, ArrowLeft, Sparkles } from 'lucide-react';
 import { useQuizzes, Quiz, QuizQuestion } from '@/hooks/useQuizzes';
 import { useLearningMaterials } from '@/hooks/useLearningMaterials';
 import { QuizQuestionEditor } from './QuizQuestionEditor';
-
+import { supabase } from '@/integrations/supabase/client';
+import { useToast } from '@/hooks/use-toast';
 const SUBJECTS = ['Mathematics', 'English', 'Science', 'Social Studies', 'Civic Education', 'Computer Science', 'Physics', 'Chemistry', 'Biology', 'Economics', 'Government', 'Literature'];
 const GRADES = ['JSS 1', 'JSS 2', 'JSS 3', 'SSS 1', 'SSS 2', 'SSS 3'];
 
@@ -41,8 +42,68 @@ interface QuizBuilderProps {
 export const QuizBuilder = ({ teacherId, quiz, onSuccess, onCancel }: QuizBuilderProps) => {
   const [questions, setQuestions] = useState<Partial<QuizQuestion>[]>([]);
   const [isLoadingQuiz, setIsLoadingQuiz] = useState(false);
+  const [isGenerating, setIsGenerating] = useState(false);
+  const { toast } = useToast();
   const { materials } = useLearningMaterials(teacherId);
   const { createQuiz, updateQuiz, getQuizWithQuestions, createQuestion, updateQuestion, deleteQuestion } = useQuizzes(teacherId);
+
+  const handleGenerateWithAI = async () => {
+    const subject = form.getValues('subject');
+    const gradeLevel = form.getValues('grade_level');
+    const materialId = form.getValues('material_id');
+
+    if (!subject || !gradeLevel) {
+      toast({
+        title: 'Missing information',
+        description: 'Please select a subject and grade level first',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    setIsGenerating(true);
+    try {
+      const selectedMaterial = materialId ? materials.find(m => m.id === materialId) : null;
+      
+      const { data, error } = await supabase.functions.invoke('generate-quiz-questions', {
+        body: {
+          materialContent: selectedMaterial?.content_text || selectedMaterial?.description,
+          materialTitle: selectedMaterial?.title || `${subject} Quiz`,
+          subject,
+          gradeLevel,
+          questionCount: 5,
+        },
+      });
+
+      if (error) throw error;
+
+      if (data?.questions && Array.isArray(data.questions)) {
+        const newQuestions: Partial<QuizQuestion>[] = data.questions.map((q: any, index: number) => ({
+          question_text: q.question_text,
+          question_type: q.question_type,
+          options: q.options,
+          correct_answer: q.correct_answer,
+          points: q.points || 1,
+          order_index: questions.length + index,
+        }));
+
+        setQuestions([...questions, ...newQuestions]);
+        toast({
+          title: 'Questions generated',
+          description: `Added ${newQuestions.length} AI-generated questions`,
+        });
+      }
+    } catch (error) {
+      console.error('Error generating questions:', error);
+      toast({
+        title: 'Generation failed',
+        description: error instanceof Error ? error.message : 'Failed to generate questions',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsGenerating(false);
+    }
+  };
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
@@ -372,17 +433,32 @@ export const QuizBuilder = ({ teacherId, quiz, onSuccess, onCancel }: QuizBuilde
 
               {/* Questions Section */}
               <div className="space-y-4">
-                <div className="flex items-center justify-between">
+                <div className="flex items-center justify-between flex-wrap gap-2">
                   <div>
                     <h3 className="text-lg font-semibold">Questions</h3>
                     <p className="text-sm text-muted-foreground">
                       {questions.length} question{questions.length !== 1 ? 's' : ''} • {totalPoints} total points
                     </p>
                   </div>
-                  <Button type="button" variant="outline" onClick={handleAddQuestion}>
-                    <Plus className="h-4 w-4 mr-2" />
-                    Add Question
-                  </Button>
+                  <div className="flex gap-2">
+                    <Button 
+                      type="button" 
+                      variant="secondary" 
+                      onClick={handleGenerateWithAI}
+                      disabled={isGenerating}
+                    >
+                      {isGenerating ? (
+                        <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                      ) : (
+                        <Sparkles className="h-4 w-4 mr-2" />
+                      )}
+                      Generate with AI
+                    </Button>
+                    <Button type="button" variant="outline" onClick={handleAddQuestion}>
+                      <Plus className="h-4 w-4 mr-2" />
+                      Add Question
+                    </Button>
+                  </div>
                 </div>
 
                 {questions.length === 0 ? (
@@ -390,10 +466,25 @@ export const QuizBuilder = ({ teacherId, quiz, onSuccess, onCancel }: QuizBuilde
                     <CardContent className="flex flex-col items-center justify-center py-12">
                       <FileQuestion className="h-12 w-12 text-muted-foreground mb-4" />
                       <p className="text-muted-foreground mb-4">No questions added yet</p>
-                      <Button type="button" variant="outline" onClick={handleAddQuestion}>
-                        <Plus className="h-4 w-4 mr-2" />
-                        Add Your First Question
-                      </Button>
+                      <div className="flex gap-2">
+                        <Button 
+                          type="button" 
+                          variant="secondary" 
+                          onClick={handleGenerateWithAI}
+                          disabled={isGenerating}
+                        >
+                          {isGenerating ? (
+                            <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                          ) : (
+                            <Sparkles className="h-4 w-4 mr-2" />
+                          )}
+                          Generate with AI
+                        </Button>
+                        <Button type="button" variant="outline" onClick={handleAddQuestion}>
+                          <Plus className="h-4 w-4 mr-2" />
+                          Add Manually
+                        </Button>
+                      </div>
                     </CardContent>
                   </Card>
                 ) : (
