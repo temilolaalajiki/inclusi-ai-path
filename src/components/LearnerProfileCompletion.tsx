@@ -74,8 +74,19 @@ export const LearnerProfileCompletion = ({ userId, onComplete }: LearnerProfileC
   const onSubmit = async (values: ProfileFormValues) => {
     setIsSubmitting(true);
     try {
+      // Get learner's profile for name
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('first_name, last_name')
+        .eq('id', userId)
+        .single();
+
+      const learnerName = profile 
+        ? `${profile.first_name} ${profile.last_name}`.trim() 
+        : 'A new learner';
+
       // Create learner record with teacher_id = NULL (pending assignment)
-      const { error: learnerError } = await supabase
+      const { data: learnerData, error: learnerError } = await supabase
         .from('learners')
         .insert({
           user_id: userId,
@@ -83,7 +94,9 @@ export const LearnerProfileCompletion = ({ userId, onComplete }: LearnerProfileC
           demographics: { age: values.age, grade: values.grade },
           learning_challenges: values.learningChallenges,
           accessibility_needs: values.accessibilityNeeds,
-        });
+        })
+        .select('id')
+        .single();
 
       if (learnerError) throw learnerError;
 
@@ -96,6 +109,25 @@ export const LearnerProfileCompletion = ({ userId, onComplete }: LearnerProfileC
           ai_processing_consent: values.dataConsent,
           consent_date: new Date().toISOString(),
         });
+
+      // Notify all admins about new learner needing teacher assignment
+      const { data: admins } = await supabase
+        .from('user_roles')
+        .select('user_id')
+        .eq('role', 'admin');
+
+      if (admins && admins.length > 0) {
+        const adminNotifications = admins.map(admin => ({
+          user_id: admin.user_id,
+          title: 'New Learner Pending Assignment',
+          message: `${learnerName} (${values.grade}) has registered and needs a teacher assigned.`,
+          type: 'info' as const,
+          category: 'assignment' as const,
+          related_learner_id: learnerData?.id
+        }));
+
+        await supabase.from('notifications').insert(adminNotifications);
+      }
 
       toast({
         title: "Profile Created!",
