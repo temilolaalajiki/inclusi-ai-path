@@ -76,15 +76,7 @@ export default function Auth() {
 
       if (roleError) throw roleError;
 
-      // Create learner record for all self-registrations
-      const { error: learnerError } = await supabase
-        .from('learners')
-        .insert({
-          user_id: authData.user.id
-        });
-
-      if (learnerError) throw learnerError;
-
+      // Learner record will be created when they complete their profile form
       // All self-registrations redirect to learner dashboard
       const redirectPath = '/learner';
 
