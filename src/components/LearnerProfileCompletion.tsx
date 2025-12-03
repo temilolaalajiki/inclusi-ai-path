@@ -4,6 +4,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -39,6 +40,15 @@ const accessibilityOptions = [
   "Assistive Technology",
   "Extra Time",
   "Quiet Environment",
+];
+
+const gradeOptions = [
+  "JSS 1",
+  "JSS 2",
+  "JSS 3",
+  "SSS 1",
+  "SSS 2",
+  "SSS 3",
 ];
 
 interface LearnerProfileCompletionProps {
@@ -141,9 +151,20 @@ export const LearnerProfileCompletion = ({ userId, onComplete }: LearnerProfileC
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Grade/Class</FormLabel>
-                    <FormControl>
-                      <Input placeholder="JSS 1" {...field} />
-                    </FormControl>
+                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select your class" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        {gradeOptions.map((grade) => (
+                          <SelectItem key={grade} value={grade}>
+                            {grade}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                     <FormMessage />
                   </FormItem>
                 )}
