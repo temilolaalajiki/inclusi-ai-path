@@ -6,6 +6,39 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
+// Helper function to verify admin role
+async function verifyAdminRole(supabaseClient: any, authHeader: string | null): Promise<{ isAdmin: boolean; userId: string | null; error: string | null }> {
+  if (!authHeader) {
+    return { isAdmin: false, userId: null, error: 'No authorization header provided' };
+  }
+
+  const token = authHeader.replace('Bearer ', '');
+  
+  const { data: { user }, error: userError } = await supabaseClient.auth.getUser(token);
+  
+  if (userError || !user) {
+    return { isAdmin: false, userId: null, error: 'Invalid authentication token' };
+  }
+
+  // Check if user has admin role
+  const { data: roleData, error: roleError } = await supabaseClient
+    .from('user_roles')
+    .select('role')
+    .eq('user_id', user.id)
+    .eq('role', 'admin')
+    .maybeSingle();
+
+  if (roleError) {
+    return { isAdmin: false, userId: user.id, error: 'Error checking user role' };
+  }
+
+  if (!roleData) {
+    return { isAdmin: false, userId: user.id, error: 'User does not have admin privileges' };
+  }
+
+  return { isAdmin: true, userId: user.id, error: null };
+}
+
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
@@ -17,7 +50,19 @@ serve(async (req) => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     );
 
-    console.log('Starting comprehensive test data seeding...');
+    // SECURITY: Verify the requester is an authenticated admin
+    const authHeader = req.headers.get('Authorization');
+    const { isAdmin, error: authError } = await verifyAdminRole(supabaseClient, authHeader);
+
+    if (!isAdmin) {
+      console.error('Unauthorized seed-test-data attempt:', authError);
+      return new Response(
+        JSON.stringify({ error: authError || 'Unauthorized' }),
+        { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    console.log('Admin verified, starting comprehensive test data seeding...');
 
     // Get first teacher for assignment
     const { data: teachers } = await supabaseClient

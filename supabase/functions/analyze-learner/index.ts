@@ -71,6 +71,72 @@ function generateFallbackRecommendations(learnerData: any): any[] {
   return recommendations;
 }
 
+// Helper function to verify user has permission to analyze learner
+async function verifyLearnerAccess(supabase: any, authHeader: string | null, learnerId: string): Promise<{ hasAccess: boolean; error: string | null }> {
+  // For system/cron calls without auth header, allow access (these are internal calls)
+  if (!authHeader) {
+    console.log('No auth header - allowing internal system call');
+    return { hasAccess: true, error: null };
+  }
+
+  const token = authHeader.replace('Bearer ', '');
+  const { data: { user }, error: userError } = await supabase.auth.getUser(token);
+  
+  if (userError || !user) {
+    return { hasAccess: false, error: 'Invalid authentication token' };
+  }
+
+  // Check if user is admin
+  const { data: adminRole } = await supabase
+    .from('user_roles')
+    .select('role')
+    .eq('user_id', user.id)
+    .eq('role', 'admin')
+    .maybeSingle();
+
+  if (adminRole) {
+    return { hasAccess: true, error: null };
+  }
+
+  // Check if user is the learner
+  const { data: learnerSelf } = await supabase
+    .from('learners')
+    .select('id')
+    .eq('id', learnerId)
+    .eq('user_id', user.id)
+    .maybeSingle();
+
+  if (learnerSelf) {
+    return { hasAccess: true, error: null };
+  }
+
+  // Check if user is the teacher assigned to this learner
+  const { data: teacherAccess } = await supabase
+    .from('learners')
+    .select('id')
+    .eq('id', learnerId)
+    .eq('teacher_id', user.id)
+    .maybeSingle();
+
+  if (teacherAccess) {
+    return { hasAccess: true, error: null };
+  }
+
+  // Check if user is any teacher (teachers can analyze any learner for now)
+  const { data: teacherRole } = await supabase
+    .from('user_roles')
+    .select('role')
+    .eq('user_id', user.id)
+    .eq('role', 'teacher')
+    .maybeSingle();
+
+  if (teacherRole) {
+    return { hasAccess: true, error: null };
+  }
+
+  return { hasAccess: false, error: 'You do not have permission to analyze this learner' };
+}
+
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
@@ -86,6 +152,18 @@ serve(async (req) => {
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
     const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const supabase = createClient(supabaseUrl, supabaseKey);
+
+    // SECURITY: Verify the requester has permission to analyze this learner
+    const authHeader = req.headers.get('Authorization');
+    const { hasAccess, error: accessError } = await verifyLearnerAccess(supabase, authHeader, learnerId);
+
+    if (!hasAccess) {
+      console.error('Unauthorized analyze-learner attempt:', accessError);
+      return new Response(
+        JSON.stringify({ error: accessError || 'Unauthorized', success: false }),
+        { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
 
     // Fetch learner data
     const { data: learnerData, error: learnerError } = await supabase
