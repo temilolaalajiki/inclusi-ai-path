@@ -219,11 +219,10 @@ export const EnhancedAccessibilityToolbar = () => {
               )}
               
               <Button
-                variant="outline"
+                variant={isSpeaking ? "destructive" : "outline"}
                 size="sm"
                 className="w-full justify-start"
                 onClick={handleTextToSpeech}
-                disabled={isSpeaking}
                 aria-label={isSpeaking ? "Stop reading page" : "Read page aloud"}
               >
                 <Volume2 className="h-4 w-4 mr-2" aria-hidden="true" />
