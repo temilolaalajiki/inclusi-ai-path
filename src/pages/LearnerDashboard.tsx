@@ -20,8 +20,8 @@ import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 
 const LearnerDashboard = () => {
-  const { user } = useAuth();
-  const { 
+  const { user, userProfile } = useAuth();
+  const {
     learner, 
     performance, 
     recommendations, 
@@ -141,7 +141,7 @@ const LearnerDashboard = () => {
         <div className="mb-8">
           <div className="flex items-center justify-between mb-2">
             <h1 className="text-4xl font-bold bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
-              Welcome Back, Student!
+              Welcome back, {userProfile?.firstName || 'Learner'}!
             </h1>
             <Badge variant="outline" className="text-lg px-4 py-2">
               <Award className="h-4 w-4 mr-2" />
