@@ -5,32 +5,48 @@ import { Slider } from "@/components/ui/slider";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Volume2, Type, Contrast, Ear, Accessibility } from "lucide-react";
-import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useAccessibilityLogger } from "@/hooks/useAccessibilityLogger";
 
-const VOICES = [
-  { id: 'Aria', name: 'Aria (Female)' },
-  { id: 'Roger', name: 'Roger (Male)' },
-  { id: 'Sarah', name: 'Sarah (Female)' },
-  { id: 'Laura', name: 'Laura (Female)' },
-  { id: 'Charlie', name: 'Charlie (Male)' },
-  { id: 'George', name: 'George (Male)' },
-  { id: 'Liam', name: 'Liam (Male)' },
-];
+// Use browser's native speech synthesis voices
+const getAvailableVoices = () => {
+  const voices = window.speechSynthesis.getVoices();
+  if (voices.length === 0) return [];
+  
+  // Filter to get good quality voices, preferring English
+  return voices.filter(v => v.lang.startsWith('en')).slice(0, 7);
+};
 
 export const EnhancedAccessibilityToolbar = () => {
   const [fontSize, setFontSize] = useState([100]);
   const [isOpen, setIsOpen] = useState(false);
-  const [selectedVoice, setSelectedVoice] = useState('Aria');
+  const [selectedVoiceIndex, setSelectedVoiceIndex] = useState(0);
   const [isSpeaking, setIsSpeaking] = useState(false);
+  const [availableVoices, setAvailableVoices] = useState<SpeechSynthesisVoice[]>([]);
   const { toast } = useToast();
   const { logAccessibilityFeature } = useAccessibilityLogger();
+
+  // Load voices when available
+  useEffect(() => {
+    const loadVoices = () => {
+      const voices = getAvailableVoices();
+      if (voices.length > 0) {
+        setAvailableVoices(voices);
+      }
+    };
+
+    loadVoices();
+    window.speechSynthesis.onvoiceschanged = loadVoices;
+
+    return () => {
+      window.speechSynthesis.onvoiceschanged = null;
+    };
+  }, []);
 
   // Load saved preferences
   useEffect(() => {
     const savedFontSize = localStorage.getItem('accessibility_font_size');
-    const savedVoice = localStorage.getItem('accessibility_voice');
+    const savedVoiceIndex = localStorage.getItem('accessibility_voice_index');
     const savedContrast = localStorage.getItem('accessibility_high_contrast');
 
     if (savedFontSize) {
@@ -38,8 +54,8 @@ export const EnhancedAccessibilityToolbar = () => {
       setFontSize([size]);
       document.documentElement.style.fontSize = `${size}%`;
     }
-    if (savedVoice) {
-      setSelectedVoice(savedVoice);
+    if (savedVoiceIndex) {
+      setSelectedVoiceIndex(parseInt(savedVoiceIndex));
     }
     if (savedContrast === 'true') {
       document.documentElement.classList.add('high-contrast');
@@ -53,67 +69,64 @@ export const EnhancedAccessibilityToolbar = () => {
     logAccessibilityFeature('font_size', value[0].toString());
   };
 
-  const handleTextToSpeech = async () => {
+  const speakText = (text: string) => {
+    if (!window.speechSynthesis) {
+      toast({
+        title: "Not supported",
+        description: "Text-to-speech is not supported in this browser.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    window.speechSynthesis.cancel();
+    
+    const utterance = new SpeechSynthesisUtterance(text);
+    
+    if (availableVoices.length > 0 && availableVoices[selectedVoiceIndex]) {
+      utterance.voice = availableVoices[selectedVoiceIndex];
+    }
+    
+    utterance.rate = 1;
+    utterance.pitch = 1;
+    
+    utterance.onend = () => {
+      setIsSpeaking(false);
+    };
+    
+    utterance.onerror = () => {
+      setIsSpeaking(false);
+      toast({
+        title: "Error",
+        description: "Failed to read the text.",
+        variant: "destructive",
+      });
+    };
+
+    window.speechSynthesis.speak(utterance);
+    setIsSpeaking(true);
+  };
+
+  const handleTextToSpeech = () => {
     if (isSpeaking) {
       window.speechSynthesis.cancel();
       setIsSpeaking(false);
       return;
     }
 
-    try {
-      setIsSpeaking(true);
-      const mainContent = document.querySelector('main')?.innerText || document.body.innerText;
-      const textToRead = mainContent.slice(0, 1000); // Limit to 1000 chars for performance
+    const mainContent = document.querySelector('main')?.innerText || document.body.innerText;
+    const textToRead = mainContent.slice(0, 3000); // Limit chars
 
-      toast({
-        title: "Generating speech...",
-        description: "Please wait while we process your request.",
-      });
+    toast({
+      title: "Reading page",
+      description: "Click the button again to stop.",
+    });
 
-      const { data, error } = await supabase.functions.invoke('text-to-speech', {
-        body: { text: textToRead, voice: selectedVoice }
-      });
-
-      if (error) throw error;
-
-      // Play the audio
-      const audioBlob = await fetch(`data:audio/mp3;base64,${data.audioContent}`).then(r => r.blob());
-      const audioUrl = URL.createObjectURL(audioBlob);
-      const audio = new Audio(audioUrl);
-      
-      audio.onended = () => {
-        setIsSpeaking(false);
-        URL.revokeObjectURL(audioUrl);
-      };
-      
-      audio.onerror = () => {
-        setIsSpeaking(false);
-        toast({
-          title: "Playback error",
-          description: "Failed to play the audio.",
-          variant: "destructive",
-        });
-      };
-
-      await audio.play();
-      logAccessibilityFeature('tts', selectedVoice);
-
-      toast({
-        title: "Reading page",
-        description: "Click the button again to stop.",
-      });
-    } catch (error) {
-      console.error('TTS error:', error);
-      setIsSpeaking(false);
-      toast({
-        title: "Error",
-        description: "Failed to generate speech. Please try again.",
-        variant: "destructive",
-      });
-    }
+    speakText(textToRead);
+    logAccessibilityFeature('tts', 'native_speech');
   };
 
-  const handleReadSelection = async () => {
+  const handleReadSelection = () => {
     const selection = window.getSelection()?.toString();
     if (!selection) {
       toast({
@@ -123,39 +136,14 @@ export const EnhancedAccessibilityToolbar = () => {
       return;
     }
 
-    try {
-      setIsSpeaking(true);
-      toast({
-        title: "Generating speech...",
-        description: "Please wait while we process your selection.",
-      });
-
-      const { data, error } = await supabase.functions.invoke('text-to-speech', {
-        body: { text: selection, voice: selectedVoice }
-      });
-
-      if (error) throw error;
-
-      const audioBlob = await fetch(`data:audio/mp3;base64,${data.audioContent}`).then(r => r.blob());
-      const audioUrl = URL.createObjectURL(audioBlob);
-      const audio = new Audio(audioUrl);
-      
-      audio.onended = () => {
-        setIsSpeaking(false);
-        URL.revokeObjectURL(audioUrl);
-      };
-
-      await audio.play();
-      logAccessibilityFeature('read_selection', selectedVoice);
-    } catch (error) {
-      console.error('Read selection error:', error);
+    if (isSpeaking) {
+      window.speechSynthesis.cancel();
       setIsSpeaking(false);
-      toast({
-        title: "Error",
-        description: "Failed to read selection.",
-        variant: "destructive",
-      });
+      return;
     }
+
+    speakText(selection);
+    logAccessibilityFeature('read_selection', 'native_speech');
   };
 
   const toggleHighContrast = () => {
@@ -203,29 +191,32 @@ export const EnhancedAccessibilityToolbar = () => {
                 </span>
               </div>
 
-              <div>
-                <Label htmlFor="voice-select" className="text-sm font-medium mb-2 block">
-                  Voice Selection
-                </Label>
-                <Select 
-                  value={selectedVoice} 
-                  onValueChange={(value) => {
-                    setSelectedVoice(value);
-                    localStorage.setItem('accessibility_voice', value);
-                  }}
-                >
-                  <SelectTrigger id="voice-select" aria-label="Select voice for text-to-speech">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {VOICES.map((voice) => (
-                      <SelectItem key={voice.id} value={voice.id}>
-                        {voice.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
+              {availableVoices.length > 0 && (
+                <div>
+                  <Label htmlFor="voice-select" className="text-sm font-medium mb-2 block">
+                    Voice Selection
+                  </Label>
+                  <Select 
+                    value={selectedVoiceIndex.toString()} 
+                    onValueChange={(value) => {
+                      const index = parseInt(value);
+                      setSelectedVoiceIndex(index);
+                      localStorage.setItem('accessibility_voice_index', value);
+                    }}
+                  >
+                    <SelectTrigger id="voice-select" aria-label="Select voice for text-to-speech" className="bg-background">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent className="bg-background z-50">
+                      {availableVoices.map((voice, index) => (
+                        <SelectItem key={index} value={index.toString()}>
+                          {voice.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
               
               <Button
                 variant="outline"
