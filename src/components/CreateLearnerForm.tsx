@@ -43,6 +43,15 @@ const accessibilityOptions = [
   "Quiet Environment",
 ];
 
+const gradeOptions = [
+  "JSS 1",
+  "JSS 2",
+  "JSS 3",
+  "SSS 1",
+  "SSS 2",
+  "SSS 3",
+];
+
 interface CreateLearnerFormProps {
   onSuccess: () => void;
   onBulkUploadClick: () => void;
@@ -207,9 +216,20 @@ export const CreateLearnerForm = ({ onSuccess, onBulkUploadClick }: CreateLearne
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Grade/Class</FormLabel>
-                    <FormControl>
-                      <Input placeholder="7th Grade" {...field} />
-                    </FormControl>
+                    <Select onValueChange={field.onChange} value={field.value}>
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select class" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        {gradeOptions.map((grade) => (
+                          <SelectItem key={grade} value={grade}>
+                            {grade}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                     <FormMessage />
                   </FormItem>
                 )}
