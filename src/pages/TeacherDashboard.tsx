@@ -23,8 +23,15 @@ const TeacherDashboard = () => {
   const [selectedStudent, setSelectedStudent] = useState<LearnerWithProgress | null>(null);
   const [studentDialogOpen, setStudentDialogOpen] = useState(false);
   const [attendanceRecords, setAttendanceRecords] = useState<any[]>([]);
-  const { user } = useAuth();
+  const { user, userProfile } = useAuth();
   const { learners, loading, updateRecommendationStatus, analyzeStudent, suggestInterventions, refetch } = useTeacherData(user?.id);
+
+  const getDisplayName = () => {
+    if (userProfile?.firstName) {
+      return `${userProfile.firstName}${userProfile.lastName ? ' ' + userProfile.lastName : ''}`;
+    }
+    return user?.email?.split('@')[0] || 'Teacher';
+  };
 
   // Set up real-time updates for learners
   useEffect(() => {
@@ -104,7 +111,7 @@ const TeacherDashboard = () => {
       <div className="container mx-auto px-4 py-4 md:py-8">
         <div className="mb-6 md:mb-8">
           <h1 className="text-2xl md:text-4xl font-bold bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent mb-2">
-            Teacher Dashboard
+            Welcome, {getDisplayName()}
           </h1>
           <p className="text-muted-foreground text-sm md:text-lg">Manage your students and access AI-powered insights</p>
         </div>
