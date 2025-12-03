@@ -49,4 +49,4 @@ verify_jwt = false
 verify_jwt = false
 
 [functions.seed-test-data]
-verify_jwt = false
+verify_jwt = true
