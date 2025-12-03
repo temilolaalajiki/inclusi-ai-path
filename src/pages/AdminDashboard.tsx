@@ -11,8 +11,9 @@ import { TeacherListTable } from "@/components/TeacherListTable";
 import { NigerianEducationOverview } from "@/components/NigerianEducationOverview";
 import { BiasMonitoringDashboard } from "@/components/BiasMonitoringDashboard";
 import { TeacherAnalyticsDashboard } from "@/components/TeacherAnalyticsDashboard";
+import { PendingLearnersTable } from "@/components/PendingLearnersTable";
 import { BarChart, Bar, LineChart, Line, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
-import { Users, BookOpen, TrendingUp, Download, AlertTriangle, CheckCircle, FileDown, FileSpreadsheet, Calendar, Brain, UserCheck, Eye, BarChart3, ShieldAlert, Scale, Settings } from "lucide-react";
+import { Users, BookOpen, TrendingUp, Download, AlertTriangle, CheckCircle, FileDown, FileSpreadsheet, Calendar, Brain, UserCheck, Eye, BarChart3, ShieldAlert, Scale, Settings, UserPlus } from "lucide-react";
 import { MobileTabs, MobileTabsList, MobileTabsContent } from "@/components/ui/mobile-tabs";
 import { useAdminData } from "@/hooks/useAdminData";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -617,6 +618,7 @@ const AdminDashboard = () => {
             onValueChange={setActiveTab}
             tabs={[
               { value: "trends", label: "Trends", icon: <TrendingUp className="h-4 w-4" /> },
+              { value: "pending", label: "Pending", icon: <UserPlus className="h-4 w-4" /> },
               { value: "barriers", label: "Barriers", icon: <ShieldAlert className="h-4 w-4" /> },
               { value: "interventions", label: "Interventions", icon: <BarChart3 className="h-4 w-4" /> },
               { value: "analytics", label: "Teachers", icon: <UserCheck className="h-4 w-4" /> },
@@ -697,6 +699,28 @@ const AdminDashboard = () => {
                 </CardContent>
               </Card>
             </div>
+          </MobileTabsContent>
+
+          <MobileTabsContent value="pending" className="space-y-6">
+            <Card className="shadow-lg">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <UserPlus className="h-5 w-5 text-primary" />
+                  Pending Learner Assignments
+                </CardTitle>
+                <CardDescription>
+                  Learners who have completed their profile but haven't been assigned to a teacher yet
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <PendingLearnersTable 
+                  onAssignmentComplete={() => {
+                    fetchLearners();
+                    fetchTeachers();
+                  }} 
+                />
+              </CardContent>
+            </Card>
           </MobileTabsContent>
 
           <MobileTabsContent value="barriers" className="space-y-6">
