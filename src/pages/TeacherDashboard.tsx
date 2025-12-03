@@ -5,7 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { Navbar } from "@/components/Navbar";
 import { EnhancedAccessibilityToolbar } from "@/components/EnhancedAccessibilityToolbar";
 import { Progress } from "@/components/ui/progress";
-import { Users, Brain, TrendingUp, AlertCircle, CheckCircle2, Calendar, LayoutDashboard, GraduationCap, Lightbulb } from "lucide-react";
+import { Users, Brain, TrendingUp, AlertCircle, CheckCircle2, Calendar, LayoutDashboard, GraduationCap, Lightbulb, BookOpen } from "lucide-react";
 import { MobileTabs, MobileTabsList, MobileTabsContent } from "@/components/ui/mobile-tabs";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useAuth } from "@/hooks/useAuth";
@@ -17,6 +17,7 @@ import { StudentDetailsDialog } from "@/components/StudentDetailsDialog";
 import { LoadingScreen } from "@/components/LoadingScreen";
 import { AttendanceTracker } from "@/components/AttendanceTracker";
 import { AttendanceAnalytics } from "@/components/AttendanceAnalytics";
+import { TeacherContentManager } from "@/components/content/TeacherContentManager";
 
 const TeacherDashboard = () => {
   const [activeTab, setActiveTab] = useState("overview");
@@ -174,6 +175,7 @@ const TeacherDashboard = () => {
               { value: "overview", label: "Overview", icon: <LayoutDashboard className="h-4 w-4" /> },
               { value: "students", label: "Students", icon: <GraduationCap className="h-4 w-4" /> },
               { value: "attendance", label: "Attendance", icon: <Calendar className="h-4 w-4" /> },
+              { value: "content", label: "Content", icon: <BookOpen className="h-4 w-4" /> },
               { value: "insights", label: "AI Insights", icon: <Brain className="h-4 w-4" /> },
               { value: "training", label: "Training", icon: <Lightbulb className="h-4 w-4" /> },
             ]}
@@ -279,6 +281,10 @@ const TeacherDashboard = () => {
               learners={learners}
               attendanceRecords={attendanceRecords}
             />
+          </MobileTabsContent>
+
+          <MobileTabsContent value="content" className="space-y-6">
+            {user?.id && <TeacherContentManager teacherId={user.id} />}
           </MobileTabsContent>
         </MobileTabs>
       </div>
