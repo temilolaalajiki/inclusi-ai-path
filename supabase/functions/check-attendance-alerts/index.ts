@@ -117,6 +117,31 @@ serve(async (req) => {
       }
 
       console.log(`Created ${interventions.length} attendance intervention(s)`);
+
+      // Send notifications to teachers
+      const notifications = [];
+      for (const intervention of interventions) {
+        if (intervention.teacher_id) {
+          notifications.push({
+            user_id: intervention.teacher_id,
+            title: intervention.title,
+            message: `A learner in your class has low attendance requiring attention.`,
+            type: 'warning',
+            category: 'attendance',
+            related_learner_id: intervention.learner_id
+          });
+        }
+      }
+
+      if (notifications.length > 0) {
+        const { error: notifError } = await supabase
+          .from('notifications')
+          .insert(notifications);
+        
+        if (notifError) {
+          console.error('Error sending notifications:', notifError);
+        }
+      }
     }
 
     return new Response(

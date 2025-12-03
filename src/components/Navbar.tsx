@@ -10,6 +10,7 @@ import {
 } from "@/components/ui/sheet";
 import { useAuth } from "@/hooks/useAuth";
 import { useEffect } from "react";
+import NotificationCenter from "./NotificationCenter";
 
 export const Navbar = () => {
   const { user, userRole, userProfile, loading, signOut } = useAuth();
@@ -59,6 +60,7 @@ export const Navbar = () => {
               <>
                 {user ? (
                   <div className="flex items-center gap-3">
+                    <NotificationCenter />
                     <Avatar className="h-8 w-8">
                       <AvatarFallback className="bg-primary text-primary-foreground text-xs">
                         {getInitials()}
@@ -107,6 +109,7 @@ export const Navbar = () => {
                               {userRole}
                             </Badge>
                           )}
+                          <NotificationCenter />
                         </div>
                         <Button className="w-full" variant="outline" onClick={handleSignOut} aria-label="Sign out of your account">
                           <LogOut className="h-4 w-4 mr-2" aria-hidden="true" />

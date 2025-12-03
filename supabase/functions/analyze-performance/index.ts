@@ -85,8 +85,23 @@ serve(async (req) => {
               learner_id: learner.id,
               learner_name: learnerName,
               avg_score: avgScore,
-              subjects: performance.map(p => p.subject)
+              subjects: performance.map(p => p.subject),
+              teacher_id: learner.teacher_id
             });
+
+            // Send notification to teacher
+            if (learner.teacher_id) {
+              await supabaseClient
+                .from('notifications')
+                .insert({
+                  user_id: learner.teacher_id,
+                  title: `Low Performance Alert: ${learnerName}`,
+                  message: `${learnerName} has an average score of ${avgScore.toFixed(1)}% and requires attention.`,
+                  type: avgScore < 30 ? 'alert' : 'warning',
+                  category: 'performance',
+                  related_learner_id: learner.id
+                });
+            }
           }
         }
       }

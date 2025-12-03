@@ -86,6 +86,31 @@ export const AssignTeacherDialog = ({ learner, open, onOpenChange, onSuccess }: 
 
       if (error) throw error;
 
+      const selectedTeacher = teachers.find(t => t.id === selectedTeacherId);
+      const learnerFullName = learner.profiles 
+        ? `${learner.profiles.first_name} ${learner.profiles.last_name}`.trim() 
+        : 'A new learner';
+
+      // Send notification to teacher about new assignment
+      await supabase.from('notifications').insert({
+        user_id: selectedTeacherId,
+        title: 'New Learner Assigned',
+        message: `${learnerFullName} has been assigned to your class.`,
+        type: 'info',
+        category: 'assignment',
+        related_learner_id: learner.id
+      });
+
+      // Send notification to learner about teacher assignment
+      await supabase.from('notifications').insert({
+        user_id: learner.user_id,
+        title: 'Teacher Assigned',
+        message: `You have been assigned to ${selectedTeacher?.name || 'a teacher'}. You now have full access to your dashboard.`,
+        type: 'success',
+        category: 'assignment',
+        related_learner_id: learner.id
+      });
+
       toast({
         title: "Teacher Assigned!",
         description: `${learner.profiles?.first_name || 'Learner'} has been assigned to their teacher.`,
