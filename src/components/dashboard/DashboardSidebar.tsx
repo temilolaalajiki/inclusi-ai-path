@@ -1,6 +1,6 @@
 import * as React from "react";
-import { useNavigate, useLocation } from "react-router-dom";
-import { LogOut, ChevronDown } from "lucide-react";
+import { useNavigate } from "react-router-dom";
+import { LogOut, ChevronDown, ChevronLeft, ChevronRight } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import {
@@ -22,6 +22,8 @@ import {
 } from "@/components/ui/sidebar";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import { Button } from "@/components/ui/button";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 
 export interface SidebarMenuItem {
   title: string;
@@ -47,7 +49,7 @@ export function DashboardSidebar({
 }: DashboardSidebarProps) {
   const navigate = useNavigate();
   const { toast } = useToast();
-  const { state } = useSidebar();
+  const { state, toggleSidebar } = useSidebar();
   const isCollapsed = state === "collapsed";
 
   const handleSignOut = async () => {
@@ -77,24 +79,38 @@ export function DashboardSidebar({
   };
 
   return (
-    <Sidebar collapsible="icon">
+    <Sidebar collapsible="icon" className="border-r border-sidebar-border">
       <SidebarHeader className="border-b border-sidebar-border">
-        <div className="flex items-center gap-2 px-2 py-3">
-          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-sidebar-primary text-sidebar-primary-foreground">
-            <span className="text-sm font-bold">IE</span>
-          </div>
-          {!isCollapsed && (
-            <div className="flex flex-col">
-              <span className="text-sm font-semibold">Inclusive Ed</span>
-              <span className="text-xs text-sidebar-foreground/70">{userRole}</span>
+        <div className="flex items-center justify-between px-2 py-3">
+          <div className="flex items-center gap-2">
+            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-sidebar-primary text-sidebar-primary-foreground">
+              <span className="text-sm font-bold">IE</span>
             </div>
-          )}
+            {!isCollapsed && (
+              <div className="flex flex-col">
+                <span className="text-sm font-semibold">Inclusive Ed</span>
+                <span className="text-xs text-sidebar-foreground/70">{userRole}</span>
+              </div>
+            )}
+          </div>
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-6 w-6"
+            onClick={toggleSidebar}
+          >
+            {isCollapsed ? (
+              <ChevronRight className="h-4 w-4" />
+            ) : (
+              <ChevronLeft className="h-4 w-4" />
+            )}
+          </Button>
         </div>
       </SidebarHeader>
 
       <SidebarContent>
         <SidebarGroup>
-          <SidebarGroupLabel>Navigation</SidebarGroupLabel>
+          {!isCollapsed && <SidebarGroupLabel>Navigation</SidebarGroupLabel>}
           <SidebarGroupContent>
             <SidebarMenu>
               {menuItems.map((item) => (
@@ -102,39 +118,73 @@ export function DashboardSidebar({
                   {item.subItems ? (
                     <Collapsible defaultOpen={item.subItems.some(sub => sub.value === activeTab)}>
                       <SidebarMenuItem>
-                        <CollapsibleTrigger asChild>
-                          <SidebarMenuButton tooltip={item.title}>
-                            {item.icon}
-                            <span>{item.title}</span>
-                            <ChevronDown className="ml-auto h-4 w-4 transition-transform group-data-[state=open]:rotate-180" />
-                          </SidebarMenuButton>
-                        </CollapsibleTrigger>
-                        <CollapsibleContent>
-                          <SidebarMenuSub>
-                            {item.subItems.map((subItem) => (
-                              <SidebarMenuSubItem key={subItem.value}>
-                                <SidebarMenuSubButton
-                                  isActive={activeTab === subItem.value}
-                                  onClick={() => onTabChange(subItem.value)}
-                                >
-                                  {subItem.title}
-                                </SidebarMenuSubButton>
-                              </SidebarMenuSubItem>
-                            ))}
-                          </SidebarMenuSub>
-                        </CollapsibleContent>
+                        {isCollapsed ? (
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <SidebarMenuButton
+                                isActive={item.subItems.some(sub => sub.value === activeTab)}
+                                onClick={() => onTabChange(item.subItems![0].value)}
+                              >
+                                {item.icon}
+                              </SidebarMenuButton>
+                            </TooltipTrigger>
+                            <TooltipContent side="right">
+                              {item.title}
+                            </TooltipContent>
+                          </Tooltip>
+                        ) : (
+                          <>
+                            <CollapsibleTrigger asChild>
+                              <SidebarMenuButton tooltip={item.title}>
+                                {item.icon}
+                                <span>{item.title}</span>
+                                <ChevronDown className="ml-auto h-4 w-4 transition-transform group-data-[state=open]:rotate-180" />
+                              </SidebarMenuButton>
+                            </CollapsibleTrigger>
+                            <CollapsibleContent>
+                              <SidebarMenuSub>
+                                {item.subItems.map((subItem) => (
+                                  <SidebarMenuSubItem key={subItem.value}>
+                                    <SidebarMenuSubButton
+                                      isActive={activeTab === subItem.value}
+                                      onClick={() => onTabChange(subItem.value)}
+                                    >
+                                      {subItem.title}
+                                    </SidebarMenuSubButton>
+                                  </SidebarMenuSubItem>
+                                ))}
+                              </SidebarMenuSub>
+                            </CollapsibleContent>
+                          </>
+                        )}
                       </SidebarMenuItem>
                     </Collapsible>
                   ) : (
                     <SidebarMenuItem>
-                      <SidebarMenuButton
-                        isActive={activeTab === item.value}
-                        onClick={() => onTabChange(item.value)}
-                        tooltip={item.title}
-                      >
-                        {item.icon}
-                        <span>{item.title}</span>
-                      </SidebarMenuButton>
+                      {isCollapsed ? (
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <SidebarMenuButton
+                              isActive={activeTab === item.value}
+                              onClick={() => onTabChange(item.value)}
+                            >
+                              {item.icon}
+                            </SidebarMenuButton>
+                          </TooltipTrigger>
+                          <TooltipContent side="right">
+                            {item.title}
+                          </TooltipContent>
+                        </Tooltip>
+                      ) : (
+                        <SidebarMenuButton
+                          isActive={activeTab === item.value}
+                          onClick={() => onTabChange(item.value)}
+                          tooltip={item.title}
+                        >
+                          {item.icon}
+                          <span>{item.title}</span>
+                        </SidebarMenuButton>
+                      )}
                     </SidebarMenuItem>
                   )}
                 </React.Fragment>
@@ -147,10 +197,21 @@ export function DashboardSidebar({
       <SidebarFooter className="border-t border-sidebar-border">
         <SidebarMenu>
           <SidebarMenuItem>
-            <SidebarMenuButton onClick={handleSignOut} tooltip="Sign Out">
-              <LogOut className="h-4 w-4" />
-              <span>Sign Out</span>
-            </SidebarMenuButton>
+            {isCollapsed ? (
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <SidebarMenuButton onClick={handleSignOut}>
+                    <LogOut className="h-4 w-4" />
+                  </SidebarMenuButton>
+                </TooltipTrigger>
+                <TooltipContent side="right">Sign Out</TooltipContent>
+              </Tooltip>
+            ) : (
+              <SidebarMenuButton onClick={handleSignOut} tooltip="Sign Out">
+                <LogOut className="h-4 w-4" />
+                <span>Sign Out</span>
+              </SidebarMenuButton>
+            )}
           </SidebarMenuItem>
         </SidebarMenu>
         <SidebarSeparator />
