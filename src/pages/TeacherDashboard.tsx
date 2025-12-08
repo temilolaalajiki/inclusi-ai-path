@@ -2,12 +2,8 @@ import { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Navbar } from "@/components/Navbar";
-import { EnhancedAccessibilityToolbar } from "@/components/EnhancedAccessibilityToolbar";
 import { Progress } from "@/components/ui/progress";
 import { Users, Brain, TrendingUp, AlertCircle, CheckCircle2, Calendar, LayoutDashboard, GraduationCap, Lightbulb, BookOpen } from "lucide-react";
-import { MobileTabs, MobileTabsList, MobileTabsContent } from "@/components/ui/mobile-tabs";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useAuth } from "@/hooks/useAuth";
 import { useTeacherData, LearnerWithProgress } from "@/hooks/useTeacherData";
 import { supabase } from "@/integrations/supabase/client";
@@ -18,9 +14,13 @@ import { LoadingScreen } from "@/components/LoadingScreen";
 import { AttendanceTracker } from "@/components/AttendanceTracker";
 import { AttendanceAnalytics } from "@/components/AttendanceAnalytics";
 import { TeacherContentManager } from "@/components/content/TeacherContentManager";
+import { DashboardLayout } from "@/components/dashboard/DashboardLayout";
+import { DashboardSidebar, SidebarMenuItem } from "@/components/dashboard/DashboardSidebar";
+import { DashboardHeader } from "@/components/dashboard/DashboardHeader";
+import { ChartCard } from "@/components/dashboard/ChartCard";
 
 const TeacherDashboard = () => {
-  const [activeTab, setActiveTab] = useState("overview");
+  const [activeTab, setActiveTab] = useState("dashboard");
   const [selectedStudent, setSelectedStudent] = useState<LearnerWithProgress | null>(null);
   const [studentDialogOpen, setStudentDialogOpen] = useState(false);
   const [attendanceRecords, setAttendanceRecords] = useState<any[]>([]);
@@ -34,7 +34,15 @@ const TeacherDashboard = () => {
     return user?.email?.split('@')[0] || 'Teacher';
   };
 
-  // Set up real-time updates for learners
+  const menuItems: SidebarMenuItem[] = [
+    { title: "Dashboard", icon: <LayoutDashboard className="h-4 w-4" />, value: "dashboard" },
+    { title: "My Learners", icon: <GraduationCap className="h-4 w-4" />, value: "students" },
+    { title: "Content", icon: <BookOpen className="h-4 w-4" />, value: "content" },
+    { title: "Attendance", icon: <Calendar className="h-4 w-4" />, value: "attendance" },
+    { title: "AI Insights", icon: <Brain className="h-4 w-4" />, value: "insights" },
+    { title: "Training", icon: <Lightbulb className="h-4 w-4" />, value: "training" },
+  ];
+
   useEffect(() => {
     const channel = supabase
       .channel('learners-changes')
@@ -56,7 +64,6 @@ const TeacherDashboard = () => {
     };
   }, [refetch]);
 
-  // Fetch attendance records
   const fetchAttendanceRecords = async () => {
     if (!user?.id) return;
 
@@ -86,7 +93,6 @@ const TeacherDashboard = () => {
     return <LoadingScreen />;
   }
 
-  // Calculate metrics
   const totalStudents = learners.length;
   const avgProgress = learners.length > 0
     ? Math.round(
@@ -105,159 +111,136 @@ const TeacherDashboard = () => {
   
   const onTrack = totalStudents - needSupport;
 
-  return (
-    <div className="min-h-screen bg-gradient-to-br from-background via-muted/20 to-background">
-      <Navbar />
-      
-      <div className="container mx-auto px-4 py-4 md:py-8">
-        <div className="mb-6 md:mb-8">
-          <h1 className="text-2xl md:text-4xl font-bold bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent mb-2">
-            Welcome, {getDisplayName()}
-          </h1>
-          <p className="text-muted-foreground text-sm md:text-lg">Manage your students and access AI-powered insights</p>
-        </div>
+  const headerStats = [
+    { title: "Total Students", value: totalStudents, icon: <Users className="h-5 w-5" />, variant: "default" as const },
+    { title: "Avg Progress", value: `${avgProgress}%`, icon: <TrendingUp className="h-5 w-5" />, variant: "success" as const },
+    { title: "Need Support", value: needSupport, icon: <AlertCircle className="h-5 w-5" />, variant: "warning" as const },
+    { title: "On Track", value: onTrack, icon: <CheckCircle2 className="h-5 w-5" />, variant: "success" as const },
+  ];
 
-        <div className="grid gap-4 md:gap-6 grid-cols-2 md:grid-cols-4 mb-6">
-          <Card className="shadow-lg hover:shadow-xl transition-shadow">
-            <CardHeader className="pb-2 md:pb-3 p-3 md:p-6">
-              <CardTitle className="flex items-center gap-2 text-sm md:text-base">
-                <Users className="h-4 w-4 text-primary" />
-                <span className="hidden sm:inline">Total</span> Students
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="p-3 md:p-6 pt-0">
-              <div className="text-2xl md:text-3xl font-bold text-primary">{totalStudents}</div>
-            </CardContent>
-          </Card>
+  const renderContent = () => {
+    switch (activeTab) {
+      case "dashboard":
+        return (
+          <div className="space-y-6">
+            <DashboardHeader
+              welcomeMessage={`Welcome, ${getDisplayName()}`}
+              subtitle="Manage your students and access AI-powered insights"
+              stats={headerStats}
+            />
 
-          <Card className="shadow-lg hover:shadow-xl transition-shadow">
-            <CardHeader className="pb-2 md:pb-3 p-3 md:p-6">
-              <CardTitle className="flex items-center gap-2 text-sm md:text-base">
-                <TrendingUp className="h-4 w-4 text-success" />
-                <span className="hidden sm:inline">Avg.</span> Progress
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="p-3 md:p-6 pt-0">
-              <div className="text-2xl md:text-3xl font-bold text-success">{avgProgress}%</div>
-            </CardContent>
-          </Card>
-
-          <Card className="shadow-lg hover:shadow-xl transition-shadow">
-            <CardHeader className="pb-2 md:pb-3 p-3 md:p-6">
-              <CardTitle className="flex items-center gap-2 text-sm md:text-base">
-                <AlertCircle className="h-4 w-4 text-warning" />
-                Need Support
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="p-3 md:p-6 pt-0">
-              <div className="text-2xl md:text-3xl font-bold text-warning">{needSupport}</div>
-            </CardContent>
-          </Card>
-
-          <Card className="shadow-lg hover:shadow-xl transition-shadow">
-            <CardHeader className="pb-2 md:pb-3 p-3 md:p-6">
-              <CardTitle className="flex items-center gap-2 text-sm md:text-base">
-                <CheckCircle2 className="h-4 w-4 text-success" />
-                On Track
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="p-3 md:p-6 pt-0">
-              <div className="text-2xl md:text-3xl font-bold text-success">{onTrack}</div>
-            </CardContent>
-          </Card>
-        </div>
-
-        <MobileTabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-          <MobileTabsList
-            value={activeTab}
-            onValueChange={setActiveTab}
-            tabs={[
-              { value: "overview", label: "Overview", icon: <LayoutDashboard className="h-4 w-4" /> },
-              { value: "students", label: "Students", icon: <GraduationCap className="h-4 w-4" /> },
-              { value: "attendance", label: "Attendance", icon: <Calendar className="h-4 w-4" /> },
-              { value: "content", label: "Content", icon: <BookOpen className="h-4 w-4" /> },
-              { value: "insights", label: "AI Insights", icon: <Brain className="h-4 w-4" /> },
-              { value: "training", label: "Training", icon: <Lightbulb className="h-4 w-4" /> },
-            ]}
-          />
-
-          <MobileTabsContent value="overview" className="space-y-6">
-            <div className="grid gap-6">
-              <Card className="shadow-lg">
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <Brain className="h-5 w-5 text-primary" />
-                    Recent Recommendations
-                  </CardTitle>
-                  <CardDescription>Latest recommendations for your students</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-3">
-                    {learners.flatMap(l => l.recommendations || []).slice(0, 2).length > 0 ? (
-                      learners.flatMap(l => l.recommendations || []).slice(0, 2).map((rec) => (
-                        <div key={rec.id} className="p-3 border rounded-lg">
-                          <div className="flex items-start gap-2 mb-1">
-                            <Badge 
-                              variant={rec.priority === "high" ? "destructive" : rec.priority === "medium" ? "default" : "secondary"}
-                            >
-                              {rec.priority}
-                            </Badge>
-                            <h4 className="font-semibold text-sm flex-1">{rec.title}</h4>
-                          </div>
-                          <p className="text-xs text-muted-foreground">{rec.description}</p>
+            <div className="grid gap-6 md:grid-cols-2">
+              <ChartCard title="Recent Recommendations" description="Latest recommendations for your students">
+                <div className="space-y-3">
+                  {learners.flatMap(l => l.recommendations || []).slice(0, 3).length > 0 ? (
+                    learners.flatMap(l => l.recommendations || []).slice(0, 3).map((rec) => (
+                      <div key={rec.id} className="p-3 border rounded-lg">
+                        <div className="flex items-start gap-2 mb-1">
+                          <Badge 
+                            variant={rec.priority === "high" ? "destructive" : rec.priority === "medium" ? "default" : "secondary"}
+                          >
+                            {rec.priority}
+                          </Badge>
+                          <h4 className="font-semibold text-sm flex-1">{rec.title}</h4>
                         </div>
-                      ))
-                    ) : (
-                      <p className="text-sm text-muted-foreground text-center py-4">
-                        No recommendations yet
-                      </p>
-                    )}
-                    <Button variant="outline" className="w-full" onClick={() => setActiveTab("insights")}>
-                      View All Insights
-                    </Button>
+                        <p className="text-xs text-muted-foreground">{rec.description}</p>
+                      </div>
+                    ))
+                  ) : (
+                    <p className="text-sm text-muted-foreground text-center py-4">
+                      No recommendations yet
+                    </p>
+                  )}
+                  <Button variant="outline" className="w-full" onClick={() => setActiveTab("insights")}>
+                    View All Insights
+                  </Button>
+                </div>
+              </ChartCard>
+
+              <ChartCard title="Quick Stats" description="Overview of your class">
+                <div className="space-y-4">
+                  <div className="space-y-2">
+                    <div className="flex justify-between text-sm">
+                      <span>Students On Track</span>
+                      <span className="font-semibold">{totalStudents > 0 ? Math.round((onTrack / totalStudents) * 100) : 0}%</span>
+                    </div>
+                    <Progress value={totalStudents > 0 ? (onTrack / totalStudents) * 100 : 0} className="h-2" />
                   </div>
-                </CardContent>
-              </Card>
+                  <div className="space-y-2">
+                    <div className="flex justify-between text-sm">
+                      <span>Average Performance</span>
+                      <span className="font-semibold">{avgProgress}%</span>
+                    </div>
+                    <Progress value={avgProgress} className="h-2" />
+                  </div>
+                </div>
+              </ChartCard>
             </div>
-          </MobileTabsContent>
+          </div>
+        );
 
-          <MobileTabsContent value="students" className="space-y-6">
-            <Card className="shadow-lg">
-              <CardHeader>
-                <CardTitle>Student List</CardTitle>
-                <CardDescription>View and manage all student profiles</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <StudentListTable
-                  learners={learners}
-                  onViewStudent={handleViewStudent}
-                  onAnalyze={analyzeStudent}
-                  onSuggestInterventions={suggestInterventions}
-                />
-              </CardContent>
-            </Card>
-          </MobileTabsContent>
+      case "students":
+        return (
+          <Card className="shadow-lg">
+            <CardHeader>
+              <CardTitle>Student List</CardTitle>
+              <CardDescription>View and manage all student profiles</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <StudentListTable
+                learners={learners}
+                onViewStudent={handleViewStudent}
+                onAnalyze={analyzeStudent}
+                onSuggestInterventions={suggestInterventions}
+              />
+            </CardContent>
+          </Card>
+        );
 
-          <MobileTabsContent value="insights" className="space-y-6">
-            <Card className="shadow-lg">
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Brain className="h-5 w-5 text-primary" />
-                  AI-Generated Insights
-                </CardTitle>
-                <CardDescription>Evidence-based recommendations to improve inclusive education</CardDescription>
-              </CardHeader>
-              <CardContent>
-...
-              </CardContent>
-            </Card>
-          </MobileTabsContent>
+      case "insights":
+        return (
+          <Card className="shadow-lg">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Brain className="h-5 w-5 text-primary" />
+                AI-Generated Insights
+              </CardTitle>
+              <CardDescription>Evidence-based recommendations to improve inclusive education</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                {learners.flatMap(l => l.recommendations || []).length > 0 ? (
+                  learners.flatMap(l => l.recommendations || []).map((rec) => (
+                    <div key={rec.id} className="p-4 border rounded-lg">
+                      <div className="flex items-start gap-2 mb-2">
+                        <Badge 
+                          variant={rec.priority === "high" ? "destructive" : rec.priority === "medium" ? "default" : "secondary"}
+                        >
+                          {rec.priority}
+                        </Badge>
+                        <div className="flex-1">
+                          <h4 className="font-semibold">{rec.title}</h4>
+                          <p className="text-sm text-muted-foreground mt-1">{rec.description}</p>
+                        </div>
+                      </div>
+                    </div>
+                  ))
+                ) : (
+                  <p className="text-sm text-muted-foreground text-center py-8">
+                    No AI insights available yet. Click "Analyze" on a student to generate recommendations.
+                  </p>
+                )}
+              </div>
+            </CardContent>
+          </Card>
+        );
 
-          <MobileTabsContent value="training" className="space-y-6">
-            <TrainingRecommendations />
-          </MobileTabsContent>
+      case "training":
+        return <TrainingRecommendations />;
 
-          <MobileTabsContent value="attendance" className="space-y-6">
+      case "attendance":
+        return (
+          <div className="space-y-6">
             <div className="grid gap-6 lg:grid-cols-2">
               <AttendanceTracker 
                 learners={learners}
@@ -281,13 +264,36 @@ const TeacherDashboard = () => {
               learners={learners}
               attendanceRecords={attendanceRecords}
             />
-          </MobileTabsContent>
+          </div>
+        );
 
-          <MobileTabsContent value="content" className="space-y-6">
-            {user?.id && <TeacherContentManager teacherId={user.id} />}
-          </MobileTabsContent>
-        </MobileTabs>
-      </div>
+      case "content":
+        return user?.id ? <TeacherContentManager teacherId={user.id} /> : null;
+
+      default:
+        return null;
+    }
+  };
+
+  const sidebar = (
+    <DashboardSidebar
+      menuItems={menuItems}
+      activeTab={activeTab}
+      onTabChange={setActiveTab}
+      userName={getDisplayName()}
+      userRole="Teacher"
+    />
+  );
+
+  return (
+    <>
+      <DashboardLayout
+        sidebar={sidebar}
+        title="Teacher Dashboard"
+        subtitle="Manage your students and insights"
+      >
+        {renderContent()}
+      </DashboardLayout>
 
       <StudentDetailsDialog
         student={selectedStudent}
@@ -295,9 +301,7 @@ const TeacherDashboard = () => {
         onOpenChange={setStudentDialogOpen}
         onUpdate={refetch}
       />
-
-      <EnhancedAccessibilityToolbar />
-    </div>
+    </>
   );
 };
 
