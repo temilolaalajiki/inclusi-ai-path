@@ -1,8 +1,6 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Navbar } from "@/components/Navbar";
-import { EnhancedAccessibilityToolbar } from "@/components/EnhancedAccessibilityToolbar";
 import { CreateLearnerForm } from "@/components/CreateLearnerForm";
 import { CreateTeacherForm } from "@/components/CreateTeacherForm";
 import { StudentListTable } from "@/components/StudentListTable";
@@ -12,9 +10,8 @@ import { NigerianEducationOverview } from "@/components/NigerianEducationOvervie
 import { BiasMonitoringDashboard } from "@/components/BiasMonitoringDashboard";
 import { TeacherAnalyticsDashboard } from "@/components/TeacherAnalyticsDashboard";
 import { PendingLearnersTable } from "@/components/PendingLearnersTable";
-import { BarChart, Bar, LineChart, Line, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
-import { Users, BookOpen, TrendingUp, Download, AlertTriangle, CheckCircle, FileDown, FileSpreadsheet, Calendar, Brain, UserCheck, Eye, BarChart3, ShieldAlert, Scale, Settings, UserPlus } from "lucide-react";
-import { MobileTabs, MobileTabsList, MobileTabsContent } from "@/components/ui/mobile-tabs";
+import { BarChart, Bar, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
+import { Users, BookOpen, TrendingUp, Download, AlertTriangle, CheckCircle, FileDown, FileSpreadsheet, Calendar, Brain, UserCheck, Eye, BarChart3, ShieldAlert, Scale, Settings, UserPlus, LayoutDashboard } from "lucide-react";
 import { useAdminData } from "@/hooks/useAdminData";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
@@ -25,6 +22,11 @@ import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
 import * as XLSX from 'xlsx';
 import { LoadingScreen } from "@/components/LoadingScreen";
+import { DashboardLayout } from "@/components/dashboard/DashboardLayout";
+import { DashboardSidebar, SidebarMenuItem } from "@/components/dashboard/DashboardSidebar";
+import { DashboardHeader } from "@/components/dashboard/DashboardHeader";
+import { ChartCard } from "@/components/dashboard/ChartCard";
+import { QuickActionsCard } from "@/components/dashboard/QuickActionsCard";
 
 const AdminDashboard = () => {
   const { 
@@ -47,8 +49,38 @@ const AdminDashboard = () => {
   const [selectedStudent, setSelectedStudent] = useState<LearnerWithProgress | null>(null);
   const [detailsDialogOpen, setDetailsDialogOpen] = useState(false);
   const [learnersLoading, setLearnersLoading] = useState(false);
-  const [activeTab, setActiveTab] = useState("trends");
+  const [activeTab, setActiveTab] = useState("dashboard");
   const { toast } = useToast();
+
+  const menuItems: SidebarMenuItem[] = [
+    { title: "Dashboard", icon: <LayoutDashboard className="h-4 w-4" />, value: "dashboard" },
+    { title: "Users", icon: <Users className="h-4 w-4" />, value: "users" },
+    { title: "Teachers", icon: <BookOpen className="h-4 w-4" />, value: "teachers" },
+    { 
+      title: "Requests", 
+      icon: <UserPlus className="h-4 w-4" />, 
+      value: "requests",
+      subItems: [
+        { title: "Pending", value: "pending" },
+        { title: "All Learners", value: "all-learners" },
+      ]
+    },
+    { title: "Management", icon: <Settings className="h-4 w-4" />, value: "management" },
+    { 
+      title: "Reports", 
+      icon: <BarChart3 className="h-4 w-4" />, 
+      value: "reports",
+      subItems: [
+        { title: "Interventions", value: "interventions" },
+        { title: "Barriers", value: "barriers" },
+        { title: "Trends", value: "trends" },
+        { title: "Teacher Analytics", value: "analytics" },
+        { title: "AI Insights", value: "ai-insights" },
+      ]
+    },
+    { title: "Standards", icon: <BookOpen className="h-4 w-4" />, value: "standards" },
+    { title: "Equity", icon: <Scale className="h-4 w-4" />, value: "equity" },
+  ];
 
   useEffect(() => {
     fetchLearners();
@@ -68,7 +100,6 @@ const AdminDashboard = () => {
 
       if (error) throw error;
 
-      // Fetch profiles separately
       if (learnersData && learnersData.length > 0) {
         const userIds = learnersData.map(l => l.user_id);
         const { data: profilesData } = await supabase
@@ -76,7 +107,6 @@ const AdminDashboard = () => {
           .select('id, first_name, last_name')
           .in('id', userIds);
 
-        // Merge profiles with learners
         const enrichedLearners = learnersData.map(learner => ({
           ...learner,
           profiles: profilesData?.find(p => p.id === learner.user_id) || null
@@ -113,16 +143,6 @@ const AdminDashboard = () => {
           .select('id, first_name, last_name')
           .in('id', teacherIds);
 
-        // Fetch email addresses from auth.users
-        const { data: { users }, error: usersError } = await supabase.auth.admin.listUsers();
-        
-        const emailMap = new Map<string, string>();
-        if (!usersError && users) {
-          users.forEach((user: any) => {
-            emailMap.set(user.id, user.email || 'N/A');
-          });
-        }
-
         const { data: learnersCount } = await supabase
           .from('learners')
           .select('teacher_id');
@@ -134,7 +154,7 @@ const AdminDashboard = () => {
               id: profile.id,
               first_name: profile.first_name,
               last_name: profile.last_name,
-              email: emailMap.get(profile.id) || 'N/A',
+              email: 'N/A',
               assigned_learners_count: assignedCount
             };
           }) || [];
@@ -321,7 +341,6 @@ const AdminDashboard = () => {
         description: `Created ${data?.learners_created || 0} learners with complete profiles, recommendations, and equity metrics.`,
       });
 
-      // Refresh all data
       fetchLearners();
       fetchTeachers();
     } catch (error: any) {
@@ -377,7 +396,6 @@ const AdminDashboard = () => {
   const handleExportExcel = () => {
     const wb = XLSX.utils.book_new();
     
-    // Metrics sheet
     const metricsData = [
       ['Metric', 'Value'],
       ['Total Learners', metrics.totalLearners],
@@ -390,12 +408,10 @@ const AdminDashboard = () => {
     const ws1 = XLSX.utils.aoa_to_sheet(metricsData);
     XLSX.utils.book_append_sheet(wb, ws1, 'Metrics');
     
-    // Barriers sheet
     const barriersData = [['Barrier', 'Count'], ...barriers.map(b => [b.name, b.value])];
     const ws2 = XLSX.utils.aoa_to_sheet(barriersData);
     XLSX.utils.book_append_sheet(wb, ws2, 'Barriers');
     
-    // Interventions sheet
     const interventionsData = [
       ['Type', 'Count', 'Success Rate'],
       ...interventions.map(i => [i.type, i.count, `${i.successRate.toFixed(2)}%`])
@@ -433,22 +449,36 @@ const AdminDashboard = () => {
 
   const COLORS = ['hsl(var(--chart-1))', 'hsl(var(--chart-2))', 'hsl(var(--chart-3))', 'hsl(var(--chart-4))', 'hsl(var(--chart-5))', 'hsl(var(--muted))'];
 
-  return (
-    <div className="min-h-screen bg-gradient-to-br from-background via-muted/20 to-background">
-      <Navbar />
-      
-      <div className="container mx-auto px-4 py-4 md:py-8" id="dashboard-content">
-        <div className="mb-6 md:mb-8">
-          <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 mb-4">
-            <div>
-              <h1 className="text-2xl md:text-4xl font-bold bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
-                Administrator Analytics
-              </h1>
-              <p className="text-muted-foreground text-sm md:text-lg">System-wide insights and reporting</p>
-            </div>
-            <div className="flex flex-wrap gap-2">
+  const headerStats = [
+    { title: "Total Learners", value: metrics.totalLearners, icon: <Users className="h-5 w-5" />, variant: "default" as const },
+    { title: "Active Teachers", value: metrics.totalTeachers, icon: <BookOpen className="h-5 w-5" />, variant: "default" as const },
+    { title: "Avg Progress", value: `${metrics.avgProgress}%`, icon: <TrendingUp className="h-5 w-5" />, variant: "success" as const },
+    { title: "Accessibility", value: metrics.accessibilityScore, icon: <CheckCircle className="h-5 w-5" />, variant: "success" as const },
+  ];
+
+  const quickActions = [
+    { label: "Analyze Performance", icon: <Brain className="h-4 w-4" />, onClick: handlePerformanceAnalysis },
+    { label: "Check Capacity", icon: <UserCheck className="h-4 w-4" />, onClick: handleCapacityCheck },
+    { label: "Visual Materials", icon: <Eye className="h-4 w-4" />, onClick: handleVisualMaterialsRecommendation },
+    { label: "Seed Standards", icon: <BookOpen className="h-4 w-4" />, onClick: seedNigerianStandards, variant: "secondary" as const },
+    { label: "Equity Metrics", icon: <Brain className="h-4 w-4" />, onClick: calculateEquityMetrics, variant: "secondary" as const },
+    { label: "Seed Test Data", icon: <UserPlus className="h-4 w-4" />, onClick: seedTestData, variant: "outline" as const },
+  ];
+
+  const renderContent = () => {
+    switch (activeTab) {
+      case "dashboard":
+        return (
+          <div className="space-y-6" id="dashboard-content">
+            <DashboardHeader
+              welcomeMessage="Welcome, Administrator"
+              subtitle="System-wide insights and reporting"
+              stats={headerStats}
+            />
+
+            <div className="flex flex-wrap gap-2 mb-4">
               <Select onValueChange={handleDateRangeChange} defaultValue="all">
-                <SelectTrigger className="w-full sm:w-[180px] bg-background">
+                <SelectTrigger className="w-[180px] bg-background">
                   <Calendar className="h-4 w-4 mr-2" />
                   <SelectValue placeholder="Date Range" />
                 </SelectTrigger>
@@ -459,298 +489,202 @@ const AdminDashboard = () => {
                   <SelectItem value="all">All Time</SelectItem>
                 </SelectContent>
               </Select>
-              <Button onClick={handleExportPDF} variant="outline" size="sm" className="flex-1 sm:flex-none">
-                <FileDown className="h-4 w-4 sm:mr-2" />
-                <span className="hidden sm:inline">PDF</span>
+              <Button onClick={handleExportPDF} variant="outline" size="sm">
+                <FileDown className="h-4 w-4 mr-2" />
+                PDF
               </Button>
-              <Button onClick={handleExportExcel} variant="outline" size="sm" className="flex-1 sm:flex-none">
-                <FileSpreadsheet className="h-4 w-4 sm:mr-2" />
-                <span className="hidden sm:inline">Excel</span>
+              <Button onClick={handleExportExcel} variant="outline" size="sm">
+                <FileSpreadsheet className="h-4 w-4 mr-2" />
+                Excel
               </Button>
-              <Button onClick={generateWeeklyReport} size="sm" className="flex-1 sm:flex-none">
-                <Download className="h-4 w-4 sm:mr-2" />
-                <span className="hidden sm:inline">Weekly Report</span>
+              <Button onClick={generateWeeklyReport} size="sm">
+                <Download className="h-4 w-4 mr-2" />
+                Weekly Report
+              </Button>
+              <Button onClick={generateInsights} disabled={insightsLoading} size="sm">
+                <Brain className="h-4 w-4 mr-2" />
+                {insightsLoading ? 'Generating...' : 'Generate Insights'}
               </Button>
             </div>
-          </div>
-        </div>
 
-        <div className="mb-6">
-          <div className="flex justify-between items-center mb-4">
-            <div>
-              <h2 className="text-2xl font-bold">AI-Powered Insights</h2>
-              <p className="text-muted-foreground">System-wide analysis and recommendations</p>
-            </div>
-            <Button onClick={generateInsights} disabled={insightsLoading}>
-              {insightsLoading ? 'Generating...' : 'Generate Insights'}
-            </Button>
-          </div>
+            <QuickActionsCard
+              title="AI-Powered Actions"
+              description="System-wide analysis and recommendations"
+              actions={quickActions}
+            />
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-            <Button onClick={handlePerformanceAnalysis} variant="outline" className="w-full">
-              <Brain className="h-4 w-4 mr-2" />
-              Analyze Low Performance
-            </Button>
-            <Button onClick={handleCapacityCheck} variant="outline" className="w-full">
-              <UserCheck className="h-4 w-4 mr-2" />
-              Check Class Capacity
-            </Button>
-            <Button onClick={handleVisualMaterialsRecommendation} variant="outline" className="w-full">
-              <Eye className="h-4 w-4 mr-2" />
-              Visual Support Materials
-            </Button>
-          </div>
-
-          <div className="mt-3 grid grid-cols-1 md:grid-cols-2 gap-3">
-            <Button onClick={seedNigerianStandards} variant="secondary" className="w-full">
-              <BookOpen className="h-4 w-4 mr-2" />
-              Seed WAEC/NECO Standards
-            </Button>
-            <Button onClick={calculateEquityMetrics} variant="secondary" className="w-full">
-              <Brain className="h-4 w-4 mr-2" />
-              Calculate Equity Metrics
-            </Button>
-          </div>
-
-          <div className="mt-3">
-            <Button onClick={seedTestData} variant="outline" className="w-full border-2 border-primary">
-              🧪 Seed Complete Test Data (5 Diverse Learners)
-            </Button>
-          </div>
-        </div>
-
-        {insights && (
-          <Card className="mb-6">
-            <CardHeader>
-              <CardTitle>System Insights</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-6">
-              <div>
-                <h3 className="font-semibold mb-2">Key Trends</h3>
-                <div className="space-y-3">
-                  {insights.trends?.map((trend: any, idx: number) => (
-                    <div key={idx} className="border-l-4 border-primary pl-4">
-                      <p className="font-medium">{trend.category}</p>
-                      <p className="text-sm text-muted-foreground">{trend.insight}</p>
-                      <p className="text-sm text-primary mt-1">→ {trend.recommendation}</p>
+            {insights && (
+              <Card>
+                <CardHeader>
+                  <CardTitle>System Insights</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-6">
+                  <div>
+                    <h3 className="font-semibold mb-2">Key Trends</h3>
+                    <div className="space-y-3">
+                      {insights.trends?.map((trend: any, idx: number) => (
+                        <div key={idx} className="border-l-4 border-primary pl-4">
+                          <p className="font-medium">{trend.category}</p>
+                          <p className="text-sm text-muted-foreground">{trend.insight}</p>
+                          <p className="text-sm text-primary mt-1">→ {trend.recommendation}</p>
+                        </div>
+                      ))}
                     </div>
-                  ))}
-                </div>
-              </div>
-              
-              <div>
-                <h3 className="font-semibold mb-2">Strategic Priorities</h3>
-                <div className="space-y-2">
-                  {insights.priorities?.map((priority: any, idx: number) => (
-                    <div key={idx} className="flex items-start gap-3 p-3 bg-muted/50 rounded-lg">
-                      <Badge variant={priority.impact === 'high' ? 'default' : 'secondary'}>
-                        {priority.impact}
-                      </Badge>
-                      <div>
-                        <p className="font-medium">{priority.area}</p>
-                        <p className="text-sm text-muted-foreground">{priority.action}</p>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        )}
-
-        <div className="grid gap-4 md:gap-6 grid-cols-2 lg:grid-cols-4 mb-6">
-          <Card className="shadow-lg hover:shadow-xl transition-shadow">
-            <CardHeader className="pb-2 md:pb-3 p-3 md:p-6">
-              <CardTitle className="flex items-center gap-2 text-sm md:text-base">
-                <Users className="h-4 w-4 text-primary" />
-                <span className="hidden sm:inline">Total</span> Learners
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="p-3 md:p-6 pt-0">
-              <div className="text-2xl md:text-3xl font-bold text-primary">{metrics.totalLearners}</div>
-              <p className="text-xs text-muted-foreground mt-1 hidden sm:block">Active in system</p>
-            </CardContent>
-          </Card>
-
-          <Card className="shadow-lg hover:shadow-xl transition-shadow">
-            <CardHeader className="pb-2 md:pb-3 p-3 md:p-6">
-              <CardTitle className="flex items-center gap-2 text-sm md:text-base">
-                <BookOpen className="h-4 w-4 text-primary" />
-                <span className="hidden sm:inline">Active</span> Teachers
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="p-3 md:p-6 pt-0">
-              <div className="text-2xl md:text-3xl font-bold text-primary">{metrics.totalTeachers}</div>
-              <p className="text-xs text-muted-foreground mt-1 hidden sm:block">Teaching staff</p>
-            </CardContent>
-          </Card>
-
-          <Card className="shadow-lg hover:shadow-xl transition-shadow">
-            <CardHeader className="pb-2 md:pb-3 p-3 md:p-6">
-              <CardTitle className="flex items-center gap-2 text-sm md:text-base">
-                <TrendingUp className="h-4 w-4 text-success" />
-                <span className="hidden sm:inline">Avg</span> Progress
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="p-3 md:p-6 pt-0">
-              <div className="text-2xl md:text-3xl font-bold text-success">{metrics.avgProgress}%</div>
-              <p className="text-xs text-muted-foreground mt-1 hidden sm:block">Overall performance</p>
-            </CardContent>
-          </Card>
-
-          <Card className="shadow-lg hover:shadow-xl transition-shadow">
-            <CardHeader className="pb-2 md:pb-3 p-3 md:p-6">
-              <CardTitle className="flex items-center gap-2 text-sm md:text-base">
-                <CheckCircle className="h-4 w-4 text-success" />
-                <span className="hidden sm:inline">Accessibility</span> Score
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="p-3 md:p-6 pt-0">
-              <div className="text-2xl md:text-3xl font-bold text-success">{metrics.accessibilityScore}</div>
-              <p className="text-xs text-muted-foreground mt-1 hidden sm:block">Out of 100</p>
-            </CardContent>
-          </Card>
-        </div>
-
-        <MobileTabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-          <MobileTabsList
-            value={activeTab}
-            onValueChange={setActiveTab}
-            tabs={[
-              { value: "trends", label: "Trends", icon: <TrendingUp className="h-4 w-4" /> },
-              { value: "pending", label: "Pending", icon: <UserPlus className="h-4 w-4" /> },
-              { value: "barriers", label: "Barriers", icon: <ShieldAlert className="h-4 w-4" /> },
-              { value: "interventions", label: "Interventions", icon: <BarChart3 className="h-4 w-4" /> },
-              { value: "analytics", label: "Teachers", icon: <UserCheck className="h-4 w-4" /> },
-              { value: "standards", label: "Standards", icon: <BookOpen className="h-4 w-4" /> },
-              { value: "equity", label: "Equity", icon: <Scale className="h-4 w-4" /> },
-              { value: "users", label: "Users", icon: <Users className="h-4 w-4" /> },
-              { value: "management", label: "Management", icon: <Settings className="h-4 w-4" /> },
-            ]}
-          />
-
-          <MobileTabsContent value="trends" className="space-y-6">
-            <Card className="shadow-lg">
-              <CardHeader>
-                <CardTitle>System Metrics</CardTitle>
-                <CardDescription>Key performance indicators</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  <div className="flex justify-between items-center p-4 border rounded-lg">
-                    <div>
-                      <p className="text-sm text-muted-foreground">Learners Needing Support</p>
-                      <p className="text-2xl font-bold text-warning">{metrics.learnersNeedingSupport}</p>
-                    </div>
-                    <AlertTriangle className="h-8 w-8 text-warning" />
                   </div>
-                  <div className="flex justify-between items-center p-4 border rounded-lg">
-                    <div>
-                      <p className="text-sm text-muted-foreground">Learners On Track</p>
-                      <p className="text-2xl font-bold text-success">{metrics.learnersOnTrack}</p>
+                  
+                  <div>
+                    <h3 className="font-semibold mb-2">Strategic Priorities</h3>
+                    <div className="space-y-2">
+                      {insights.priorities?.map((priority: any, idx: number) => (
+                        <div key={idx} className="flex items-start gap-3 p-3 bg-muted/50 rounded-lg">
+                          <Badge variant={priority.impact === 'high' ? 'default' : 'secondary'}>
+                            {priority.impact}
+                          </Badge>
+                          <div>
+                            <p className="font-medium">{priority.area}</p>
+                            <p className="text-sm text-muted-foreground">{priority.action}</p>
+                          </div>
+                        </div>
+                      ))}
                     </div>
-                    <CheckCircle className="h-8 w-8 text-success" />
                   </div>
-                </div>
-              </CardContent>
-            </Card>
+                </CardContent>
+              </Card>
+            )}
 
             <div className="grid gap-6 md:grid-cols-2">
-              <Card className="shadow-lg">
-                <CardHeader>
-                  <CardTitle>Teacher Engagement</CardTitle>
-                  <CardDescription>Active teachers using AI recommendations</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <div className="text-4xl font-bold text-primary mb-2">{teacherEngagement.rate}%</div>
-                  <p className="text-sm text-muted-foreground mb-4">
-                    {teacherEngagement.active} of {teacherEngagement.total} teachers actively using AI insights
-                  </p>
-                  {predictiveTrend !== 0 && (
-                    <div className="mt-2 p-2 bg-muted/50 rounded">
-                      <p className="text-xs text-muted-foreground">
-                        Trend: {predictiveTrend > 0 ? '↑' : '↓'} {Math.abs(predictiveTrend)}% per week
-                      </p>
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
-
-              <Card className="shadow-lg">
-                <CardHeader>
-                  <CardTitle>System Usage</CardTitle>
-                  <CardDescription>Platform engagement metrics</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-3">
-                    <div className="flex justify-between">
-                      <span className="text-sm">Total Learners</span>
-                      <span className="font-semibold">{metrics.totalLearners}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-sm">Total Teachers</span>
-                      <span className="font-semibold">{metrics.totalTeachers}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-sm">Avg Performance</span>
-                      <span className="font-semibold">{metrics.avgProgress}%</span>
-                    </div>
+              <ChartCard title="Teacher Engagement" description="Active teachers using AI recommendations">
+                <div className="text-4xl font-bold text-primary mb-2">{teacherEngagement.rate}%</div>
+                <p className="text-sm text-muted-foreground mb-4">
+                  {teacherEngagement.active} of {teacherEngagement.total} teachers actively using AI insights
+                </p>
+                {predictiveTrend !== 0 && (
+                  <div className="mt-2 p-2 bg-muted/50 rounded">
+                    <p className="text-xs text-muted-foreground">
+                      Trend: {predictiveTrend > 0 ? '↑' : '↓'} {Math.abs(predictiveTrend)}% per week
+                    </p>
                   </div>
-                </CardContent>
-              </Card>
+                )}
+              </ChartCard>
+
+              <ChartCard title="System Metrics" description="Key performance indicators">
+                <div className="space-y-3">
+                  <div className="flex justify-between items-center p-3 border rounded-lg">
+                    <div>
+                      <p className="text-sm text-muted-foreground">Learners Needing Support</p>
+                      <p className="text-xl font-bold text-warning">{metrics.learnersNeedingSupport}</p>
+                    </div>
+                    <AlertTriangle className="h-6 w-6 text-warning" />
+                  </div>
+                  <div className="flex justify-between items-center p-3 border rounded-lg">
+                    <div>
+                      <p className="text-sm text-muted-foreground">Learners On Track</p>
+                      <p className="text-xl font-bold text-success">{metrics.learnersOnTrack}</p>
+                    </div>
+                    <CheckCircle className="h-6 w-6 text-success" />
+                  </div>
+                </div>
+              </ChartCard>
             </div>
-          </MobileTabsContent>
+          </div>
+        );
 
-          <MobileTabsContent value="pending" className="space-y-6">
-            <Card className="shadow-lg">
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <UserPlus className="h-5 w-5 text-primary" />
-                  Pending Learner Assignments
-                </CardTitle>
-                <CardDescription>
-                  Learners who have completed their profile but haven't been assigned to a teacher yet
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <PendingLearnersTable 
-                  onAssignmentComplete={() => {
-                    fetchLearners();
-                    fetchTeachers();
-                  }} 
-                />
-              </CardContent>
-            </Card>
-          </MobileTabsContent>
+      case "pending":
+        return (
+          <Card className="shadow-lg">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <UserPlus className="h-5 w-5 text-primary" />
+                Pending Learner Assignments
+              </CardTitle>
+              <CardDescription>
+                Learners who have completed their profile but haven't been assigned to a teacher yet
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <PendingLearnersTable 
+                onAssignmentComplete={() => {
+                  fetchLearners();
+                  fetchTeachers();
+                }} 
+              />
+            </CardContent>
+          </Card>
+        );
 
-          <MobileTabsContent value="barriers" className="space-y-6">
-            <Card className="shadow-lg">
-              <CardHeader>
-                <CardTitle>Common Accessibility Barriers</CardTitle>
-                <CardDescription>Distribution of learning challenges across the institution</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <ResponsiveContainer width="100%" height={350}>
-                  <PieChart>
-                    <Pie
-                      data={barriers}
-                      cx="50%"
-                      cy="50%"
-                      labelLine={false}
-                      label={({ name, value }) => `${name}: ${value}`}
-                      outerRadius={120}
-                      fill="#8884d8"
-                      dataKey="value"
-                    >
-                      {barriers.map((entry, index) => (
-                        <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                      ))}
-                    </Pie>
-                    <Tooltip />
-                  </PieChart>
-                </ResponsiveContainer>
-              </CardContent>
-            </Card>
+      case "all-learners":
+      case "users":
+        return (
+          <Card className="shadow-lg">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Users className="h-5 w-5" />
+                All Learners
+              </CardTitle>
+              <CardDescription>View and manage all learners in the system</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <StudentListTable 
+                learners={learners}
+                onViewStudent={handleViewStudent}
+                onAnalyze={handleAnalyze}
+                onSuggestInterventions={handleSuggestInterventions}
+              />
+            </CardContent>
+          </Card>
+        );
+
+      case "teachers":
+        return (
+          <Card className="shadow-lg">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <BookOpen className="h-5 w-5" />
+                All Teachers
+              </CardTitle>
+              <CardDescription>View all teachers and their assigned learners</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <TeacherListTable teachers={teachers} />
+            </CardContent>
+          </Card>
+        );
+
+      case "management":
+        return (
+          <div className="grid gap-6 md:grid-cols-2">
+            <CreateTeacherForm onSuccess={() => fetchTeachers()} />
+            <CreateLearnerForm 
+              onSuccess={() => fetchLearners()}
+              onBulkUploadClick={() => {}}
+            />
+          </div>
+        );
+
+      case "barriers":
+        return (
+          <div className="space-y-6">
+            <ChartCard title="Common Accessibility Barriers" description="Distribution of learning challenges across the institution">
+              <ResponsiveContainer width="100%" height={350}>
+                <PieChart>
+                  <Pie
+                    data={barriers}
+                    cx="50%"
+                    cy="50%"
+                    labelLine={false}
+                    label={({ name, value }) => `${name}: ${value}`}
+                    outerRadius={120}
+                    fill="#8884d8"
+                    dataKey="value"
+                  >
+                    {barriers.map((entry, index) => (
+                      <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                    ))}
+                  </Pie>
+                  <Tooltip />
+                </PieChart>
+              </ResponsiveContainer>
+            </ChartCard>
 
             <Card className="shadow-lg">
               <CardHeader>
@@ -779,27 +713,24 @@ const AdminDashboard = () => {
                 </div>
               </CardContent>
             </Card>
-          </MobileTabsContent>
+          </div>
+        );
 
-          <MobileTabsContent value="interventions" className="space-y-6">
-            <Card className="shadow-lg">
-              <CardHeader>
-                <CardTitle>Intervention Success Rates</CardTitle>
-                <CardDescription>Effectiveness of different support strategies</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <ResponsiveContainer width="100%" height={350}>
-                  <BarChart data={interventions}>
-                    <CartesianGrid strokeDasharray="3 3" />
-                    <XAxis dataKey="type" />
-                    <YAxis />
-                    <Tooltip />
-                    <Legend />
-                    <Bar dataKey="successRate" fill="hsl(var(--primary))" name="Success Rate (%)" />
-                  </BarChart>
-                </ResponsiveContainer>
-              </CardContent>
-            </Card>
+      case "interventions":
+        return (
+          <div className="space-y-6">
+            <ChartCard title="Intervention Success Rates" description="Effectiveness of different support strategies">
+              <ResponsiveContainer width="100%" height={350}>
+                <BarChart data={interventions}>
+                  <CartesianGrid strokeDasharray="3 3" />
+                  <XAxis dataKey="type" />
+                  <YAxis />
+                  <Tooltip />
+                  <Legend />
+                  <Bar dataKey="successRate" fill="hsl(var(--primary))" name="Success Rate (%)" />
+                </BarChart>
+              </ResponsiveContainer>
+            </ChartCard>
 
             <div className="grid gap-6 md:grid-cols-3">
               <Card className="shadow-lg">
@@ -850,77 +781,110 @@ const AdminDashboard = () => {
                 </CardContent>
               </Card>
             </div>
-          </MobileTabsContent>
+          </div>
+        );
 
-          <MobileTabsContent value="analytics" className="space-y-6">
-            <TeacherAnalyticsDashboard />
-          </MobileTabsContent>
+      case "trends":
+        return (
+          <div className="grid gap-6 md:grid-cols-2">
+            <ChartCard title="Teacher Engagement" description="Active teachers using AI recommendations">
+              <div className="text-4xl font-bold text-primary mb-2">{teacherEngagement.rate}%</div>
+              <p className="text-sm text-muted-foreground mb-4">
+                {teacherEngagement.active} of {teacherEngagement.total} teachers actively using AI insights
+              </p>
+              {predictiveTrend !== 0 && (
+                <div className="mt-2 p-2 bg-muted/50 rounded">
+                  <p className="text-xs text-muted-foreground">
+                    Trend: {predictiveTrend > 0 ? '↑' : '↓'} {Math.abs(predictiveTrend)}% per week
+                  </p>
+                </div>
+              )}
+            </ChartCard>
 
-          <MobileTabsContent value="standards" className="space-y-6">
-            <NigerianEducationOverview />
-          </MobileTabsContent>
+            <ChartCard title="System Usage" description="Platform engagement metrics">
+              <div className="space-y-3">
+                <div className="flex justify-between">
+                  <span className="text-sm">Total Learners</span>
+                  <span className="font-semibold">{metrics.totalLearners}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-sm">Total Teachers</span>
+                  <span className="font-semibold">{metrics.totalTeachers}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-sm">Avg Performance</span>
+                  <span className="font-semibold">{metrics.avgProgress}%</span>
+                </div>
+              </div>
+            </ChartCard>
+          </div>
+        );
 
-          <MobileTabsContent value="equity" className="space-y-6">
-            <BiasMonitoringDashboard />
-          </MobileTabsContent>
+      case "analytics":
+        return <TeacherAnalyticsDashboard />;
 
-          <MobileTabsContent value="users" className="space-y-6">
-            <Card className="shadow-lg">
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Users className="h-5 w-5" />
-                  All Learners
-                </CardTitle>
-                <CardDescription>View and manage all learners in the system</CardDescription>
-              </CardHeader>
-              <CardContent>
-                {learnersLoading ? (
-                  <p className="text-center text-muted-foreground py-8">Loading learners...</p>
-                ) : (
-                  <StudentListTable 
-                    learners={learners}
-                    onViewStudent={handleViewStudent}
-                    onAnalyze={handleAnalyze}
-                    onSuggestInterventions={handleSuggestInterventions}
-                  />
-                )}
-              </CardContent>
-            </Card>
+      case "ai-insights":
+        return (
+          <div className="space-y-6">
+            <QuickActionsCard
+              title="AI-Powered Actions"
+              description="Run system-wide analysis and generate insights"
+              actions={quickActions}
+            />
+            {insights && (
+              <Card>
+                <CardHeader>
+                  <CardTitle>Generated Insights</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-6">
+                  <div>
+                    <h3 className="font-semibold mb-2">Key Trends</h3>
+                    <div className="space-y-3">
+                      {insights.trends?.map((trend: any, idx: number) => (
+                        <div key={idx} className="border-l-4 border-primary pl-4">
+                          <p className="font-medium">{trend.category}</p>
+                          <p className="text-sm text-muted-foreground">{trend.insight}</p>
+                          <p className="text-sm text-primary mt-1">→ {trend.recommendation}</p>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+          </div>
+        );
 
-            <Card className="shadow-lg">
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <BookOpen className="h-5 w-5" />
-                  All Teachers
-                </CardTitle>
-                <CardDescription>View all teachers and their assigned learners</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <TeacherListTable teachers={teachers} />
-              </CardContent>
-            </Card>
-          </MobileTabsContent>
+      case "standards":
+        return <NigerianEducationOverview />;
 
-          <MobileTabsContent value="management" className="space-y-6">
-            <div className="grid gap-6 md:grid-cols-2">
-              <CreateTeacherForm 
-                onSuccess={() => {
-                  // Refresh dashboard data if needed
-                }}
-              />
-              
-              <CreateLearnerForm 
-                onSuccess={() => {
-                  // Refresh dashboard data if needed
-                }}
-                onBulkUploadClick={() => {
-                  // Handle bulk upload
-                }}
-              />
-            </div>
-          </MobileTabsContent>
-        </MobileTabs>
-      </div>
+      case "equity":
+        return <BiasMonitoringDashboard />;
+
+      default:
+        return null;
+    }
+  };
+
+  const sidebar = (
+    <DashboardSidebar
+      menuItems={menuItems}
+      activeTab={activeTab}
+      onTabChange={setActiveTab}
+      userName="Administrator"
+      userRole="Admin"
+    />
+  );
+
+  return (
+    <>
+      <DashboardLayout
+        sidebar={sidebar}
+        title="Administrator Dashboard"
+        subtitle="System-wide insights and reporting"
+      >
+        {renderContent()}
+      </DashboardLayout>
 
       <StudentDetailsDialog
         student={selectedStudent}
@@ -928,9 +892,7 @@ const AdminDashboard = () => {
         onOpenChange={setDetailsDialogOpen}
         onUpdate={fetchLearners}
       />
-
-      <EnhancedAccessibilityToolbar />
-    </div>
+    </>
   );
 };
 

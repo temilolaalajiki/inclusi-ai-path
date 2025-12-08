@@ -1,24 +1,26 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
-import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Navbar } from "@/components/Navbar";
-import { EnhancedAccessibilityToolbar } from "@/components/EnhancedAccessibilityToolbar";
 import { EnhancedLearnerProfile } from "@/components/EnhancedLearnerProfile";
 import { CurriculumStandardsView } from "@/components/CurriculumStandardsView";
 import { ExplainableAIView } from "@/components/ExplainableAIView";
 import { DataTransparencyView } from "@/components/DataTransparencyView";
 import { LearnerProfileCompletion } from "@/components/LearnerProfileCompletion";
-import { BookOpen, TrendingUp, Lightbulb, ThumbsUp, ThumbsDown, Award, Calendar, Clock, GraduationCap } from "lucide-react";
+import { BookOpen, TrendingUp, Award, Clock, GraduationCap, LayoutDashboard, Brain, Shield, Calendar, User } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useLearnerData } from "@/hooks/useLearnerData";
 import { ProgressTimeline } from "@/components/ProgressTimeline";
 import { LoadingScreen } from "@/components/LoadingScreen";
 import { LearnerAttendanceView } from "@/components/LearnerAttendanceView";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { LearnerContentHub } from "@/components/content/LearnerContentHub";
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { LearnerContentHub } from "@/components/content/LearnerContentHub";
+import { DashboardLayout } from "@/components/dashboard/DashboardLayout";
+import { DashboardSidebar, SidebarMenuItem } from "@/components/dashboard/DashboardSidebar";
+import { DashboardHeader } from "@/components/dashboard/DashboardHeader";
+import { ChartCard } from "@/components/dashboard/ChartCard";
+import { Navbar } from "@/components/Navbar";
+import { EnhancedAccessibilityToolbar } from "@/components/EnhancedAccessibilityToolbar";
 
 const LearnerDashboard = () => {
   const { user, userProfile } = useAuth();
@@ -32,9 +34,20 @@ const LearnerDashboard = () => {
     loading, 
     submitFeedback 
   } = useLearnerData(user?.id);
-  const [activeTab, setActiveTab] = useState("progress");
+  const [activeTab, setActiveTab] = useState("dashboard");
   const [curriculumAlignments, setCurriculumAlignments] = useState<any[]>([]);
   const [refreshKey, setRefreshKey] = useState(0);
+
+  const menuItems: SidebarMenuItem[] = [
+    { title: "Dashboard", icon: <LayoutDashboard className="h-4 w-4" />, value: "dashboard" },
+    { title: "My Progress", icon: <TrendingUp className="h-4 w-4" />, value: "progress" },
+    { title: "Learn", icon: <GraduationCap className="h-4 w-4" />, value: "learn" },
+    { title: "Standards", icon: <BookOpen className="h-4 w-4" />, value: "standards" },
+    { title: "Profile", icon: <User className="h-4 w-4" />, value: "profile" },
+    { title: "AI Reasoning", icon: <Brain className="h-4 w-4" />, value: "ai" },
+    { title: "Privacy", icon: <Shield className="h-4 w-4" />, value: "privacy" },
+    { title: "Attendance", icon: <Calendar className="h-4 w-4" />, value: "attendance" },
+  ];
 
   useEffect(() => {
     if (learner?.id) {
@@ -57,7 +70,6 @@ const LearnerDashboard = () => {
   };
 
   const handleProfileComplete = () => {
-    // Trigger a refresh by updating the key
     setRefreshKey(prev => prev + 1);
     window.location.reload();
   };
@@ -134,123 +146,171 @@ const LearnerDashboard = () => {
     ? Math.round(subjects.reduce((sum, s) => sum + s.progress, 0) / subjects.length)
     : 0;
 
-  return (
-    <div className="min-h-screen bg-gradient-to-br from-background via-muted/20 to-background">
-      <Navbar />
-      
-      <div className="container mx-auto px-4 py-8">
-        <div className="mb-8">
-          <div className="flex items-center justify-between mb-2">
-            <h1 className="text-4xl font-bold bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
-              Welcome back, {userProfile?.firstName || 'Learner'}!
-            </h1>
-            <Badge variant="outline" className="text-lg px-4 py-2">
-              <Award className="h-4 w-4 mr-2" />
-              Level 5 Learner
-            </Badge>
-          </div>
-          <p className="text-muted-foreground text-lg">Your personalized learning journey continues</p>
-        </div>
+  const headerStats = [
+    { title: "Overall Progress", value: `${avgProgress}%`, icon: <TrendingUp className="h-5 w-5" />, variant: "success" as const },
+    { title: "Active Courses", value: subjects.length, icon: <BookOpen className="h-5 w-5" />, variant: "default" as const },
+    { title: "Recommendations", value: recommendations.length, icon: <Brain className="h-5 w-5" />, variant: "default" as const },
+  ];
 
-        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3 mb-6">
-          <Card className="shadow-lg hover:shadow-xl transition-shadow">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <TrendingUp className="h-5 w-5 text-success" />
-                Overall Progress
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-4xl font-bold text-primary mb-2">{avgProgress}%</div>
-              <Progress value={avgProgress} className="h-2" />
-              <p className="text-sm text-muted-foreground mt-2">
-                {avgProgress >= 85 ? 'Excellent work!' : avgProgress >= 70 ? 'Keep up the great work!' : 'You can do it!'}
-              </p>
-            </CardContent>
-          </Card>
+  const renderContent = () => {
+    switch (activeTab) {
+      case "dashboard":
+        return (
+          <div className="space-y-6">
+            <DashboardHeader
+              welcomeMessage={`Welcome back, ${userProfile?.firstName || 'Learner'}!`}
+              subtitle="Your personalized learning journey continues"
+              stats={headerStats}
+            />
 
-          <Card className="shadow-lg hover:shadow-xl transition-shadow">
-            <CardHeader>
-              <CardTitle>Active Courses</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-4xl font-bold text-primary mb-2">{subjects.length}</div>
-              <p className="text-sm text-muted-foreground">Subjects in progress</p>
-            </CardContent>
-          </Card>
-
-          <Card className="shadow-lg hover:shadow-xl transition-shadow">
-            <CardHeader>
-              <CardTitle>Recommendations</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-4xl font-bold text-primary mb-2">{recommendations.length}</div>
-              <p className="text-sm text-muted-foreground">Personalized suggestions</p>
-            </CardContent>
-          </Card>
-        </div>
-
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-          <TabsList className="grid w-full max-w-5xl grid-cols-7">
-            <TabsTrigger value="progress">Progress</TabsTrigger>
-            <TabsTrigger value="learn" className="flex items-center gap-1">
-              <GraduationCap className="h-3 w-3" />
-              Learn
-            </TabsTrigger>
-            <TabsTrigger value="standards">Standards</TabsTrigger>
-            <TabsTrigger value="profile">Profile</TabsTrigger>
-            <TabsTrigger value="ai">AI Reasoning</TabsTrigger>
-            <TabsTrigger value="privacy">Privacy</TabsTrigger>
-            <TabsTrigger value="attendance">Attendance</TabsTrigger>
-          </TabsList>
-
-          <TabsContent value="progress" className="space-y-6">
-            <div className="grid gap-6 md:grid-cols-2">
-              <Card className="shadow-lg">
-                <CardHeader>
-                  <CardTitle>Subject Progress</CardTitle>
-                  <CardDescription>Your performance across all subjects</CardDescription>
-                </CardHeader>
-...
-              </Card>
+            <div className="flex justify-end">
+              <Badge variant="outline" className="text-lg px-4 py-2">
+                <Award className="h-4 w-4 mr-2" />
+                Level 5 Learner
+              </Badge>
             </div>
 
+            <div className="grid gap-6 md:grid-cols-2">
+              <ChartCard title="Subject Progress" description="Your performance across all subjects">
+                <div className="space-y-4">
+                  {subjects.length > 0 ? (
+                    subjects.map((subject) => (
+                      <div key={subject.name} className="space-y-2">
+                        <div className="flex justify-between items-center">
+                          <span className="text-sm font-medium">{subject.name}</span>
+                          <div className="flex items-center gap-2">
+                            <span className="text-sm text-muted-foreground">{subject.progress}%</span>
+                            <Badge 
+                              variant={subject.status === 'Excellent' ? 'default' : subject.status === 'On Track' ? 'secondary' : 'destructive'}
+                              className="text-xs"
+                            >
+                              {subject.status}
+                            </Badge>
+                          </div>
+                        </div>
+                        <Progress value={subject.progress} className="h-2" />
+                      </div>
+                    ))
+                  ) : (
+                    <p className="text-sm text-muted-foreground text-center py-4">
+                      No performance data yet
+                    </p>
+                  )}
+                </div>
+              </ChartCard>
+
+              <ChartCard title="Recent Recommendations" description="Personalized learning suggestions">
+                <div className="space-y-3">
+                  {recommendations.slice(0, 3).length > 0 ? (
+                    recommendations.slice(0, 3).map((rec) => (
+                      <div key={rec.id} className="p-3 border rounded-lg">
+                        <div className="flex items-start gap-2">
+                          <Badge 
+                            variant={rec.priority === "high" ? "destructive" : rec.priority === "medium" ? "default" : "secondary"}
+                          >
+                            {rec.priority}
+                          </Badge>
+                          <div>
+                            <h4 className="font-semibold text-sm">{rec.title}</h4>
+                            <p className="text-xs text-muted-foreground mt-1">{rec.description}</p>
+                          </div>
+                        </div>
+                      </div>
+                    ))
+                  ) : (
+                    <p className="text-sm text-muted-foreground text-center py-4">
+                      No recommendations yet
+                    </p>
+                  )}
+                </div>
+              </ChartCard>
+            </div>
+          </div>
+        );
+
+      case "progress":
+        return (
+          <div className="space-y-6">
+            <ChartCard title="Subject Progress" description="Your performance across all subjects">
+              <div className="space-y-4">
+                {subjects.length > 0 ? (
+                  subjects.map((subject) => (
+                    <div key={subject.name} className="space-y-2">
+                      <div className="flex justify-between items-center">
+                        <span className="text-sm font-medium">{subject.name}</span>
+                        <div className="flex items-center gap-2">
+                          <span className="text-sm text-muted-foreground">{subject.progress}%</span>
+                          <Badge 
+                            variant={subject.status === 'Excellent' ? 'default' : subject.status === 'On Track' ? 'secondary' : 'destructive'}
+                            className="text-xs"
+                          >
+                            {subject.status}
+                          </Badge>
+                        </div>
+                      </div>
+                      <Progress value={subject.progress} className="h-2" />
+                    </div>
+                  ))
+                ) : (
+                  <p className="text-sm text-muted-foreground text-center py-4">
+                    No performance data yet
+                  </p>
+                )}
+              </div>
+            </ChartCard>
+
             <ProgressTimeline performance={performance} />
-          </TabsContent>
+          </div>
+        );
 
-          <TabsContent value="standards" className="space-y-6">
-            <CurriculumStandardsView alignments={curriculumAlignments} />
-          </TabsContent>
+      case "learn":
+        return <LearnerContentHub learnerId={learner.id} />;
 
-          <TabsContent value="profile" className="space-y-6">
-            <EnhancedLearnerProfile
-              learnerId={learner.id}
-              nigerianContext={nigerianContext}
-              demographics={demographics}
-              accessibilityProfile={accessibilityProfile}
-            />
-          </TabsContent>
+      case "standards":
+        return <CurriculumStandardsView alignments={curriculumAlignments} />;
 
-          <TabsContent value="ai" className="space-y-6">
-            <ExplainableAIView learnerId={learner.id} />
-          </TabsContent>
+      case "profile":
+        return (
+          <EnhancedLearnerProfile
+            learnerId={learner.id}
+            nigerianContext={nigerianContext}
+            demographics={demographics}
+            accessibilityProfile={accessibilityProfile}
+          />
+        );
 
-          <TabsContent value="privacy" className="space-y-6">
-            {user && <DataTransparencyView userId={user.id} />}
-          </TabsContent>
+      case "ai":
+        return <ExplainableAIView learnerId={learner.id} />;
 
-          <TabsContent value="attendance" className="space-y-6">
-            {learner && <LearnerAttendanceView learnerId={learner.id} />}
-          </TabsContent>
+      case "privacy":
+        return user ? <DataTransparencyView userId={user.id} /> : null;
 
-          <TabsContent value="learn" className="space-y-6">
-            {learner && <LearnerContentHub learnerId={learner.id} />}
-          </TabsContent>
-        </Tabs>
-      </div>
+      case "attendance":
+        return <LearnerAttendanceView learnerId={learner.id} />;
 
-      <EnhancedAccessibilityToolbar />
-    </div>
+      default:
+        return null;
+    }
+  };
+
+  const sidebar = (
+    <DashboardSidebar
+      menuItems={menuItems}
+      activeTab={activeTab}
+      onTabChange={setActiveTab}
+      userName={userProfile?.firstName || 'Learner'}
+      userRole="Learner"
+    />
+  );
+
+  return (
+    <DashboardLayout
+      sidebar={sidebar}
+      title="Learner Dashboard"
+      subtitle="Your personalized learning journey"
+    >
+      {renderContent()}
+    </DashboardLayout>
   );
 };
 
