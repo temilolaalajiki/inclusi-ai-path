@@ -1,8 +1,7 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { CreateLearnerForm } from "@/components/CreateLearnerForm";
-import { CreateTeacherForm } from "@/components/CreateTeacherForm";
+import { ManagementSection } from "@/components/ManagementSection";
 import { StudentListTable } from "@/components/StudentListTable";
 import { StudentDetailsDialog } from "@/components/StudentDetailsDialog";
 import { TeacherListTable } from "@/components/TeacherListTable";
@@ -652,13 +651,10 @@ const AdminDashboard = () => {
 
       case "management":
         return (
-          <div className="grid gap-6 md:grid-cols-2">
-            <CreateTeacherForm onSuccess={() => fetchTeachers()} />
-            <CreateLearnerForm 
-              onSuccess={() => fetchLearners()}
-              onBulkUploadClick={() => {}}
-            />
-          </div>
+          <ManagementSection 
+            onTeacherCreated={() => fetchTeachers()} 
+            onLearnerCreated={() => fetchLearners()} 
+          />
         );
 
       case "barriers":
