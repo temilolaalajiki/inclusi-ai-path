@@ -3,6 +3,8 @@ import { SidebarProvider, SidebarInset, SidebarTrigger } from "@/components/ui/s
 import { EnhancedAccessibilityToolbar } from "@/components/EnhancedAccessibilityToolbar";
 import NotificationCenter from "@/components/NotificationCenter";
 
+const SIDEBAR_STORAGE_KEY = "sidebar-collapsed";
+
 interface DashboardLayoutProps {
   children: React.ReactNode;
   sidebar: React.ReactNode;
@@ -11,8 +13,17 @@ interface DashboardLayoutProps {
 }
 
 export function DashboardLayout({ children, sidebar, title, subtitle }: DashboardLayoutProps) {
+  const [defaultOpen] = React.useState(() => {
+    const stored = localStorage.getItem(SIDEBAR_STORAGE_KEY);
+    return stored !== "true"; // Default to open, collapsed if stored as "true"
+  });
+
+  const handleOpenChange = (open: boolean) => {
+    localStorage.setItem(SIDEBAR_STORAGE_KEY, (!open).toString());
+  };
+
   return (
-    <SidebarProvider defaultOpen={true}>
+    <SidebarProvider defaultOpen={defaultOpen} onOpenChange={handleOpenChange}>
       <div className="min-h-screen flex w-full bg-gradient-to-br from-background via-muted/20 to-background">
         {sidebar}
         <SidebarInset className="flex flex-col flex-1">
