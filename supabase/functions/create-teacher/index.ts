@@ -84,6 +84,17 @@ serve(async (req) => {
     console.log('Teacher user created:', teacherUserId);
 
     // Profile is automatically created by the handle_new_user trigger
+    // Update the profile to include the email
+    const { error: profileUpdateError } = await supabaseAdmin
+      .from('profiles')
+      .update({ email })
+      .eq('id', teacherUserId);
+
+    if (profileUpdateError) {
+      console.error('Profile update error:', profileUpdateError);
+      // Non-critical error, continue with role assignment
+    }
+
     // Assign teacher role
     const { error: roleInsertError } = await supabaseAdmin
       .from('user_roles')

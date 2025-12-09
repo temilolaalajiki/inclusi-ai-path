@@ -77,7 +77,7 @@ export function TeacherListTable({ teachers }: TeacherListTableProps) {
                       {teacher.first_name} {teacher.last_name}
                     </TableCell>
                     <TableCell className="text-muted-foreground">
-                      {teacher.email || 'N/A'}
+                      {teacher.email}
                     </TableCell>
                     <TableCell>
                       <div className="flex items-center gap-2">

@@ -139,7 +139,7 @@ const AdminDashboard = () => {
         
         const { data: profilesData } = await supabase
           .from('profiles')
-          .select('id, first_name, last_name')
+          .select('id, first_name, last_name, email')
           .in('id', teacherIds);
 
         const { data: learnersCount } = await supabase
@@ -153,7 +153,7 @@ const AdminDashboard = () => {
               id: profile.id,
               first_name: profile.first_name,
               last_name: profile.last_name,
-              email: 'N/A',
+              email: profile.email || '',
               assigned_learners_count: assignedCount
             };
           }) || [];
