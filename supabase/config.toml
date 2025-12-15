@@ -53,3 +53,6 @@ verify_jwt = true
 
 [functions.generate-quiz-questions]
 verify_jwt = true
+
+[functions.update-user-passwords]
+verify_jwt = false
