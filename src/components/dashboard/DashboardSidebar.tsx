@@ -48,11 +48,10 @@ export function DashboardSidebar({
 }: DashboardSidebarProps) {
   const navigate = useNavigate();
   const { toast } = useToast();
-  const { state, toggleSidebar, open } = useSidebar();
+  const { state, toggleSidebar } = useSidebar();
   const isCollapsed = state === "collapsed";
 
   const handleToggle = () => {
-    console.log('Toggle clicked, current state:', state, 'open:', open);
     toggleSidebar();
   };
 

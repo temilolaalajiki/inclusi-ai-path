@@ -13,17 +13,20 @@ interface DashboardLayoutProps {
 }
 
 export function DashboardLayout({ children, sidebar, title, subtitle }: DashboardLayoutProps) {
-  const [defaultOpen] = React.useState(() => {
-    const stored = localStorage.getItem(SIDEBAR_STORAGE_KEY);
-    return stored !== "true"; // Default to open, collapsed if stored as "true"
-  });
+  // Always default to Expanded on load.
+  const [open, setOpen] = React.useState(true);
 
-  const handleOpenChange = (open: boolean) => {
-    localStorage.setItem(SIDEBAR_STORAGE_KEY, (!open).toString());
-  };
+  React.useEffect(() => {
+    localStorage.setItem(SIDEBAR_STORAGE_KEY, "false");
+  }, []);
+
+  const handleOpenChange = React.useCallback((nextOpen: boolean) => {
+    setOpen(nextOpen);
+    localStorage.setItem(SIDEBAR_STORAGE_KEY, (!nextOpen).toString());
+  }, []);
 
   return (
-    <SidebarProvider defaultOpen={defaultOpen} onOpenChange={handleOpenChange}>
+    <SidebarProvider open={open} onOpenChange={handleOpenChange}>
       <div className="min-h-screen flex w-full bg-gradient-to-br from-background via-muted/20 to-background">
         {sidebar}
         <SidebarInset className="flex flex-col flex-1">
