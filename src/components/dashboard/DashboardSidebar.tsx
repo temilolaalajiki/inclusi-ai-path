@@ -164,15 +164,6 @@ export function DashboardSidebar({
       </SidebarContent>
 
       <SidebarFooter className="border-t border-sidebar-border">
-        <SidebarMenu>
-          <SidebarMenuItem>
-            <SidebarMenuButton onClick={handleSignOut} tooltip="Sign Out">
-              <LogOut className="h-4 w-4" />
-              <span className="group-data-[collapsible=icon]:hidden">Sign Out</span>
-            </SidebarMenuButton>
-          </SidebarMenuItem>
-        </SidebarMenu>
-        <SidebarSeparator />
         <div className="flex items-center gap-2 px-2 py-2">
           <Avatar className="h-8 w-8 shrink-0">
             <AvatarFallback className="bg-sidebar-accent text-sidebar-accent-foreground text-xs">
@@ -184,6 +175,15 @@ export function DashboardSidebar({
             <span className="truncate text-xs text-sidebar-foreground/70">{userRole}</span>
           </div>
         </div>
+        <SidebarSeparator />
+        <SidebarMenu>
+          <SidebarMenuItem>
+            <SidebarMenuButton onClick={handleSignOut} tooltip="Sign Out">
+              <LogOut className="h-4 w-4" />
+              <span className="group-data-[collapsible=icon]:hidden">Sign Out</span>
+            </SidebarMenuButton>
+          </SidebarMenuItem>
+        </SidebarMenu>
       </SidebarFooter>
     </Sidebar>
   );
