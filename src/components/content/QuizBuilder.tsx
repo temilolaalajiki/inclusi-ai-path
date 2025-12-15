@@ -63,7 +63,9 @@ export const QuizBuilder = ({ teacherId, quiz, onSuccess, onCancel }: QuizBuilde
 
     setIsGenerating(true);
     try {
-      const selectedMaterial = materialId ? materials.find(m => m.id === materialId) : null;
+      const selectedMaterial = materialId && materialId !== 'none'
+        ? materials.find(m => m.id === materialId)
+        : null;
       
       const { data, error } = await supabase.functions.invoke('generate-quiz-questions', {
         body: {
@@ -112,7 +114,7 @@ export const QuizBuilder = ({ teacherId, quiz, onSuccess, onCancel }: QuizBuilde
       description: quiz?.description || '',
       subject: quiz?.subject || '',
       grade_level: quiz?.grade_level || '',
-      material_id: quiz?.material_id || '',
+      material_id: quiz?.material_id ?? 'none',
       time_limit_minutes: quiz?.time_limit_minutes || undefined,
       pass_score: quiz?.pass_score || 50,
       is_published: quiz?.is_published || false,
@@ -180,7 +182,7 @@ export const QuizBuilder = ({ teacherId, quiz, onSuccess, onCancel }: QuizBuilde
         pass_score: values.pass_score,
         is_published: values.is_published,
         teacher_id: teacherId,
-        material_id: values.material_id || null,
+        material_id: values.material_id && values.material_id !== 'none' ? values.material_id : null,
         time_limit_minutes: values.time_limit_minutes || null,
       };
 
@@ -353,7 +355,7 @@ export const QuizBuilder = ({ teacherId, quiz, onSuccess, onCancel }: QuizBuilde
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
-                          <SelectItem value="">None</SelectItem>
+                          <SelectItem value="none">None</SelectItem>
                           {materials.filter(m => m.is_published).map((material) => (
                             <SelectItem key={material.id} value={material.id}>
                               {material.title}
