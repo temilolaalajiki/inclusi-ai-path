@@ -9,13 +9,13 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useToast } from '@/hooks/use-toast';
 import { z } from 'zod';
 import { Navbar } from '@/components/Navbar';
+import { ArrowLeft } from 'lucide-react';
 
 const signUpSchema = z.object({
   email: z.string().email('Invalid email address'),
   password: z.string().min(6, 'Password must be at least 6 characters'),
   firstName: z.string().min(1, 'First name is required'),
   lastName: z.string().min(1, 'Last name is required')
-  // Role is always 'learner' for self-registration
 });
 
 const signInSchema = z.object({
@@ -23,8 +23,14 @@ const signInSchema = z.object({
   password: z.string().min(1, 'Password is required')
 });
 
+const forgotPasswordSchema = z.object({
+  email: z.string().email('Invalid email address')
+});
+
 export default function Auth() {
   const [loading, setLoading] = useState(false);
+  const [showForgotPassword, setShowForgotPassword] = useState(false);
+  const [forgotPasswordEmail, setForgotPasswordEmail] = useState('');
   const navigate = useNavigate();
   const { toast } = useToast();
 
@@ -40,17 +46,56 @@ export default function Auth() {
     password: ''
   });
 
+  const handleForgotPassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+
+    try {
+      forgotPasswordSchema.parse({ email: forgotPasswordEmail });
+
+      const redirectUrl = `${window.location.origin}/auth`;
+
+      const { error } = await supabase.auth.resetPasswordForEmail(forgotPasswordEmail, {
+        redirectTo: redirectUrl
+      });
+
+      if (error) throw error;
+
+      toast({
+        title: 'Password Reset Email Sent',
+        description: 'Check your email for a link to reset your password.'
+      });
+
+      setShowForgotPassword(false);
+      setForgotPasswordEmail('');
+    } catch (error: any) {
+      if (error instanceof z.ZodError) {
+        toast({
+          title: 'Validation Error',
+          description: error.errors[0].message,
+          variant: 'destructive'
+        });
+      } else {
+        toast({
+          title: 'Error',
+          description: error.message || 'Failed to send reset email',
+          variant: 'destructive'
+        });
+      }
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
 
     try {
-      // Validate input
       signUpSchema.parse(signUpData);
 
       const redirectUrl = `${window.location.origin}/`;
 
-      // Sign up user
       const { data: authData, error: authError } = await supabase.auth.signUp({
         email: signUpData.email,
         password: signUpData.password,
@@ -66,7 +111,6 @@ export default function Auth() {
       if (authError) throw authError;
       if (!authData.user) throw new Error('No user returned from signup');
 
-      // Insert user role - always 'learner' for self-registration
       const { error: roleError } = await supabase
         .from('user_roles')
         .insert({
@@ -76,8 +120,6 @@ export default function Auth() {
 
       if (roleError) throw roleError;
 
-      // Learner record will be created when they complete their profile form
-      // All self-registrations redirect to learner dashboard
       const redirectPath = '/learner';
 
       toast({
@@ -119,7 +161,6 @@ export default function Auth() {
     setLoading(true);
 
     try {
-      // Validate input
       signInSchema.parse(signInData);
 
       const { data: authData, error } = await supabase.auth.signInWithPassword({
@@ -130,7 +171,6 @@ export default function Auth() {
       if (error) throw error;
       if (!authData.user) throw new Error('No user returned from signin');
 
-      // Fetch user role to redirect appropriately
       const { data: roleData, error: roleError } = await supabase
         .from('user_roles')
         .select('role')
@@ -184,6 +224,51 @@ export default function Auth() {
     }
   };
 
+  if (showForgotPassword) {
+    return (
+      <div className="min-h-screen bg-background">
+        <Navbar />
+        <div className="container mx-auto px-4 py-16 flex items-center justify-center min-h-[calc(100vh-80px)]">
+          <Card className="w-full max-w-md">
+            <CardHeader>
+              <Button
+                variant="ghost"
+                size="sm"
+                className="w-fit mb-2 -ml-2"
+                onClick={() => setShowForgotPassword(false)}
+              >
+                <ArrowLeft className="h-4 w-4 mr-2" />
+                Back to Sign In
+              </Button>
+              <CardTitle className="text-2xl">Reset Password</CardTitle>
+              <CardDescription>
+                Enter your email address and we'll send you a link to reset your password.
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <form onSubmit={handleForgotPassword} className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="forgot-email">Email</Label>
+                  <Input
+                    id="forgot-email"
+                    type="email"
+                    placeholder="Enter your email"
+                    value={forgotPasswordEmail}
+                    onChange={(e) => setForgotPasswordEmail(e.target.value)}
+                    required
+                  />
+                </div>
+                <Button type="submit" className="w-full" disabled={loading}>
+                  {loading ? 'Sending...' : 'Send Reset Link'}
+                </Button>
+              </form>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-background">
       <Navbar />
@@ -223,6 +308,16 @@ export default function Auth() {
                       onChange={(e) => setSignInData({ ...signInData, password: e.target.value })}
                       required
                     />
+                  </div>
+                  <div className="flex justify-end">
+                    <Button
+                      type="button"
+                      variant="link"
+                      className="px-0 text-sm text-muted-foreground hover:text-primary"
+                      onClick={() => setShowForgotPassword(true)}
+                    >
+                      Forgot password?
+                    </Button>
                   </div>
                   <Button type="submit" className="w-full" disabled={loading}>
                     {loading ? 'Signing in...' : 'Sign In'}
