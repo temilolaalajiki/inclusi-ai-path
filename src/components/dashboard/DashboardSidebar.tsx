@@ -80,12 +80,12 @@ export function DashboardSidebar({
   return (
     <Sidebar collapsible="icon" className="border-r border-sidebar-border transition-all duration-200">
       <SidebarHeader className="border-b border-sidebar-border">
-        <div className="flex items-center justify-between px-2 py-3">
-          <div className="flex items-center gap-2 overflow-hidden">
+        <div className="flex items-center justify-between px-2 py-3 group-data-[collapsible=icon]:justify-center">
+          <div className="flex items-center gap-2 overflow-hidden group-data-[collapsible=icon]:hidden">
             <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-sidebar-primary text-sidebar-primary-foreground">
               <span className="text-sm font-bold">IE</span>
             </div>
-            <div className="flex flex-col overflow-hidden group-data-[collapsible=icon]:hidden">
+            <div className="flex flex-col overflow-hidden">
               <span className="text-sm font-semibold truncate">Inclusive Ed</span>
               <span className="text-xs text-sidebar-foreground/70 truncate">{userRole}</span>
             </div>
@@ -93,8 +93,9 @@ export function DashboardSidebar({
           <Button
             variant="ghost"
             size="icon"
-            className="h-7 w-7 shrink-0"
+            className="h-8 w-8 shrink-0"
             onClick={toggleSidebar}
+            type="button"
           >
             {isCollapsed ? (
               <PanelLeft className="h-4 w-4" />
