@@ -48,8 +48,13 @@ export function DashboardSidebar({
 }: DashboardSidebarProps) {
   const navigate = useNavigate();
   const { toast } = useToast();
-  const { state, toggleSidebar } = useSidebar();
+  const { state, toggleSidebar, open } = useSidebar();
   const isCollapsed = state === "collapsed";
+
+  const handleToggle = () => {
+    console.log('Toggle clicked, current state:', state, 'open:', open);
+    toggleSidebar();
+  };
 
   const handleSignOut = async () => {
     try {
@@ -78,10 +83,10 @@ export function DashboardSidebar({
   };
 
   return (
-    <Sidebar collapsible="icon" className="border-r border-sidebar-border transition-all duration-200">
+    <Sidebar collapsible="icon" className="border-r border-sidebar-border transition-all duration-300 ease-in-out">
       <SidebarHeader className="border-b border-sidebar-border">
-        <div className="flex items-center justify-between px-2 py-3 group-data-[collapsible=icon]:justify-center">
-          <div className="flex items-center gap-2 overflow-hidden group-data-[collapsible=icon]:hidden">
+        <div className={`flex items-center px-2 py-3 transition-all duration-300 ${isCollapsed ? 'justify-center' : 'justify-between'}`}>
+          <div className={`flex items-center gap-2 overflow-hidden transition-all duration-300 ${isCollapsed ? 'w-0 opacity-0' : 'w-auto opacity-100'}`}>
             <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-sidebar-primary text-sidebar-primary-foreground">
               <span className="text-sm font-bold">IE</span>
             </div>
@@ -93,15 +98,13 @@ export function DashboardSidebar({
           <Button
             variant="ghost"
             size="icon"
-            className="h-8 w-8 shrink-0"
-            onClick={toggleSidebar}
+            className="h-8 w-8 shrink-0 transition-transform duration-300 hover:bg-sidebar-accent"
+            onClick={handleToggle}
             type="button"
           >
-            {isCollapsed ? (
-              <PanelLeft className="h-4 w-4" />
-            ) : (
+            <span className={`inline-flex transition-transform duration-300 ${isCollapsed ? 'rotate-180' : 'rotate-0'}`}>
               <PanelLeftClose className="h-4 w-4" />
-            )}
+            </span>
           </Button>
         </div>
       </SidebarHeader>
