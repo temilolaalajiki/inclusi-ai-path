@@ -105,7 +105,7 @@ export const QuizzesList = ({ teacherId, onEdit, onCreate }: QuizzesListProps) =
             <div className="text-center py-12 text-muted-foreground">
               <FileQuestion className="h-12 w-12 mx-auto mb-4 opacity-50" />
               <p>No quizzes found</p>
-              <Button variant="link" onClick={onCreate}>Create your first quiz</Button>
+              <Button type="button" variant="link" onClick={onCreate}>Create your first quiz</Button>
             </div>
           ) : (
             <Table>
