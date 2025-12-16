@@ -1,6 +1,6 @@
 import * as React from "react";
 import * as DialogPrimitive from "@radix-ui/react-dialog";
-import { X } from "lucide-react";
+import { X, Loader2 } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 
@@ -19,7 +19,7 @@ const DialogOverlay = React.forwardRef<
   <DialogPrimitive.Overlay
     ref={ref}
     className={cn(
-      "fixed inset-0 z-50 bg-black/80 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0",
+      "fixed inset-0 z-50 bg-black/60 backdrop-blur-sm data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0",
       className,
     )}
     {...props}
@@ -29,8 +29,10 @@ DialogOverlay.displayName = DialogPrimitive.Overlay.displayName;
 
 const DialogContent = React.forwardRef<
   React.ElementRef<typeof DialogPrimitive.Content>,
-  React.ComponentPropsWithoutRef<typeof DialogPrimitive.Content>
->(({ className, children, ...props }, ref) => (
+  React.ComponentPropsWithoutRef<typeof DialogPrimitive.Content> & {
+    hideCloseButton?: boolean;
+  }
+>(({ className, children, hideCloseButton = false, ...props }, ref) => (
   <DialogPortal>
     <DialogOverlay />
     <DialogPrimitive.Content
@@ -42,14 +44,64 @@ const DialogContent = React.forwardRef<
       {...props}
     >
       {children}
-      <DialogPrimitive.Close className="absolute right-4 top-4 rounded-sm opacity-70 ring-offset-background transition-opacity data-[state=open]:bg-accent data-[state=open]:text-muted-foreground hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:pointer-events-none">
-        <X className="h-4 w-4" />
-        <span className="sr-only">Close</span>
-      </DialogPrimitive.Close>
+      {!hideCloseButton && (
+        <DialogPrimitive.Close className="absolute right-4 top-4 rounded-sm opacity-70 ring-offset-background transition-opacity data-[state=open]:bg-accent data-[state=open]:text-muted-foreground hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:pointer-events-none">
+          <X className="h-4 w-4" />
+          <span className="sr-only">Close</span>
+        </DialogPrimitive.Close>
+      )}
     </DialogPrimitive.Content>
   </DialogPortal>
 ));
 DialogContent.displayName = DialogPrimitive.Content.displayName;
+
+// Process Dialog - A non-dismissible dialog for loading/processing states
+interface ProcessDialogContentProps extends React.ComponentPropsWithoutRef<typeof DialogPrimitive.Content> {
+  isProcessing?: boolean;
+  processingMessage?: string;
+}
+
+const ProcessDialogContent = React.forwardRef<
+  React.ElementRef<typeof DialogPrimitive.Content>,
+  ProcessDialogContentProps
+>(({ className, children, isProcessing = true, processingMessage = "Processing...", ...props }, ref) => (
+  <DialogPortal>
+    <DialogOverlay className="backdrop-blur-md" />
+    <DialogPrimitive.Content
+      ref={ref}
+      onPointerDownOutside={(e) => {
+        if (isProcessing) {
+          e.preventDefault();
+        }
+      }}
+      onEscapeKeyDown={(e) => {
+        if (isProcessing) {
+          e.preventDefault();
+        }
+      }}
+      onInteractOutside={(e) => {
+        if (isProcessing) {
+          e.preventDefault();
+        }
+      }}
+      className={cn(
+        "fixed left-[50%] top-[50%] z-50 grid w-full max-w-md translate-x-[-50%] translate-y-[-50%] gap-4 border bg-background p-6 shadow-xl duration-200 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 sm:rounded-lg",
+        className,
+      )}
+      {...props}
+    >
+      {isProcessing ? (
+        <div className="flex flex-col items-center justify-center py-8 space-y-4">
+          <Loader2 className="h-10 w-10 animate-spin text-primary" />
+          <p className="text-sm font-medium text-muted-foreground">{processingMessage}</p>
+        </div>
+      ) : (
+        children
+      )}
+    </DialogPrimitive.Content>
+  </DialogPortal>
+));
+ProcessDialogContent.displayName = "ProcessDialogContent";
 
 const DialogHeader = ({ className, ...props }: React.HTMLAttributes<HTMLDivElement>) => (
   <div className={cn("flex flex-col space-y-1.5 text-center sm:text-left", className)} {...props} />
@@ -92,4 +144,5 @@ export {
   DialogFooter,
   DialogTitle,
   DialogDescription,
+  ProcessDialogContent,
 };
