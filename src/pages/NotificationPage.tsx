@@ -1,16 +1,20 @@
 import { useParams, useNavigate } from 'react-router-dom';
 import { useNotifications, Notification } from '@/hooks/useNotifications';
+import { useAuth } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { ArrowLeft, AlertTriangle, Info, CheckCircle, AlertCircle, Trash2 } from 'lucide-react';
+import { ArrowLeft, AlertTriangle, Info, CheckCircle, AlertCircle, Trash2, Bell, LayoutDashboard } from 'lucide-react';
 import { formatDistanceToNow, format } from 'date-fns';
 import { useEffect } from 'react';
+import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
+import { DashboardSidebar, SidebarMenuItem } from '@/components/dashboard/DashboardSidebar';
+import { LoadingScreen } from '@/components/LoadingScreen';
 
 const NotificationPage = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { notifications, markAsRead, deleteNotification, loading } = useNotifications();
+  const { user, userProfile, userRole, loading: authLoading } = useAuth();
 
   const notification = notifications.find((n) => n.id === id);
 
@@ -50,40 +54,73 @@ const NotificationPage = () => {
   const handleDelete = async () => {
     if (notification) {
       await deleteNotification(notification.id);
-      navigate(-1);
+      handleGoBack();
     }
   };
 
-  if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-background">
-        <p className="text-muted-foreground">Loading...</p>
-      </div>
-    );
+  const handleGoBack = () => {
+    if (userRole === 'admin') {
+      navigate('/admin');
+    } else if (userRole === 'teacher') {
+      navigate('/teacher');
+    } else {
+      navigate('/learner');
+    }
+  };
+
+  const menuItems: SidebarMenuItem[] = [
+    { title: "Back to Dashboard", icon: <LayoutDashboard className="h-4 w-4" />, value: "dashboard" },
+    { title: "Notification", icon: <Bell className="h-4 w-4" />, value: "notification" },
+  ];
+
+  const handleTabChange = (tab: string) => {
+    if (tab === "dashboard") {
+      handleGoBack();
+    }
+  };
+
+  if (authLoading || loading) {
+    return <LoadingScreen />;
   }
 
-  if (!notification) {
-    return (
-      <div className="min-h-screen flex flex-col items-center justify-center bg-background gap-4">
-        <p className="text-muted-foreground">Notification not found</p>
-        <Button variant="outline" onClick={() => navigate(-1)}>
-          <ArrowLeft className="h-4 w-4 mr-2" />
-          Go Back
-        </Button>
-      </div>
-    );
+  if (!user) {
+    navigate('/auth');
+    return null;
   }
 
-  return (
-    <div className="min-h-screen bg-background p-4 md:p-8">
+  const sidebar = (
+    <DashboardSidebar
+      menuItems={menuItems}
+      activeTab="notification"
+      onTabChange={handleTabChange}
+      userName={userProfile?.firstName || 'User'}
+      userRole={userRole ? userRole.charAt(0).toUpperCase() + userRole.slice(1) : 'User'}
+    />
+  );
+
+  const renderContent = () => {
+    if (!notification) {
+      return (
+        <div className="flex flex-col items-center justify-center h-64 gap-4">
+          <Bell className="h-12 w-12 text-muted-foreground opacity-50" />
+          <p className="text-muted-foreground">Notification not found</p>
+          <Button variant="outline" onClick={handleGoBack}>
+            <ArrowLeft className="h-4 w-4 mr-2" />
+            Go Back to Dashboard
+          </Button>
+        </div>
+      );
+    }
+
+    return (
       <div className="max-w-2xl mx-auto">
         <Button
           variant="ghost"
-          onClick={() => navigate(-1)}
+          onClick={handleGoBack}
           className="mb-6"
         >
           <ArrowLeft className="h-4 w-4 mr-2" />
-          Back
+          Back to Dashboard
         </Button>
 
         <Card>
@@ -131,7 +168,17 @@ const NotificationPage = () => {
           </CardContent>
         </Card>
       </div>
-    </div>
+    );
+  };
+
+  return (
+    <DashboardLayout
+      sidebar={sidebar}
+      title="Notification"
+      subtitle="View notification details"
+    >
+      {renderContent()}
+    </DashboardLayout>
   );
 };
 
