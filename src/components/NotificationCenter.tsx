@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Bell, Check, CheckCheck, Trash2, X, AlertTriangle, Info, CheckCircle, AlertCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -13,6 +14,7 @@ import { useNotifications, Notification } from '@/hooks/useNotifications';
 import { formatDistanceToNow } from 'date-fns';
 
 const NotificationCenter = () => {
+  const navigate = useNavigate();
   const {
     notifications,
     unreadCount,
@@ -23,6 +25,11 @@ const NotificationCenter = () => {
     clearAll,
   } = useNotifications();
   const [open, setOpen] = useState(false);
+
+  const handleNotificationClick = (notification: Notification) => {
+    setOpen(false);
+    navigate(`/notification/${notification.id}`);
+  };
 
   const getTypeIcon = (type: Notification['type']) => {
     switch (type) {
@@ -109,9 +116,10 @@ const NotificationCenter = () => {
               {notifications.map((notification) => (
                 <div
                   key={notification.id}
-                  className={`p-4 hover:bg-muted/50 transition-colors ${
+                  className={`p-4 hover:bg-muted/50 transition-colors cursor-pointer ${
                     !notification.is_read ? 'bg-primary/5' : ''
                   }`}
+                  onClick={() => handleNotificationClick(notification)}
                 >
                   <div className="flex gap-3">
                     <div className="flex-shrink-0 mt-0.5">
@@ -133,7 +141,10 @@ const NotificationCenter = () => {
                               variant="ghost"
                               size="icon"
                               className="h-6 w-6"
-                              onClick={() => markAsRead(notification.id)}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                markAsRead(notification.id);
+                              }}
                             >
                               <Check className="h-3 w-3" />
                             </Button>
@@ -142,7 +153,10 @@ const NotificationCenter = () => {
                             variant="ghost"
                             size="icon"
                             className="h-6 w-6 text-muted-foreground hover:text-destructive"
-                            onClick={() => deleteNotification(notification.id)}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              deleteNotification(notification.id);
+                            }}
                           >
                             <X className="h-3 w-3" />
                           </Button>
