@@ -4,7 +4,7 @@ import { Card } from "@/components/ui/card";
 import { Slider } from "@/components/ui/slider";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Volume2, Type, Contrast, Ear, Accessibility } from "lucide-react";
+import { Volume2, Type, Contrast, Ear, Accessibility, Moon, Sun } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useAccessibilityLogger } from "@/hooks/useAccessibilityLogger";
 
@@ -23,6 +23,7 @@ export const EnhancedAccessibilityToolbar = () => {
   const [selectedVoiceIndex, setSelectedVoiceIndex] = useState(0);
   const [isSpeaking, setIsSpeaking] = useState(false);
   const [availableVoices, setAvailableVoices] = useState<SpeechSynthesisVoice[]>([]);
+  const [isDarkMode, setIsDarkMode] = useState(false);
   const { toast } = useToast();
   const { logAccessibilityFeature } = useAccessibilityLogger();
 
@@ -59,6 +60,12 @@ export const EnhancedAccessibilityToolbar = () => {
     }
     if (savedContrast === 'true') {
       document.documentElement.classList.add('high-contrast');
+    }
+    
+    const savedDarkMode = localStorage.getItem('accessibility_dark_mode');
+    if (savedDarkMode === 'true') {
+      document.documentElement.classList.add('dark');
+      setIsDarkMode(true);
     }
   }, []);
 
@@ -159,6 +166,16 @@ export const EnhancedAccessibilityToolbar = () => {
     });
   };
 
+  const toggleDarkMode = () => {
+    const isEnabled = document.documentElement.classList.toggle('dark');
+    setIsDarkMode(isEnabled);
+    localStorage.setItem('accessibility_dark_mode', isEnabled.toString());
+    logAccessibilityFeature('dark_mode', isEnabled.toString());
+    toast({
+      title: isEnabled ? "Dark mode enabled" : "Dark mode disabled",
+    });
+  };
+
   return (
     <>
       <a 
@@ -253,6 +270,21 @@ export const EnhancedAccessibilityToolbar = () => {
               >
                 <Contrast className="h-4 w-4 mr-2" aria-hidden="true" />
                 High Contrast
+              </Button>
+
+              <Button
+                variant="outline"
+                size="sm"
+                className="w-full justify-start"
+                onClick={toggleDarkMode}
+                aria-label={isDarkMode ? "Switch to light mode" : "Switch to dark mode"}
+              >
+                {isDarkMode ? (
+                  <Sun className="h-4 w-4 mr-2" aria-hidden="true" />
+                ) : (
+                  <Moon className="h-4 w-4 mr-2" aria-hidden="true" />
+                )}
+                {isDarkMode ? 'Light Mode' : 'Dark Mode'}
               </Button>
             </div>
           </Card>

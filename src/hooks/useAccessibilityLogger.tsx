@@ -5,7 +5,7 @@ export const useAccessibilityLogger = () => {
   const { toast } = useToast();
 
   const logAccessibilityFeature = async (
-    featureType: 'tts' | 'high_contrast' | 'font_size' | 'keyboard_nav' | 'read_selection',
+    featureType: 'tts' | 'high_contrast' | 'font_size' | 'keyboard_nav' | 'read_selection' | 'dark_mode',
     featureValue?: string
   ) => {
     try {
