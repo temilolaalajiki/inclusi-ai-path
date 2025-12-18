@@ -180,6 +180,7 @@ const LearnerDashboard = () => {
             <DashboardHeader
               welcomeMessage={`Welcome back, ${userProfile?.firstName || 'Learner'}!`}
               subtitle="Your personalized learning journey continues"
+              thirdLine={teacherName ? `Assigned Teacher: ${teacherName}` : undefined}
               stats={headerStats}
             />
 

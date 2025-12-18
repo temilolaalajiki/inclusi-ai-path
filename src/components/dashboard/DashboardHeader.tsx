@@ -14,10 +14,11 @@ interface StatItem {
 interface DashboardHeaderProps {
   welcomeMessage: string;
   subtitle?: string;
+  thirdLine?: string;
   stats: StatItem[];
 }
 
-export function DashboardHeader({ welcomeMessage, subtitle, stats }: DashboardHeaderProps) {
+export function DashboardHeader({ welcomeMessage, subtitle, thirdLine, stats }: DashboardHeaderProps) {
   return (
     <div className="space-y-6">
       <div>
@@ -26,6 +27,9 @@ export function DashboardHeader({ welcomeMessage, subtitle, stats }: DashboardHe
         </h2>
         {subtitle && (
           <p className="text-muted-foreground mt-1">{subtitle}</p>
+        )}
+        {thirdLine && (
+          <p className="text-muted-foreground mt-1 font-medium">{thirdLine}</p>
         )}
       </div>
 
