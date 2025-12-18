@@ -49,6 +49,8 @@ const AdminDashboard = () => {
   const [detailsDialogOpen, setDetailsDialogOpen] = useState(false);
   const [learnersLoading, setLearnersLoading] = useState(false);
   const [activeTab, setActiveTab] = useState("dashboard");
+  const [performanceAnalysisResults, setPerformanceAnalysisResults] = useState<any>(null);
+  const [isAnalyzing, setIsAnalyzing] = useState(false);
   const { toast } = useToast();
 
   const menuItems: SidebarMenuItem[] = [
@@ -220,6 +222,9 @@ const AdminDashboard = () => {
 
   const handlePerformanceAnalysis = async () => {
     try {
+      setIsAnalyzing(true);
+      setPerformanceAnalysisResults(null);
+      
       toast({
         title: 'Analyzing Performance...',
         description: 'Checking for learners needing intervention.'
@@ -229,6 +234,8 @@ const AdminDashboard = () => {
 
       if (error) throw error;
 
+      setPerformanceAnalysisResults(data);
+      
       toast({
         title: 'Performance Analysis Complete',
         description: `Created ${data.interventions_created} low performance interventions.`
@@ -242,6 +249,8 @@ const AdminDashboard = () => {
         description: 'Failed to analyze performance.',
         variant: 'destructive'
       });
+    } finally {
+      setIsAnalyzing(false);
     }
   };
 
@@ -456,12 +465,7 @@ const AdminDashboard = () => {
   ];
 
   const quickActions = [
-    { label: "Analyze Performance", icon: <Brain className="h-4 w-4" />, onClick: handlePerformanceAnalysis },
-    // { label: "Check Capacity", icon: <UserCheck className="h-4 w-4" />, onClick: handleCapacityCheck },
-    // { label: "Visual Materials", icon: <Eye className="h-4 w-4" />, onClick: handleVisualMaterialsRecommendation },
-    // { label: "Seed Standards", icon: <BookOpen className="h-4 w-4" />, onClick: seedNigerianStandards, variant: "secondary" as const },
-    // { label: "Equity Metrics", icon: <Brain className="h-4 w-4" />, onClick: calculateEquityMetrics, variant: "secondary" as const },
-    // { label: "Seed Test Data", icon: <UserPlus className="h-4 w-4" />, onClick: seedTestData, variant: "outline" as const },
+    { label: isAnalyzing ? "Analyzing..." : "Analyze Performance", icon: <Brain className="h-4 w-4" />, onClick: handlePerformanceAnalysis, disabled: isAnalyzing },
   ];
 
   const renderContent = () => {
@@ -827,6 +831,117 @@ const AdminDashboard = () => {
               description="Run system-wide analysis and generate insights"
               actions={quickActions}
             />
+            
+            {/* Performance Analysis Results */}
+            {isAnalyzing && (
+              <Card>
+                <CardContent className="py-8">
+                  <div className="flex flex-col items-center justify-center gap-3">
+                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+                    <p className="text-muted-foreground">Analyzing learner performance data...</p>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+
+            {performanceAnalysisResults && !isAnalyzing && (
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <AlertTriangle className="h-5 w-5 text-warning" />
+                    Performance Analysis Results
+                  </CardTitle>
+                  <CardDescription>
+                    {performanceAnalysisResults.interventions_created > 0
+                      ? `Found ${performanceAnalysisResults.interventions_created} learner(s) requiring intervention`
+                      : 'All learners are performing above the intervention threshold'}
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  {performanceAnalysisResults.interventions && performanceAnalysisResults.interventions.length > 0 ? (
+                    <div className="space-y-4">
+                      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+                        {performanceAnalysisResults.interventions.map((intervention: any, idx: number) => (
+                          <div key={idx} className="border rounded-lg p-4 bg-warning/5 border-warning/30">
+                            <div className="flex items-start justify-between mb-2">
+                              <h4 className="font-semibold text-sm">{intervention.learner_name}</h4>
+                              <Badge variant={intervention.avg_score < 30 ? "destructive" : "secondary"}>
+                                {intervention.avg_score.toFixed(1)}%
+                              </Badge>
+                            </div>
+                            <div className="space-y-2">
+                              <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                                <TrendingUp className="h-3 w-3" />
+                                <span>Average Score: {intervention.avg_score.toFixed(1)}%</span>
+                              </div>
+                              <div className="flex flex-wrap gap-1">
+                                {intervention.subjects?.slice(0, 3).map((subject: string, sIdx: number) => (
+                                  <Badge key={sIdx} variant="outline" className="text-xs">
+                                    {subject}
+                                  </Badge>
+                                ))}
+                                {intervention.subjects?.length > 3 && (
+                                  <Badge variant="outline" className="text-xs">
+                                    +{intervention.subjects.length - 3} more
+                                  </Badge>
+                                )}
+                              </div>
+                            </div>
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              className="w-full mt-3"
+                              onClick={() => {
+                                const student = learners.find(l => l.id === intervention.learner_id);
+                                if (student) {
+                                  handleViewStudent(student);
+                                }
+                              }}
+                            >
+                              <Eye className="h-3 w-3 mr-1" />
+                              View Details
+                            </Button>
+                          </div>
+                        ))}
+                      </div>
+                      
+                      <div className="pt-4 border-t">
+                        <h4 className="font-semibold text-sm mb-2">Summary</h4>
+                        <div className="grid gap-2 md:grid-cols-3">
+                          <div className="text-center p-3 bg-muted/50 rounded-lg">
+                            <div className="text-2xl font-bold text-destructive">
+                              {performanceAnalysisResults.interventions.filter((i: any) => i.avg_score < 30).length}
+                            </div>
+                            <p className="text-xs text-muted-foreground">Critical (&lt;30%)</p>
+                          </div>
+                          <div className="text-center p-3 bg-muted/50 rounded-lg">
+                            <div className="text-2xl font-bold text-warning">
+                              {performanceAnalysisResults.interventions.filter((i: any) => i.avg_score >= 30 && i.avg_score < 50).length}
+                            </div>
+                            <p className="text-xs text-muted-foreground">Low (30-50%)</p>
+                          </div>
+                          <div className="text-center p-3 bg-muted/50 rounded-lg">
+                            <div className="text-2xl font-bold">
+                              {performanceAnalysisResults.interventions_created}
+                            </div>
+                            <p className="text-xs text-muted-foreground">Total Flagged</p>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="text-center py-8">
+                      <CheckCircle className="h-12 w-12 text-green-500 mx-auto mb-3" />
+                      <p className="font-medium">All Clear!</p>
+                      <p className="text-sm text-muted-foreground">
+                        No learners currently require performance intervention.
+                      </p>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            )}
+
             {insights && (
               <Card>
                 <CardHeader>
