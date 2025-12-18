@@ -17,19 +17,21 @@ serve(async (req) => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     );
 
-    // Get all learners with low performance (average score < 50)
+    // Get all learners
     const { data: learners, error: learnersError } = await supabaseClient
       .from('learners')
-      .select(`
-        id,
-        user_id,
-        teacher_id,
-        learning_challenges,
-        accessibility_needs,
-        profiles!learners_user_id_fkey(first_name, last_name)
-      `);
+      .select('id, user_id, teacher_id, learning_challenges, accessibility_needs');
 
     if (learnersError) throw learnersError;
+
+    // Fetch all profiles for these learners
+    const userIds = (learners || []).map(l => l.user_id);
+    const { data: profiles } = await supabaseClient
+      .from('profiles')
+      .select('id, first_name, last_name')
+      .in('id', userIds);
+
+    const profilesMap = new Map((profiles || []).map(p => [p.id, p]));
 
     const interventions = [];
 
@@ -51,7 +53,7 @@ serve(async (req) => {
 
       // Check if intervention is needed
       if (avgScore < 50) {
-        const profile = learner.profiles as any;
+        const profile = profilesMap.get(learner.user_id);
         const learnerName = profile ? `${profile.first_name} ${profile.last_name}` : 'Unknown';
         
         // Check if intervention already exists
