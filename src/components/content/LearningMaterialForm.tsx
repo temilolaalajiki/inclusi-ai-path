@@ -11,7 +11,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Switch } from '@/components/ui/switch';
 import { Upload, Video, FileText, Link, BookOpen, Loader2 } from 'lucide-react';
 import { useLearningMaterials, LearningMaterial } from '@/hooks/useLearningMaterials';
-
+import { useToast } from '@/hooks/use-toast';
 const SUBJECTS = ['Mathematics', 'English', 'Science', 'Social Studies', 'Civic Education', 'Computer Science', 'Physics', 'Chemistry', 'Biology', 'Economics', 'Government', 'Literature'];
 const GRADES = ['JSS 1', 'JSS 2', 'JSS 3', 'SSS 1', 'SSS 2', 'SSS 3'];
 const CONTENT_TYPES = [
@@ -45,6 +45,7 @@ export const LearningMaterialForm = ({ teacherId, material, onSuccess, onCancel 
   const [file, setFile] = useState<File | null>(null);
   const [isUploading, setIsUploading] = useState(false);
   const { createMaterial, updateMaterial, uploadFile } = useLearningMaterials(teacherId);
+  const { toast } = useToast();
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
@@ -66,8 +67,16 @@ export const LearningMaterialForm = ({ teacherId, material, onSuccess, onCancel 
     const selectedFile = e.target.files?.[0];
     if (selectedFile) {
       // Validate file size (max 50MB)
-      if (selectedFile.size > 50 * 1024 * 1024) {
-        form.setError('root', { message: 'File size must be less than 50MB' });
+      const maxSizeMB = 50;
+      if (selectedFile.size > maxSizeMB * 1024 * 1024) {
+        const fileSizeMB = (selectedFile.size / (1024 * 1024)).toFixed(1);
+        toast({
+          title: 'File Too Large',
+          description: `The selected file is ${fileSizeMB}MB. Maximum allowed size is ${maxSizeMB}MB.`,
+          variant: 'destructive',
+        });
+        // Reset the file input
+        e.target.value = '';
         return;
       }
       setFile(selectedFile);
