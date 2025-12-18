@@ -99,19 +99,29 @@ export function StudentDetailsDialog({ student, open, onOpenChange, onUpdate }: 
     if (!student) return;
     
     setLoading(true);
+    console.log('Saving student with formData:', formData);
+    console.log('Student ID:', student.id, 'User ID:', student.user_id);
+    
     try {
       // Update profile
-      const { error: profileError } = await supabase
+      const { data: profileData, error: profileError } = await supabase
         .from('profiles')
         .update({
           first_name: formData.firstName,
           last_name: formData.lastName
         })
-        .eq('id', student.user_id);
+        .eq('id', student.user_id)
+        .select();
 
-      if (profileError) throw profileError;
+      console.log('Profile update result:', { profileData, profileError });
+      
+      if (profileError) {
+        console.error('Profile update error:', profileError);
+        throw new Error(`Profile update failed: ${profileError.message}`);
+      }
 
-      // Update learner
+      // Update learner with teacher_id
+      console.log('Updating learner teacher_id to:', formData.teacherId);
       const { data: updatedLearner, error: learnerError } = await supabase
         .from('learners')
         .update({
@@ -122,11 +132,25 @@ export function StudentDetailsDialog({ student, open, onOpenChange, onUpdate }: 
         .eq('id', student.id)
         .select();
 
-      if (learnerError) throw learnerError;
+      console.log('Learner update result:', { updatedLearner, learnerError });
+
+      if (learnerError) {
+        console.error('Learner update error:', learnerError);
+        throw new Error(`Learner update failed: ${learnerError.message}`);
+      }
       
       // Check if update actually happened (RLS might block without error)
       if (!updatedLearner || updatedLearner.length === 0) {
+        console.error('No rows updated - RLS might be blocking');
         throw new Error('Update was blocked. You may not have permission to modify this learner.');
+      }
+
+      // Verify the teacher_id was actually changed
+      if (updatedLearner[0].teacher_id !== (formData.teacherId || null)) {
+        console.error('Teacher ID mismatch after update:', {
+          expected: formData.teacherId,
+          actual: updatedLearner[0].teacher_id
+        });
       }
 
       toast({
@@ -136,11 +160,12 @@ export function StudentDetailsDialog({ student, open, onOpenChange, onUpdate }: 
       
       setEditing(false);
       onUpdate();
+      onOpenChange(false); // Close dialog to force fresh data on reopen
     } catch (error: any) {
       console.error('Error updating student:', error);
       toast({
         title: 'Error',
-        description: 'Failed to update student profile.',
+        description: error.message || 'Failed to update student profile.',
         variant: 'destructive'
       });
     } finally {
