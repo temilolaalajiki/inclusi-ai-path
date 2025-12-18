@@ -78,22 +78,35 @@ serve(async (req) => {
     const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const supabase = createClient(supabaseUrl, supabaseKey);
 
-    // Fetch comprehensive learner data including feedback
+    // Fetch learner data
     const { data: learnerData, error: learnerError } = await supabase
       .from('learners')
-      .select(`
-        *,
-        profiles!learners_user_id_fkey(first_name, last_name),
-        performance_records(subject, score, assessment_date),
-        recommendations(id, title, description, status, created_at),
-        feedback:feedback(recommendation_id, rating, comment)
-      `)
+      .select('*')
       .eq('id', learnerId)
       .single();
 
     if (learnerError) throw learnerError;
 
-    console.log('Fetched learner data for interventions:', learnerData);
+    // Fetch related data separately
+    const [profileRes, perfRes, recsRes, feedbackRes] = await Promise.all([
+      supabase.from('profiles').select('first_name, last_name').eq('id', learnerData.user_id).maybeSingle(),
+      supabase.from('performance_records').select('subject, score, assessment_date').eq('learner_id', learnerId),
+      supabase.from('recommendations').select('id, title, description, status, created_at').eq('learner_id', learnerId),
+      supabase.from('feedback').select('recommendation_id, rating, comment').in('recommendation_id', 
+        (await supabase.from('recommendations').select('id').eq('learner_id', learnerId)).data?.map(r => r.id) || []
+      )
+    ]);
+
+    // Combine the data
+    const fullLearnerData = {
+      ...learnerData,
+      profiles: profileRes.data || { first_name: '', last_name: '' },
+      performance_records: perfRes.data || [],
+      recommendations: recsRes.data || [],
+      feedback: feedbackRes.data || []
+    };
+
+    console.log('Fetched learner data for interventions:', fullLearnerData);
 
     let interventions = [];
     let useAI = true;
@@ -108,18 +121,18 @@ serve(async (req) => {
       if (useAI) {
         const systemPrompt = `You are an educational intervention specialist. Generate personalized, evidence-based intervention strategies for students with diverse learning needs. Focus on practical, actionable strategies teachers can implement.`;
 
-        const feedbackSummary = learnerData.feedback?.map((f: any) => 
+        const feedbackSummary = fullLearnerData.feedback?.map((f: any) => 
           `${f.rating}: ${f.comment || 'No comment'}`
         ).join('\n') || 'No feedback yet';
 
         const userPrompt = `Generate 3-5 intervention strategies for this student:
 
 Student Profile:
-- Learning Challenges: ${learnerData.learning_challenges?.join(', ') || 'None'}
-- Accessibility Needs: ${learnerData.accessibility_needs?.join(', ') || 'None'}
+- Learning Challenges: ${fullLearnerData.learning_challenges?.join(', ') || 'None'}
+- Accessibility Needs: ${fullLearnerData.accessibility_needs?.join(', ') || 'None'}
 
-Current Recommendations (${learnerData.recommendations?.length || 0}):
-${learnerData.recommendations?.slice(0, 5).map((r: any) => 
+Current Recommendations (${fullLearnerData.recommendations?.length || 0}):
+${fullLearnerData.recommendations?.slice(0, 5).map((r: any) => 
   `- ${r.title} (${r.status})`
 ).join('\n') || 'None'}
 
@@ -127,7 +140,7 @@ Feedback History:
 ${feedbackSummary}
 
 Recent Performance:
-${learnerData.performance_records?.slice(-3).map((r: any) => 
+${fullLearnerData.performance_records?.slice(-3).map((r: any) => 
   `- ${r.subject}: ${r.score}%`
 ).join('\n') || 'No data'}
 
@@ -208,13 +221,13 @@ Suggest intervention strategies that build on successful recommendations and add
 
     if (!useAI || interventions.length === 0) {
       console.log('Using rule-based fallback for interventions');
-      interventions = generateFallbackInterventions(learnerData);
+      interventions = generateFallbackInterventions(fullLearnerData);
     }
 
     // Store interventions as recommendations
     const interventionsToInsert = interventions.map((int: any) => ({
       learner_id: learnerId,
-      teacher_id: learnerData.teacher_id,
+      teacher_id: fullLearnerData.teacher_id,
       title: int.title,
       description: int.description,
       recommendation_type: int.recommendation_type,
@@ -241,13 +254,13 @@ Suggest intervention strategies that build on successful recommendations and add
             {
               step: 1,
               description: 'Reviewed existing recommendations and feedback',
-              data_point: `${learnerData.recommendations?.length || 0} previous recommendations`,
+              data_point: `${fullLearnerData.recommendations?.length || 0} previous recommendations`,
               conclusion: 'Identified patterns in recommendation effectiveness'
             },
             {
               step: 2,
               description: 'Analyzed feedback from learner',
-              data_point: `${learnerData.feedback?.length || 0} feedback entries`,
+              data_point: `${fullLearnerData.feedback?.length || 0} feedback entries`,
               conclusion: 'Understood learner preferences and challenges'
             },
             {
@@ -272,7 +285,7 @@ Suggest intervention strategies that build on successful recommendations and add
 
       // Log data usage
       await supabase.from('data_usage_logs').insert({
-        user_id: learnerData.user_id,
+        user_id: fullLearnerData.user_id,
         data_type: 'performance',
         purpose: 'recommendation',
         data_fields: ['recommendations', 'feedback', 'performance_records'],
