@@ -168,18 +168,28 @@ serve(async (req) => {
     // Fetch learner data
     const { data: learnerData, error: learnerError } = await supabase
       .from('learners')
-      .select(`
-        *,
-        profiles!learners_user_id_fkey(first_name, last_name),
-        performance_records(subject, score, assessment_date, notes),
-        recommendations(id, title, description, status)
-      `)
+      .select('*')
       .eq('id', learnerId)
       .single();
 
     if (learnerError) throw learnerError;
 
-    console.log('Fetched learner data:', learnerData);
+    // Fetch related data separately
+    const [profileRes, perfRes, recsRes] = await Promise.all([
+      supabase.from('profiles').select('first_name, last_name').eq('id', learnerData.user_id).maybeSingle(),
+      supabase.from('performance_records').select('subject, score, assessment_date, notes').eq('learner_id', learnerId),
+      supabase.from('recommendations').select('id, title, description, status').eq('learner_id', learnerId)
+    ]);
+
+    // Combine the data
+    const fullLearnerData = {
+      ...learnerData,
+      profiles: profileRes.data || { first_name: '', last_name: '' },
+      performance_records: perfRes.data || [],
+      recommendations: recsRes.data || []
+    };
+
+    console.log('Fetched learner data:', fullLearnerData);
 
     // Try AI analysis first
     let recommendations = [];
@@ -198,17 +208,17 @@ serve(async (req) => {
         const userPrompt = `Analyze this learner profile and generate 3-5 personalized recommendations:
 
 Student Profile:
-- Learning Challenges: ${learnerData.learning_challenges?.join(', ') || 'None reported'}
-- Accessibility Needs: ${learnerData.accessibility_needs?.join(', ') || 'None reported'}
-- Demographics: ${JSON.stringify(learnerData.demographics || {})}
+- Learning Challenges: ${fullLearnerData.learning_challenges?.join(', ') || 'None reported'}
+- Accessibility Needs: ${fullLearnerData.accessibility_needs?.join(', ') || 'None reported'}
+- Demographics: ${JSON.stringify(fullLearnerData.demographics || {})}
 
 Performance History:
-${learnerData.performance_records?.map((r: any) => 
+${fullLearnerData.performance_records?.map((r: any) => 
   `- ${r.subject}: ${r.score}% (${r.assessment_date})${r.notes ? ' - ' + r.notes : ''}`
 ).join('\n') || 'No performance data yet'}
 
 Current Recommendations:
-${learnerData.recommendations?.map((r: any) => `- ${r.title} (${r.status})`).join('\n') || 'None'}
+${fullLearnerData.recommendations?.map((r: any) => `- ${r.title} (${r.status})`).join('\n') || 'None'}
 
 Provide recommendations that are specific, actionable, and prioritized.`;
 
@@ -293,13 +303,13 @@ Provide recommendations that are specific, actionable, and prioritized.`;
     // Use rule-based fallback if AI failed
     if (!useAI || recommendations.length === 0) {
       console.log('Using rule-based fallback');
-      recommendations = generateFallbackRecommendations(learnerData);
+      recommendations = generateFallbackRecommendations(fullLearnerData);
     }
 
     // Store recommendations in database
     const recommendationsToInsert = recommendations.map((rec: any) => ({
       learner_id: learnerId,
-      teacher_id: learnerData.teacher_id,
+      teacher_id: fullLearnerData.teacher_id,
       title: rec.title,
       description: rec.description,
       recommendation_type: rec.recommendation_type,
@@ -326,13 +336,13 @@ Provide recommendations that are specific, actionable, and prioritized.`;
             {
               step: 1,
               description: 'Analyzed learner performance data',
-              data_point: `${learnerData.performance_records?.length || 0} performance records`,
+              data_point: `${fullLearnerData.performance_records?.length || 0} performance records`,
               conclusion: 'Identified performance patterns'
             },
             {
               step: 2,
               description: 'Evaluated learning challenges and accessibility needs',
-              data_point: `Challenges: ${learnerData.learning_challenges?.join(', ') || 'None'}`,
+              data_point: `Challenges: ${fullLearnerData.learning_challenges?.join(', ') || 'None'}`,
               conclusion: 'Determined support requirements'
             },
             {
@@ -357,7 +367,7 @@ Provide recommendations that are specific, actionable, and prioritized.`;
 
       // Log data usage
       await supabase.from('data_usage_logs').insert({
-        user_id: learnerData.user_id,
+        user_id: fullLearnerData.user_id,
         data_type: 'performance',
         purpose: 'recommendation',
         data_fields: ['performance_records', 'learning_challenges', 'accessibility_needs'],
