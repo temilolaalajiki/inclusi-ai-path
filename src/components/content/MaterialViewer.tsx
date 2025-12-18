@@ -1,10 +1,11 @@
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { ArrowLeft, Video, FileText, Link, BookOpen, ExternalLink, CheckCircle, Download } from 'lucide-react';
 import { LearningMaterial } from '@/hooks/useLearningMaterials';
 import { MaterialProgress, useLearnerContent } from '@/hooks/useLearnerContent';
+import { DocumentAccessibilityToolbar } from './DocumentAccessibilityToolbar';
 
 const contentTypeIcons = {
   video: Video,
@@ -23,6 +24,8 @@ interface MaterialViewerProps {
 export const MaterialViewer = ({ material, progress, learnerId, onBack }: MaterialViewerProps) => {
   const { updateProgress } = useLearnerContent(learnerId);
   const Icon = contentTypeIcons[material.content_type];
+  const documentContentRef = useRef<HTMLDivElement>(null);
+  const showAccessibilityOptions = material.content_type === 'document' || material.content_type === 'article';
 
   // Mark as in progress when viewing
   useEffect(() => {
@@ -86,6 +89,14 @@ export const MaterialViewer = ({ material, progress, learnerId, onBack }: Materi
         )}
       </div>
 
+      {/* Accessibility Options for Document/Article */}
+      {showAccessibilityOptions && (
+        <DocumentAccessibilityToolbar 
+          contentRef={documentContentRef}
+          contentText={material.content_text || undefined}
+        />
+      )}
+
       {/* Content */}
       <Card>
         <CardContent className="p-6">
@@ -105,7 +116,7 @@ export const MaterialViewer = ({ material, progress, learnerId, onBack }: Materi
 
           {/* Document Content */}
           {material.content_type === 'document' && material.file_url && (
-            <div className="space-y-4">
+            <div ref={documentContentRef} className="space-y-4">
               {material.file_url.endsWith('.pdf') ? (
                 <div className="aspect-[4/3] bg-muted rounded-lg overflow-hidden">
                   <iframe
@@ -133,7 +144,7 @@ export const MaterialViewer = ({ material, progress, learnerId, onBack }: Materi
 
           {/* Article Content */}
           {material.content_type === 'article' && material.content_text && (
-            <div className="prose prose-lg max-w-none dark:prose-invert">
+            <div ref={documentContentRef} className="prose prose-lg max-w-none dark:prose-invert">
               <div className="whitespace-pre-wrap">{material.content_text}</div>
             </div>
           )}
