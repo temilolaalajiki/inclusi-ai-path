@@ -38,6 +38,7 @@ const LearnerDashboard = () => {
   const [curriculumAlignments, setCurriculumAlignments] = useState<any[]>([]);
   const [refreshKey, setRefreshKey] = useState(0);
   const [teacherName, setTeacherName] = useState<string | null>(null);
+  const [teacherEmail, setTeacherEmail] = useState<string | null>(null);
 
   const menuItems: SidebarMenuItem[] = [
     { title: "Dashboard", icon: <LayoutDashboard className="h-4 w-4" />, value: "dashboard" },
@@ -64,12 +65,13 @@ const LearnerDashboard = () => {
     
     const { data } = await supabase
       .from('profiles')
-      .select('first_name, last_name')
+      .select('first_name, last_name, email')
       .eq('id', learner.teacher_id)
       .single();
     
     if (data) {
       setTeacherName(`${data.first_name} ${data.last_name}`);
+      setTeacherEmail(data.email);
     }
   };
 
@@ -182,11 +184,16 @@ const LearnerDashboard = () => {
             />
 
             {teacherName && (
-              <div className="flex justify-end">
+              <div className="flex justify-end items-center gap-3">
                 <Badge variant="outline" className="text-lg px-4 py-2">
                   <GraduationCap className="h-4 w-4 mr-2" />
                   Teacher: {teacherName}
                 </Badge>
+                {teacherEmail && (
+                  <a href={`mailto:${teacherEmail}`} className="text-sm text-muted-foreground hover:text-primary transition-colors">
+                    {teacherEmail}
+                  </a>
+                )}
               </div>
             )}
 
