@@ -30,7 +30,10 @@ const LearnerDashboard = () => {
     recommendations, 
     nigerianContext, 
     demographics, 
-    accessibilityProfile, 
+    accessibilityProfile,
+    materialProgress,
+    quizAttempts,
+    stats,
     loading, 
     submitFeedback 
   } = useLearnerData(user?.id);
@@ -143,32 +146,10 @@ const LearnerDashboard = () => {
     return <LoadingScreen />;
   }
 
-  // Calculate subject progress from performance records
-  const subjectProgress = performance.reduce((acc, record) => {
-    if (!acc[record.subject]) {
-      acc[record.subject] = { total: 0, count: 0 };
-    }
-    acc[record.subject].total += Number(record.score);
-    acc[record.subject].count += 1;
-    return acc;
-  }, {} as Record<string, { total: number; count: number }>);
-
-  const subjects = Object.entries(subjectProgress).map(([name, data]) => {
-    const progress = Math.round(data.total / data.count);
-    return {
-      name,
-      progress,
-      status: progress >= 85 ? 'Excellent' : progress >= 70 ? 'On Track' : 'Needs Support'
-    };
-  });
-
-  const avgProgress = subjects.length > 0
-    ? Math.round(subjects.reduce((sum, s) => sum + s.progress, 0) / subjects.length)
-    : 0;
 
   const headerStats = [
-    { title: "Overall Progress", value: `${avgProgress}%`, icon: <TrendingUp className="h-5 w-5" />, variant: "success" as const },
-    { title: "Active Courses", value: subjects.length, icon: <BookOpen className="h-5 w-5" />, variant: "default" as const },
+    { title: "Overall Progress", value: `${stats.overallProgress}%`, icon: <TrendingUp className="h-5 w-5" />, variant: "success" as const },
+    { title: "Active Courses", value: stats.activeCourses, icon: <BookOpen className="h-5 w-5" />, variant: "default" as const },
     { title: "Recommendations", value: recommendations.length, icon: <Brain className="h-5 w-5" />, variant: "default" as const },
   ];
 
@@ -198,30 +179,88 @@ const LearnerDashboard = () => {
               </div>
             )}
 
+            {/* Quick Stats Grid */}
+            <div className="grid gap-4 md:grid-cols-4">
+              <Card>
+                <CardContent className="pt-6">
+                  <div className="flex items-center gap-4">
+                    <div className="p-3 rounded-full bg-primary/10">
+                      <BookOpen className="h-5 w-5 text-primary" />
+                    </div>
+                    <div>
+                      <p className="text-sm text-muted-foreground">Materials Completed</p>
+                      <p className="text-2xl font-bold">{stats.completedMaterials}</p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+              <Card>
+                <CardContent className="pt-6">
+                  <div className="flex items-center gap-4">
+                    <div className="p-3 rounded-full bg-green-500/10">
+                      <Award className="h-5 w-5 text-green-500" />
+                    </div>
+                    <div>
+                      <p className="text-sm text-muted-foreground">Quizzes Passed</p>
+                      <p className="text-2xl font-bold">{stats.completedQuizzes}</p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+              <Card>
+                <CardContent className="pt-6">
+                  <div className="flex items-center gap-4">
+                    <div className="p-3 rounded-full bg-blue-500/10">
+                      <TrendingUp className="h-5 w-5 text-blue-500" />
+                    </div>
+                    <div>
+                      <p className="text-sm text-muted-foreground">Avg Quiz Score</p>
+                      <p className="text-2xl font-bold">{stats.averageQuizScore}%</p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+              <Card>
+                <CardContent className="pt-6">
+                  <div className="flex items-center gap-4">
+                    <div className="p-3 rounded-full bg-orange-500/10">
+                      <Clock className="h-5 w-5 text-orange-500" />
+                    </div>
+                    <div>
+                      <p className="text-sm text-muted-foreground">In Progress</p>
+                      <p className="text-2xl font-bold">{stats.materialsInProgress.length}</p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+
             <div className="grid gap-6 md:grid-cols-2">
-              <ChartCard title="Subject Progress" description="Your performance across all subjects">
+              <ChartCard title="Materials Progress" description="Your learning materials journey">
                 <div className="space-y-4">
-                  {subjects.length > 0 ? (
-                    subjects.map((subject) => (
-                      <div key={subject.name} className="space-y-2">
+                  {materialProgress.length > 0 ? (
+                    materialProgress.slice(0, 5).map((progress) => (
+                      <div key={progress.id} className="space-y-2">
                         <div className="flex justify-between items-center">
-                          <span className="text-sm font-medium">{subject.name}</span>
+                          <span className="text-sm font-medium truncate max-w-[200px]">
+                            {progress.material?.title || 'Learning Material'}
+                          </span>
                           <div className="flex items-center gap-2">
-                            <span className="text-sm text-muted-foreground">{subject.progress}%</span>
+                            <span className="text-sm text-muted-foreground">{progress.progress_percent}%</span>
                             <Badge 
-                              variant={subject.status === 'Excellent' ? 'default' : subject.status === 'On Track' ? 'secondary' : 'destructive'}
+                              variant={progress.status === 'completed' ? 'default' : progress.status === 'in_progress' ? 'secondary' : 'outline'}
                               className="text-xs"
                             >
-                              {subject.status}
+                              {progress.status === 'completed' ? 'Completed' : progress.status === 'in_progress' ? 'In Progress' : 'Not Started'}
                             </Badge>
                           </div>
                         </div>
-                        <Progress value={subject.progress} className="h-2" />
+                        <Progress value={progress.progress_percent} className="h-2" />
                       </div>
                     ))
                   ) : (
                     <p className="text-sm text-muted-foreground text-center py-4">
-                      No performance data yet
+                      No materials started yet. Check the Learn tab to get started!
                     </p>
                   )}
                 </div>
@@ -247,41 +286,129 @@ const LearnerDashboard = () => {
                     ))
                   ) : (
                     <p className="text-sm text-muted-foreground text-center py-4">
-                      No recommendations yet
+                      Start learning to get personalized recommendations!
                     </p>
                   )}
                 </div>
               </ChartCard>
             </div>
+
+            {/* Recent Quiz Attempts */}
+            {quizAttempts.length > 0 && (
+              <ChartCard title="Recent Quiz Attempts" description="Your latest quiz performance">
+                <div className="space-y-3">
+                  {quizAttempts.slice(0, 5).map((attempt) => {
+                    const scorePercent = attempt.score && attempt.max_score 
+                      ? Math.round((attempt.score / attempt.max_score) * 100) 
+                      : null;
+                    const passed = scorePercent !== null && attempt.quiz?.pass_score 
+                      ? scorePercent >= attempt.quiz.pass_score 
+                      : false;
+                    
+                    return (
+                      <div key={attempt.id} className="flex items-center justify-between p-3 border rounded-lg">
+                        <div className="flex items-center gap-3">
+                          <div className={`p-2 rounded-full ${passed ? 'bg-green-500/10' : attempt.completed_at ? 'bg-red-500/10' : 'bg-orange-500/10'}`}>
+                            {passed ? (
+                              <Award className="h-4 w-4 text-green-500" />
+                            ) : attempt.completed_at ? (
+                              <TrendingUp className="h-4 w-4 text-red-500" />
+                            ) : (
+                              <Clock className="h-4 w-4 text-orange-500" />
+                            )}
+                          </div>
+                          <div>
+                            <p className="font-medium text-sm">{attempt.quiz?.title || 'Quiz'}</p>
+                            <p className="text-xs text-muted-foreground">{attempt.quiz?.subject}</p>
+                          </div>
+                        </div>
+                        <div className="text-right">
+                          {scorePercent !== null ? (
+                            <>
+                              <p className={`font-bold ${passed ? 'text-green-500' : 'text-red-500'}`}>
+                                {scorePercent}%
+                              </p>
+                              <Badge variant={passed ? 'default' : 'destructive'} className="text-xs">
+                                {passed ? 'Passed' : 'Failed'}
+                              </Badge>
+                            </>
+                          ) : (
+                            <Badge variant="outline" className="text-xs">In Progress</Badge>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </ChartCard>
+            )}
           </div>
         );
 
       case "progress":
         return (
           <div className="space-y-6">
-            <ChartCard title="Subject Progress" description="Your performance across all subjects">
+            <div className="grid gap-4 md:grid-cols-4">
+              <Card>
+                <CardContent className="pt-6">
+                  <div className="text-center">
+                    <p className="text-3xl font-bold text-primary">{stats.overallProgress}%</p>
+                    <p className="text-sm text-muted-foreground">Overall Progress</p>
+                  </div>
+                </CardContent>
+              </Card>
+              <Card>
+                <CardContent className="pt-6">
+                  <div className="text-center">
+                    <p className="text-3xl font-bold text-green-500">{stats.completedMaterials}</p>
+                    <p className="text-sm text-muted-foreground">Completed Materials</p>
+                  </div>
+                </CardContent>
+              </Card>
+              <Card>
+                <CardContent className="pt-6">
+                  <div className="text-center">
+                    <p className="text-3xl font-bold text-blue-500">{stats.completedQuizzes}</p>
+                    <p className="text-sm text-muted-foreground">Quizzes Completed</p>
+                  </div>
+                </CardContent>
+              </Card>
+              <Card>
+                <CardContent className="pt-6">
+                  <div className="text-center">
+                    <p className="text-3xl font-bold text-orange-500">{stats.averageQuizScore}%</p>
+                    <p className="text-sm text-muted-foreground">Average Quiz Score</p>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+
+            <ChartCard title="All Learning Materials" description="Track your progress across all materials">
               <div className="space-y-4">
-                {subjects.length > 0 ? (
-                  subjects.map((subject) => (
-                    <div key={subject.name} className="space-y-2">
+                {materialProgress.length > 0 ? (
+                  materialProgress.map((progress) => (
+                    <div key={progress.id} className="space-y-2">
                       <div className="flex justify-between items-center">
-                        <span className="text-sm font-medium">{subject.name}</span>
+                        <div>
+                          <span className="text-sm font-medium">{progress.material?.title || 'Learning Material'}</span>
+                          <p className="text-xs text-muted-foreground">{progress.material?.subject} • {progress.material?.grade_level}</p>
+                        </div>
                         <div className="flex items-center gap-2">
-                          <span className="text-sm text-muted-foreground">{subject.progress}%</span>
+                          <span className="text-sm text-muted-foreground">{progress.progress_percent}%</span>
                           <Badge 
-                            variant={subject.status === 'Excellent' ? 'default' : subject.status === 'On Track' ? 'secondary' : 'destructive'}
+                            variant={progress.status === 'completed' ? 'default' : progress.status === 'in_progress' ? 'secondary' : 'outline'}
                             className="text-xs"
                           >
-                            {subject.status}
+                            {progress.status === 'completed' ? 'Completed' : progress.status === 'in_progress' ? 'In Progress' : 'Not Started'}
                           </Badge>
                         </div>
                       </div>
-                      <Progress value={subject.progress} className="h-2" />
+                      <Progress value={progress.progress_percent} className="h-2" />
                     </div>
                   ))
                 ) : (
                   <p className="text-sm text-muted-foreground text-center py-4">
-                    No performance data yet
+                    No materials started yet. Check the Learn tab to get started!
                   </p>
                 )}
               </div>
