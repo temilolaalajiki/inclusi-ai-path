@@ -165,20 +165,6 @@ const LearnerDashboard = () => {
               stats={headerStats}
             />
 
-            {teacherName && (
-              <div className="flex justify-end items-center gap-3">
-                <Badge variant="outline" className="text-lg px-4 py-2">
-                  <GraduationCap className="h-4 w-4 mr-2" />
-                  Teacher: {teacherName}
-                </Badge>
-                {teacherEmail && (
-                  <a href={`mailto:${teacherEmail}`} className="text-sm text-muted-foreground hover:text-primary transition-colors">
-                    {teacherEmail}
-                  </a>
-                )}
-              </div>
-            )}
-
             {/* Quick Stats Grid */}
             <div className="grid gap-4 md:grid-cols-4">
               <Card>

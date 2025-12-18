@@ -53,7 +53,7 @@ const AdminDashboard = () => {
 
   const menuItems: SidebarMenuItem[] = [
     { title: "Dashboard", icon: <LayoutDashboard className="h-4 w-4" />, value: "dashboard" },
-    { title: "Users", icon: <Users className="h-4 w-4" />, value: "users" },
+    { title: "Learners", icon: <Users className="h-4 w-4" />, value: "users" },
     { title: "Teachers", icon: <BookOpen className="h-4 w-4" />, value: "teachers" },
     { 
       title: "Requests", 
@@ -78,7 +78,7 @@ const AdminDashboard = () => {
       ]
     },
     { title: "Standards", icon: <BookOpen className="h-4 w-4" />, value: "standards" },
-    { title: "Equity", icon: <Scale className="h-4 w-4" />, value: "equity" },
+   // { title: "Equity", icon: <Scale className="h-4 w-4" />, value: "equity" },
   ];
 
   useEffect(() => {
@@ -457,11 +457,11 @@ const AdminDashboard = () => {
 
   const quickActions = [
     { label: "Analyze Performance", icon: <Brain className="h-4 w-4" />, onClick: handlePerformanceAnalysis },
-    { label: "Check Capacity", icon: <UserCheck className="h-4 w-4" />, onClick: handleCapacityCheck },
-    { label: "Visual Materials", icon: <Eye className="h-4 w-4" />, onClick: handleVisualMaterialsRecommendation },
-    { label: "Seed Standards", icon: <BookOpen className="h-4 w-4" />, onClick: seedNigerianStandards, variant: "secondary" as const },
-    { label: "Equity Metrics", icon: <Brain className="h-4 w-4" />, onClick: calculateEquityMetrics, variant: "secondary" as const },
-    { label: "Seed Test Data", icon: <UserPlus className="h-4 w-4" />, onClick: seedTestData, variant: "outline" as const },
+    // { label: "Check Capacity", icon: <UserCheck className="h-4 w-4" />, onClick: handleCapacityCheck },
+    // { label: "Visual Materials", icon: <Eye className="h-4 w-4" />, onClick: handleVisualMaterialsRecommendation },
+    // { label: "Seed Standards", icon: <BookOpen className="h-4 w-4" />, onClick: seedNigerianStandards, variant: "secondary" as const },
+    // { label: "Equity Metrics", icon: <Brain className="h-4 w-4" />, onClick: calculateEquityMetrics, variant: "secondary" as const },
+    // { label: "Seed Test Data", icon: <UserPlus className="h-4 w-4" />, onClick: seedTestData, variant: "outline" as const },
   ];
 
   const renderContent = () => {
@@ -476,7 +476,7 @@ const AdminDashboard = () => {
             />
 
             <div className="flex flex-wrap gap-2 mb-4">
-              <Select onValueChange={handleDateRangeChange} defaultValue="all">
+              {/* <Select onValueChange={handleDateRangeChange} defaultValue="all">
                 <SelectTrigger className="w-[180px] bg-background">
                   <Calendar className="h-4 w-4 mr-2" />
                   <SelectValue placeholder="Date Range" />
@@ -487,27 +487,27 @@ const AdminDashboard = () => {
                   <SelectItem value="year">Last Year</SelectItem>
                   <SelectItem value="all">All Time</SelectItem>
                 </SelectContent>
-              </Select>
-              <Button onClick={handleExportPDF} variant="outline" size="sm">
+              </Select> */}
+              {/* <Button onClick={handleExportPDF} variant="outline" size="sm">
                 <FileDown className="h-4 w-4 mr-2" />
                 PDF
-              </Button>
-              <Button onClick={handleExportExcel} variant="outline" size="sm">
+              </Button> */}
+              {/* <Button onClick={handleExportExcel} variant="outline" size="sm">
                 <FileSpreadsheet className="h-4 w-4 mr-2" />
                 Excel
-              </Button>
-              <Button onClick={generateWeeklyReport} size="sm">
+              </Button> */}
+              {/* <Button onClick={generateWeeklyReport} size="sm">
                 <Download className="h-4 w-4 mr-2" />
                 Weekly Report
-              </Button>
-              <Button onClick={generateInsights} disabled={insightsLoading} size="sm">
+              </Button> */}
+              {/* <Button onClick={generateInsights} disabled={insightsLoading} size="sm">
                 <Brain className="h-4 w-4 mr-2" />
                 {insightsLoading ? 'Generating...' : 'Generate Insights'}
-              </Button>
+              </Button> */}
             </div>
 
             <QuickActionsCard
-              title="AI-Powered Actions"
+              title="AI-Powered Action(s)"
               description="System-wide analysis and recommendations"
               actions={quickActions}
             />
