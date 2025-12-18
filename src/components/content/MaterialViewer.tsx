@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -6,6 +6,7 @@ import { ArrowLeft, Video, FileText, Link, BookOpen, ExternalLink, CheckCircle, 
 import { LearningMaterial } from '@/hooks/useLearningMaterials';
 import { MaterialProgress, useLearnerContent } from '@/hooks/useLearnerContent';
 import { DocumentAccessibilityToolbar } from './DocumentAccessibilityToolbar';
+import { VideoAccessibilityToolbar } from './VideoAccessibilityToolbar';
 
 const contentTypeIcons = {
   video: Video,
@@ -25,7 +26,10 @@ export const MaterialViewer = ({ material, progress, learnerId, onBack }: Materi
   const { updateProgress } = useLearnerContent(learnerId);
   const Icon = contentTypeIcons[material.content_type];
   const documentContentRef = useRef<HTMLDivElement>(null);
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const [currentCaption, setCurrentCaption] = useState('');
   const showAccessibilityOptions = material.content_type === 'document' || material.content_type === 'article';
+
 
   // Mark as in progress when viewing
   useEffect(() => {
@@ -102,15 +106,31 @@ export const MaterialViewer = ({ material, progress, learnerId, onBack }: Materi
         <CardContent className="p-6">
           {/* Video Content */}
           {material.content_type === 'video' && material.file_url && (
-            <div className="aspect-video bg-black rounded-lg overflow-hidden">
-              <video
-                src={material.file_url}
-                controls
-                className="w-full h-full"
-                onEnded={handleMarkComplete}
-              >
-                Your browser does not support the video tag.
-              </video>
+            <div className="space-y-4">
+              <VideoAccessibilityToolbar 
+                videoUrl={material.file_url}
+                videoRef={videoRef}
+                onCaptionChange={setCurrentCaption}
+              />
+              <div className="relative aspect-video bg-black rounded-lg overflow-hidden">
+                <video
+                  ref={videoRef}
+                  src={material.file_url}
+                  controls
+                  className="w-full h-full"
+                  onEnded={handleMarkComplete}
+                >
+                  Your browser does not support the video tag.
+                </video>
+                {/* Caption Overlay */}
+                {currentCaption && (
+                  <div className="absolute bottom-16 left-0 right-0 flex justify-center pointer-events-none z-10">
+                    <div className="bg-black/80 text-white px-4 py-2 rounded-lg max-w-[80%] text-center">
+                      {currentCaption}
+                    </div>
+                  </div>
+                )}
+              </div>
             </div>
           )}
 
