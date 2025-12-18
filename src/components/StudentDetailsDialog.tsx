@@ -112,16 +112,22 @@ export function StudentDetailsDialog({ student, open, onOpenChange, onUpdate }: 
       if (profileError) throw profileError;
 
       // Update learner
-      const { error: learnerError } = await supabase
+      const { data: updatedLearner, error: learnerError } = await supabase
         .from('learners')
         .update({
           teacher_id: formData.teacherId || null,
           learning_challenges: formData.learningChallenges,
           accessibility_needs: formData.accessibilityNeeds
         })
-        .eq('id', student.id);
+        .eq('id', student.id)
+        .select();
 
       if (learnerError) throw learnerError;
+      
+      // Check if update actually happened (RLS might block without error)
+      if (!updatedLearner || updatedLearner.length === 0) {
+        throw new Error('Update was blocked. You may not have permission to modify this learner.');
+      }
 
       toast({
         title: 'Success!',
