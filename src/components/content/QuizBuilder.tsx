@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -10,12 +10,13 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Switch } from '@/components/ui/switch';
 import { Separator } from '@/components/ui/separator';
-import { Plus, Loader2, FileQuestion, ArrowLeft, Sparkles } from 'lucide-react';
+import { Plus, Loader2, FileQuestion, ArrowLeft, Sparkles, PenLine, BookOpen, Clock, Target, CheckCircle } from 'lucide-react';
 import { useQuizzes, Quiz, QuizQuestion } from '@/hooks/useQuizzes';
 import { useLearningMaterials } from '@/hooks/useLearningMaterials';
 import { QuizQuestionEditor } from './QuizQuestionEditor';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+
 const SUBJECTS = ['Mathematics', 'English', 'Science', 'Social Studies', 'Civic Education', 'Computer Science', 'Physics', 'Chemistry', 'Biology', 'Economics', 'Government', 'Literature'];
 const GRADES = ['JSS 1', 'JSS 2', 'JSS 3', 'SSS 1', 'SSS 2', 'SSS 3'];
 
@@ -32,6 +33,8 @@ const formSchema = z.object({
 
 type FormValues = z.infer<typeof formSchema>;
 
+type CreationMode = 'select' | 'ai' | 'manual';
+
 interface QuizBuilderProps {
   teacherId: string;
   quiz?: Quiz;
@@ -43,9 +46,36 @@ export const QuizBuilder = ({ teacherId, quiz, onSuccess, onCancel }: QuizBuilde
   const [questions, setQuestions] = useState<Partial<QuizQuestion>[]>([]);
   const [isLoadingQuiz, setIsLoadingQuiz] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
+  const [creationMode, setCreationMode] = useState<CreationMode>(quiz ? 'manual' : 'select');
   const { toast } = useToast();
   const { materials } = useLearningMaterials(teacherId);
   const { createQuiz, updateQuiz, getQuizWithQuestions, createQuestion, updateQuestion, deleteQuestion } = useQuizzes(teacherId);
+
+  const form = useForm<FormValues>({
+    resolver: zodResolver(formSchema),
+    defaultValues: {
+      title: quiz?.title || '',
+      description: quiz?.description || '',
+      subject: quiz?.subject || '',
+      grade_level: quiz?.grade_level || '',
+      material_id: quiz?.material_id ?? 'none',
+      time_limit_minutes: quiz?.time_limit_minutes || undefined,
+      pass_score: quiz?.pass_score || 50,
+      is_published: quiz?.is_published || false,
+    },
+  });
+
+  const selectedMaterialId = form.watch('material_id');
+  const selectedMaterial = materials.find(m => m.id === selectedMaterialId);
+
+  // Auto-fill subject and grade when material is selected in AI mode
+  useEffect(() => {
+    if (creationMode === 'ai' && selectedMaterial) {
+      form.setValue('subject', selectedMaterial.subject);
+      form.setValue('grade_level', selectedMaterial.grade_level);
+      form.setValue('title', `${selectedMaterial.title} Quiz`);
+    }
+  }, [selectedMaterial, creationMode, form]);
 
   const handleGenerateWithAI = async () => {
     const subject = form.getValues('subject');
@@ -55,7 +85,7 @@ export const QuizBuilder = ({ teacherId, quiz, onSuccess, onCancel }: QuizBuilde
     if (!subject || !gradeLevel) {
       toast({
         title: 'Missing information',
-        description: 'Please select a subject and grade level first',
+        description: 'Please select a material first',
         variant: 'destructive',
       });
       return;
@@ -63,14 +93,14 @@ export const QuizBuilder = ({ teacherId, quiz, onSuccess, onCancel }: QuizBuilde
 
     setIsGenerating(true);
     try {
-      const selectedMaterial = materialId && materialId !== 'none'
+      const material = materialId && materialId !== 'none'
         ? materials.find(m => m.id === materialId)
         : null;
       
       const { data, error } = await supabase.functions.invoke('generate-quiz-questions', {
         body: {
-          materialContent: selectedMaterial?.content_text || selectedMaterial?.description,
-          materialTitle: selectedMaterial?.title || `${subject} Quiz`,
+          materialContent: material?.content_text || material?.description,
+          materialTitle: material?.title || `${subject} Quiz`,
           subject,
           gradeLevel,
           questionCount: 5,
@@ -106,20 +136,6 @@ export const QuizBuilder = ({ teacherId, quiz, onSuccess, onCancel }: QuizBuilde
       setIsGenerating(false);
     }
   };
-
-  const form = useForm<FormValues>({
-    resolver: zodResolver(formSchema),
-    defaultValues: {
-      title: quiz?.title || '',
-      description: quiz?.description || '',
-      subject: quiz?.subject || '',
-      grade_level: quiz?.grade_level || '',
-      material_id: quiz?.material_id ?? 'none',
-      time_limit_minutes: quiz?.time_limit_minutes || undefined,
-      pass_score: quiz?.pass_score || 50,
-      is_published: quiz?.is_published || false,
-    },
-  });
 
   // Load existing questions when editing
   useEffect(() => {
@@ -163,7 +179,6 @@ export const QuizBuilder = ({ teacherId, quiz, onSuccess, onCancel }: QuizBuilde
 
   const handleDeleteQuestion = (index: number) => {
     const newQuestions = questions.filter((_, i) => i !== index);
-    // Update order indices
     newQuestions.forEach((q, i) => {
       q.order_index = i;
     });
@@ -193,12 +208,10 @@ export const QuizBuilder = ({ teacherId, quiz, onSuccess, onCancel }: QuizBuilde
         quizId = newQuiz.id;
       }
 
-      // Save questions
       if (quizId) {
         for (const question of questions) {
           if (question.question_text?.trim()) {
             if (question.id) {
-              // Update existing question
               await updateQuestion.mutateAsync({
                 id: question.id,
                 question_text: question.question_text,
@@ -209,7 +222,6 @@ export const QuizBuilder = ({ teacherId, quiz, onSuccess, onCancel }: QuizBuilde
                 order_index: question.order_index,
               });
             } else {
-              // Create new question
               await createQuestion.mutateAsync({
                 quiz_id: quizId,
                 question_text: question.question_text,
@@ -223,7 +235,6 @@ export const QuizBuilder = ({ teacherId, quiz, onSuccess, onCancel }: QuizBuilde
           }
         }
 
-        // Delete removed questions
         if (quiz?.questions) {
           const currentQuestionIds = questions.filter(q => q.id).map(q => q.id);
           const questionsToDelete = quiz.questions.filter(q => !currentQuestionIds.includes(q.id));
@@ -252,16 +263,298 @@ export const QuizBuilder = ({ teacherId, quiz, onSuccess, onCancel }: QuizBuilde
     );
   }
 
-  return (
-    <div className="space-y-6">
-      {/* Quiz Details Card */}
-      <Card>
-        <CardHeader className="flex flex-row items-center gap-4">
+  // Mode Selection Screen
+  if (creationMode === 'select') {
+    return (
+      <div className="space-y-6">
+        <div className="flex items-center gap-4">
           {onCancel && (
             <Button variant="ghost" size="icon" onClick={onCancel}>
               <ArrowLeft className="h-4 w-4" />
             </Button>
           )}
+          <div>
+            <h2 className="text-2xl font-bold tracking-tight">Create New Quiz</h2>
+            <p className="text-muted-foreground">Choose how you want to create your quiz</p>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          {/* AI Generation Card */}
+          <Card 
+            className="cursor-pointer transition-all hover:shadow-lg hover:border-primary/50 group"
+            onClick={() => setCreationMode('ai')}
+          >
+            <CardHeader className="text-center pb-2">
+              <div className="mx-auto mb-4 h-16 w-16 rounded-full bg-gradient-to-br from-primary/20 to-primary/5 flex items-center justify-center group-hover:from-primary/30 group-hover:to-primary/10 transition-colors">
+                <Sparkles className="h-8 w-8 text-primary" />
+              </div>
+              <CardTitle className="text-xl">Generate with AI</CardTitle>
+              <CardDescription>
+                Automatically create questions from your learning materials
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="text-center space-y-4">
+              <div className="space-y-2 text-sm text-muted-foreground">
+                <div className="flex items-center gap-2 justify-center">
+                  <BookOpen className="h-4 w-4" />
+                  <span>Link to existing material</span>
+                </div>
+                <div className="flex items-center gap-2 justify-center">
+                  <CheckCircle className="h-4 w-4" />
+                  <span>Auto-generates 5 questions</span>
+                </div>
+                <div className="flex items-center gap-2 justify-center">
+                  <Clock className="h-4 w-4" />
+                  <span>Save time on quiz creation</span>
+                </div>
+              </div>
+              <Button className="w-full" variant="default">
+                <Sparkles className="h-4 w-4 mr-2" />
+                Start with AI
+              </Button>
+            </CardContent>
+          </Card>
+
+          {/* Manual Creation Card */}
+          <Card 
+            className="cursor-pointer transition-all hover:shadow-lg hover:border-primary/50 group"
+            onClick={() => setCreationMode('manual')}
+          >
+            <CardHeader className="text-center pb-2">
+              <div className="mx-auto mb-4 h-16 w-16 rounded-full bg-gradient-to-br from-secondary/50 to-secondary/20 flex items-center justify-center group-hover:from-secondary/60 group-hover:to-secondary/30 transition-colors">
+                <PenLine className="h-8 w-8 text-foreground" />
+              </div>
+              <CardTitle className="text-xl">Add Manually</CardTitle>
+              <CardDescription>
+                Create your quiz questions from scratch
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="text-center space-y-4">
+              <div className="space-y-2 text-sm text-muted-foreground">
+                <div className="flex items-center gap-2 justify-center">
+                  <Target className="h-4 w-4" />
+                  <span>Full control over questions</span>
+                </div>
+                <div className="flex items-center gap-2 justify-center">
+                  <CheckCircle className="h-4 w-4" />
+                  <span>Multiple choice & true/false</span>
+                </div>
+                <div className="flex items-center gap-2 justify-center">
+                  <Clock className="h-4 w-4" />
+                  <span>Set custom points per question</span>
+                </div>
+              </div>
+              <Button className="w-full" variant="secondary">
+                <PenLine className="h-4 w-4 mr-2" />
+                Create Manually
+              </Button>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+    );
+  }
+
+  // AI Generation Flow
+  if (creationMode === 'ai' && questions.length === 0) {
+    return (
+      <div className="space-y-6">
+        <div className="flex items-center gap-4">
+          <Button variant="ghost" size="icon" onClick={() => setCreationMode('select')}>
+            <ArrowLeft className="h-4 w-4" />
+          </Button>
+          <div>
+            <h2 className="text-2xl font-bold tracking-tight">Generate Quiz with AI</h2>
+            <p className="text-muted-foreground">Select a material to auto-generate questions</p>
+          </div>
+        </div>
+
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <BookOpen className="h-5 w-5" />
+              Link to Learning Material
+            </CardTitle>
+            <CardDescription>
+              Choose a material and we'll generate questions based on its content
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-6">
+            <Form {...form}>
+              <div className="space-y-6">
+                <FormField
+                  control={form.control}
+                  name="material_id"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Select Material *</FormLabel>
+                      <Select onValueChange={field.onChange} value={field.value}>
+                        <FormControl>
+                          <SelectTrigger className="h-12">
+                            <SelectValue placeholder="Choose a learning material..." />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          {materials.filter(m => m.is_published).map((material) => (
+                            <SelectItem key={material.id} value={material.id}>
+                              <div className="flex flex-col items-start">
+                                <span>{material.title}</span>
+                                <span className="text-xs text-muted-foreground">
+                                  {material.subject} • {material.grade_level}
+                                </span>
+                              </div>
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                {selectedMaterial && (
+                  <>
+                    <div className="grid grid-cols-2 gap-4 p-4 bg-muted/50 rounded-lg">
+                      <div>
+                        <p className="text-sm font-medium text-muted-foreground">Subject</p>
+                        <p className="text-lg font-semibold">{selectedMaterial.subject}</p>
+                      </div>
+                      <div>
+                        <p className="text-sm font-medium text-muted-foreground">Grade Level</p>
+                        <p className="text-lg font-semibold">{selectedMaterial.grade_level}</p>
+                      </div>
+                    </div>
+
+                    <Separator />
+
+                    <FormField
+                      control={form.control}
+                      name="title"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Quiz Title</FormLabel>
+                          <FormControl>
+                            <Input placeholder="Enter quiz title" {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <FormField
+                        control={form.control}
+                        name="time_limit_minutes"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel className="flex items-center gap-2">
+                              <Clock className="h-4 w-4" />
+                              Time Limit (minutes)
+                            </FormLabel>
+                            <FormControl>
+                              <Input
+                                type="number"
+                                min={1}
+                                max={180}
+                                placeholder="No time limit"
+                                {...field}
+                                value={field.value || ''}
+                                onChange={(e) => field.onChange(e.target.value ? Number(e.target.value) : undefined)}
+                              />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+
+                      <FormField
+                        control={form.control}
+                        name="pass_score"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel className="flex items-center gap-2">
+                              <Target className="h-4 w-4" />
+                              Pass Score (%)
+                            </FormLabel>
+                            <FormControl>
+                              <Input
+                                type="number"
+                                min={0}
+                                max={100}
+                                {...field}
+                                onChange={(e) => field.onChange(Number(e.target.value))}
+                              />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    </div>
+
+                    <FormField
+                      control={form.control}
+                      name="is_published"
+                      render={({ field }) => (
+                        <FormItem className="flex items-center justify-between rounded-lg border p-4">
+                          <div className="space-y-0.5">
+                            <FormLabel className="text-base">Publish Quiz</FormLabel>
+                            <p className="text-sm text-muted-foreground">
+                              Make this quiz available to learners immediately
+                            </p>
+                          </div>
+                          <FormControl>
+                            <Switch checked={field.value} onCheckedChange={field.onChange} />
+                          </FormControl>
+                        </FormItem>
+                      )}
+                    />
+
+                    <Button 
+                      className="w-full h-12" 
+                      onClick={handleGenerateWithAI}
+                      disabled={isGenerating}
+                    >
+                      {isGenerating ? (
+                        <>
+                          <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                          Generating Questions...
+                        </>
+                      ) : (
+                        <>
+                          <Sparkles className="h-4 w-4 mr-2" />
+                          Generate Quiz Questions
+                        </>
+                      )}
+                    </Button>
+                  </>
+                )}
+              </div>
+            </Form>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
+  // Full Quiz Editor (Manual mode or after AI generation)
+  return (
+    <div className="space-y-6">
+      <Card>
+        <CardHeader className="flex flex-row items-center gap-4">
+          <Button 
+            variant="ghost" 
+            size="icon" 
+            onClick={() => {
+              if (questions.length === 0 && !quiz) {
+                setCreationMode('select');
+              } else {
+                onCancel?.();
+              }
+            }}
+          >
+            <ArrowLeft className="h-4 w-4" />
+          </Button>
           <CardTitle>{quiz ? 'Edit Quiz' : 'Create Quiz'}</CardTitle>
         </CardHeader>
         <CardContent>
@@ -302,7 +595,11 @@ export const QuizBuilder = ({ teacherId, quiz, onSuccess, onCancel }: QuizBuilde
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Subject</FormLabel>
-                      <Select onValueChange={field.onChange} defaultValue={field.value}>
+                      <Select 
+                        onValueChange={field.onChange} 
+                        value={field.value}
+                        disabled={creationMode === 'ai' && !!selectedMaterial}
+                      >
                         <FormControl>
                           <SelectTrigger>
                             <SelectValue placeholder="Select subject" />
@@ -325,7 +622,11 @@ export const QuizBuilder = ({ teacherId, quiz, onSuccess, onCancel }: QuizBuilde
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Grade Level</FormLabel>
-                      <Select onValueChange={field.onChange} defaultValue={field.value}>
+                      <Select 
+                        onValueChange={field.onChange} 
+                        value={field.value}
+                        disabled={creationMode === 'ai' && !!selectedMaterial}
+                      >
                         <FormControl>
                           <SelectTrigger>
                             <SelectValue placeholder="Select grade" />
@@ -348,7 +649,11 @@ export const QuizBuilder = ({ teacherId, quiz, onSuccess, onCancel }: QuizBuilde
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Link to Material (Optional)</FormLabel>
-                      <Select onValueChange={field.onChange} defaultValue={field.value}>
+                      <Select 
+                        onValueChange={field.onChange} 
+                        value={field.value}
+                        disabled={creationMode === 'ai'}
+                      >
                         <FormControl>
                           <SelectTrigger>
                             <SelectValue placeholder="Select material" />
@@ -447,14 +752,14 @@ export const QuizBuilder = ({ teacherId, quiz, onSuccess, onCancel }: QuizBuilde
                       type="button" 
                       variant="secondary" 
                       onClick={handleGenerateWithAI}
-                      disabled={isGenerating}
+                      disabled={isGenerating || !form.getValues('subject') || !form.getValues('grade_level')}
                     >
                       {isGenerating ? (
                         <Loader2 className="h-4 w-4 mr-2 animate-spin" />
                       ) : (
                         <Sparkles className="h-4 w-4 mr-2" />
                       )}
-                      Generate with AI
+                      Add with AI
                     </Button>
                     <Button type="button" variant="outline" onClick={handleAddQuestion}>
                       <Plus className="h-4 w-4 mr-2" />
@@ -467,19 +772,18 @@ export const QuizBuilder = ({ teacherId, quiz, onSuccess, onCancel }: QuizBuilde
                   <Card className="border-dashed">
                     <CardContent className="flex flex-col items-center justify-center py-12">
                       <FileQuestion className="h-12 w-12 text-muted-foreground mb-4" />
-                      <p className="text-muted-foreground mb-4">No questions added yet</p>
+                      <h3 className="text-lg font-medium mb-2">No questions yet</h3>
+                      <p className="text-muted-foreground text-center mb-4">
+                        Start adding questions to your quiz
+                      </p>
                       <div className="flex gap-2">
                         <Button 
                           type="button" 
                           variant="secondary" 
                           onClick={handleGenerateWithAI}
-                          disabled={isGenerating}
+                          disabled={isGenerating || !form.getValues('subject') || !form.getValues('grade_level')}
                         >
-                          {isGenerating ? (
-                            <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                          ) : (
-                            <Sparkles className="h-4 w-4 mr-2" />
-                          )}
+                          <Sparkles className="h-4 w-4 mr-2" />
                           Generate with AI
                         </Button>
                         <Button type="button" variant="outline" onClick={handleAddQuestion}>
@@ -493,9 +797,9 @@ export const QuizBuilder = ({ teacherId, quiz, onSuccess, onCancel }: QuizBuilde
                   <div className="space-y-4">
                     {questions.map((question, index) => (
                       <QuizQuestionEditor
-                        key={question.id || `new-${index}`}
-                        question={question}
+                        key={index}
                         index={index}
+                        question={question}
                         onSave={(data) => handleSaveQuestion(index, data)}
                         onDelete={() => handleDeleteQuestion(index)}
                       />
@@ -504,14 +808,10 @@ export const QuizBuilder = ({ teacherId, quiz, onSuccess, onCancel }: QuizBuilde
                 )}
               </div>
 
-              <Separator />
-
-              <div className="flex gap-3 justify-end">
-                {onCancel && (
-                  <Button type="button" variant="outline" onClick={onCancel}>
-                    Cancel
-                  </Button>
-                )}
+              <div className="flex justify-end gap-3 pt-4">
+                <Button type="button" variant="outline" onClick={onCancel}>
+                  Cancel
+                </Button>
                 <Button type="submit" disabled={isSubmitting}>
                   {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                   {quiz ? 'Update Quiz' : 'Create Quiz'}
