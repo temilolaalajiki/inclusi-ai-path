@@ -199,3 +199,22 @@ All colors MUST be HSL.
     white-space: normal;
   }
 }
+
+/* Document Accessibility Styles */
+.high-contrast-doc {
+  background-color: #000 !important;
+  color: #fff !important;
+}
+
+.high-contrast-doc * {
+  background-color: transparent !important;
+  color: #fff !important;
+}
+
+.high-contrast-doc a {
+  color: #ffff00 !important;
+}
+
+.high-contrast-doc iframe {
+  filter: invert(1) hue-rotate(180deg);
+}
