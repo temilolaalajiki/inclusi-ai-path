@@ -37,6 +37,7 @@ const LearnerDashboard = () => {
   const [activeTab, setActiveTab] = useState("dashboard");
   const [curriculumAlignments, setCurriculumAlignments] = useState<any[]>([]);
   const [refreshKey, setRefreshKey] = useState(0);
+  const [teacherName, setTeacherName] = useState<string | null>(null);
 
   const menuItems: SidebarMenuItem[] = [
     { title: "Dashboard", icon: <LayoutDashboard className="h-4 w-4" />, value: "dashboard" },
@@ -53,7 +54,24 @@ const LearnerDashboard = () => {
     if (learner?.id) {
       fetchCurriculumAlignments();
     }
-  }, [learner?.id]);
+    if (learner?.teacher_id) {
+      fetchTeacherName();
+    }
+  }, [learner?.id, learner?.teacher_id]);
+
+  const fetchTeacherName = async () => {
+    if (!learner?.teacher_id) return;
+    
+    const { data } = await supabase
+      .from('profiles')
+      .select('first_name, last_name')
+      .eq('id', learner.teacher_id)
+      .single();
+    
+    if (data) {
+      setTeacherName(`${data.first_name} ${data.last_name}`);
+    }
+  };
 
   const fetchCurriculumAlignments = async () => {
     if (!learner) return;
@@ -163,12 +181,14 @@ const LearnerDashboard = () => {
               stats={headerStats}
             />
 
-            <div className="flex justify-end">
-              <Badge variant="outline" className="text-lg px-4 py-2">
-                <Award className="h-4 w-4 mr-2" />
-                Level 5 Learner
-              </Badge>
-            </div>
+            {teacherName && (
+              <div className="flex justify-end">
+                <Badge variant="outline" className="text-lg px-4 py-2">
+                  <GraduationCap className="h-4 w-4 mr-2" />
+                  Teacher: {teacherName}
+                </Badge>
+              </div>
+            )}
 
             <div className="grid gap-6 md:grid-cols-2">
               <ChartCard title="Subject Progress" description="Your performance across all subjects">
