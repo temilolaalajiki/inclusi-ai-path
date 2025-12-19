@@ -257,27 +257,36 @@ Recommend training that addresses skill gaps and improves effectiveness.`;
       trainingRecommendations = generateFallbackRecommendations(teacherData);
     }
 
-    // Map training IDs to actual training resources
-    const trainingIds = trainingRecommendations.map((r: any) => {
-      const idMap: Record<string, string> = {
-        'dyslexia-support': 'Supporting Students with Dyslexia',
-        'adhd-management': 'ADHD: Classroom Management Strategies',
-        'visual-learning': 'Visual Learning Techniques',
-        'accessibility-tools': 'Accessibility Tools and Technology',
-        'differentiation-advanced': 'Differentiated Instruction Advanced'
-      };
-      return idMap[r.training_id] || r.training_id;
-    });
-
-    const { data: trainingResources } = await supabase
+    // Fetch all training resources to match against recommendations
+    const { data: allTrainingResources } = await supabase
       .from('training_resources')
-      .select('*')
-      .in('title', trainingIds);
+      .select('*');
+
+    // Map training IDs to matching resources using target_skills
+    const skillMapping: Record<string, string[]> = {
+      'dyslexia-support': ['dyslexia', 'reading difficulties', 'phonics'],
+      'adhd-management': ['ADHD', 'attention difficulties', 'focus', 'behavior management'],
+      'visual-learning': ['visual', 'visual impairment', 'accessible materials'],
+      'accessibility-tools': ['assistive technology', 'assistive devices', 'accessibility'],
+      'differentiation-advanced': ['differentiation', 'adaptive teaching', 'personalized learning'],
+      'autism-support': ['autism', 'sensory processing', 'structured teaching'],
+      'hearing-support': ['hearing impairment', 'sign language', 'deaf'],
+      'math-support': ['mathematics difficulties', 'dyscalculia', 'math intervention']
+    };
 
     const enrichedRecommendations = trainingRecommendations.map((rec: any) => {
-      const resource = trainingResources?.find(t => 
-        t.title.includes(rec.training_id.replace(/-/g, ' '))
-      );
+      const searchTerms = skillMapping[rec.training_id] || [rec.training_id.replace(/-/g, ' ')];
+      
+      // Find matching resource by checking if any target_skills match search terms
+      const resource = allTrainingResources?.find(t => {
+        const skills = t.target_skills || [];
+        const titleLower = t.title.toLowerCase();
+        return searchTerms.some(term => 
+          skills.some((skill: string) => skill.toLowerCase().includes(term.toLowerCase())) ||
+          titleLower.includes(term.toLowerCase())
+        );
+      });
+
       return {
         ...rec,
         resource
