@@ -32,7 +32,20 @@ const forgotPasswordSchema = z.object({
 export default function Auth() {
   const { user, userRole, loading: authLoading } = useAuth();
   const navigate = useNavigate();
+  const { toast } = useToast();
   const [loading, setLoading] = useState(false);
+  const [showForgotPassword, setShowForgotPassword] = useState(false);
+  const [forgotPasswordEmail, setForgotPasswordEmail] = useState('');
+  const [signUpData, setSignUpData] = useState({
+    email: '',
+    password: '',
+    firstName: '',
+    lastName: ''
+  });
+  const [signInData, setSignInData] = useState({
+    email: '',
+    password: ''
+  });
 
   // Redirect authenticated users to their dashboard
   useEffect(() => {
@@ -55,21 +68,6 @@ export default function Auth() {
   if (user && userRole) {
     return <LoadingScreen />;
   }
-  const [showForgotPassword, setShowForgotPassword] = useState(false);
-  const [forgotPasswordEmail, setForgotPasswordEmail] = useState('');
-  const { toast } = useToast();
-
-  const [signUpData, setSignUpData] = useState({
-    email: '',
-    password: '',
-    firstName: '',
-    lastName: ''
-  });
-
-  const [signInData, setSignInData] = useState({
-    email: '',
-    password: ''
-  });
 
   const handleForgotPassword = async (e: React.FormEvent) => {
     e.preventDefault();
