@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
@@ -10,6 +10,8 @@ import { useToast } from '@/hooks/use-toast';
 import { z } from 'zod';
 import { Navbar } from '@/components/Navbar';
 import { ArrowLeft } from 'lucide-react';
+import { useAuth } from '@/hooks/useAuth';
+import { LoadingScreen } from '@/components/LoadingScreen';
 
 const signUpSchema = z.object({
   email: z.string().email('Invalid email address'),
@@ -28,10 +30,33 @@ const forgotPasswordSchema = z.object({
 });
 
 export default function Auth() {
+  const { user, userRole, loading: authLoading } = useAuth();
+  const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
+
+  // Redirect authenticated users to their dashboard
+  useEffect(() => {
+    if (!authLoading && user && userRole) {
+      if (userRole === 'learner') {
+        navigate('/learner', { replace: true });
+      } else if (userRole === 'teacher') {
+        navigate('/teacher', { replace: true });
+      } else if (userRole === 'admin') {
+        navigate('/admin', { replace: true });
+      }
+    }
+  }, [user, userRole, authLoading, navigate]);
+
+  if (authLoading) {
+    return <LoadingScreen />;
+  }
+
+  // Don't render auth form if user is already logged in
+  if (user && userRole) {
+    return <LoadingScreen />;
+  }
   const [showForgotPassword, setShowForgotPassword] = useState(false);
   const [forgotPasswordEmail, setForgotPasswordEmail] = useState('');
-  const navigate = useNavigate();
   const { toast } = useToast();
 
   const [signUpData, setSignUpData] = useState({
