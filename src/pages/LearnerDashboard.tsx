@@ -19,6 +19,7 @@ import { DashboardLayout } from "@/components/dashboard/DashboardLayout";
 import { DashboardSidebar, SidebarMenuItem } from "@/components/dashboard/DashboardSidebar";
 import { DashboardHeader } from "@/components/dashboard/DashboardHeader";
 import { ChartCard } from "@/components/dashboard/ChartCard";
+import { MobileBottomNav } from "@/components/dashboard/MobileBottomNav";
 import { Navbar } from "@/components/Navbar";
 import { EnhancedAccessibilityToolbar } from "@/components/EnhancedAccessibilityToolbar";
 
@@ -444,14 +445,29 @@ const LearnerDashboard = () => {
     />
   );
 
+  // Mobile nav items (first 5 for bottom nav)
+  const mobileNavItems = menuItems.slice(0, 5).map(item => ({
+    icon: item.icon,
+    label: item.title,
+    value: item.value,
+  }));
+
   return (
-    <DashboardLayout
-      sidebar={sidebar}
-      title="Learner Dashboard"
-      subtitle="Your personalized learning journey"
-    >
-      {renderContent()}
-    </DashboardLayout>
+    <>
+      <DashboardLayout
+        sidebar={sidebar}
+        title="Learner Dashboard"
+        subtitle="Your personalized learning journey"
+      >
+        {renderContent()}
+      </DashboardLayout>
+
+      <MobileBottomNav
+        items={mobileNavItems}
+        activeTab={activeTab}
+        onTabChange={setActiveTab}
+      />
+    </>
   );
 };
 

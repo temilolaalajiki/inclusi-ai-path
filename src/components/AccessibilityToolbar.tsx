@@ -2,11 +2,13 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Slider } from "@/components/ui/slider";
-import { Volume2, Type, Contrast, Languages } from "lucide-react";
+import { Volume2, Type, Contrast, Languages, Accessibility } from "lucide-react";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 export const AccessibilityToolbar = () => {
   const [fontSize, setFontSize] = useState([100]);
   const [isOpen, setIsOpen] = useState(false);
+  const isMobile = useIsMobile();
 
   const handleFontSizeChange = (value: number[]) => {
     setFontSize(value);
@@ -26,9 +28,9 @@ export const AccessibilityToolbar = () => {
   };
 
   return (
-    <div className="fixed bottom-4 right-4 z-50">
+    <div className={`fixed z-50 ${isMobile ? 'bottom-20 right-3' : 'bottom-4 right-4'} safe-area-bottom`}>
       {isOpen && (
-        <Card className="mb-2 p-4 w-64 shadow-xl">
+        <Card className={`mb-2 p-4 shadow-xl ${isMobile ? 'w-[calc(100vw-1.5rem)] max-w-xs' : 'w-64'}`}>
           <div className="space-y-4">
             <div>
               <div className="flex items-center gap-2 mb-2">
@@ -41,7 +43,7 @@ export const AccessibilityToolbar = () => {
                 min={80}
                 max={150}
                 step={10}
-                className="w-full"
+                className="w-full touch-target"
               />
               <span className="text-xs text-muted-foreground">{fontSize}%</span>
             </div>
@@ -49,7 +51,7 @@ export const AccessibilityToolbar = () => {
             <Button
               variant="outline"
               size="sm"
-              className="w-full justify-start"
+              className="w-full justify-start h-11 touch-manipulation"
               onClick={handleTextToSpeech}
             >
               <Volume2 className="h-4 w-4 mr-2" />
@@ -59,7 +61,7 @@ export const AccessibilityToolbar = () => {
             <Button
               variant="outline"
               size="sm"
-              className="w-full justify-start"
+              className="w-full justify-start h-11 touch-manipulation"
               onClick={toggleHighContrast}
             >
               <Contrast className="h-4 w-4 mr-2" />
@@ -69,7 +71,7 @@ export const AccessibilityToolbar = () => {
             <Button
               variant="outline"
               size="sm"
-              className="w-full justify-start"
+              className="w-full justify-start h-11 touch-manipulation"
             >
               <Languages className="h-4 w-4 mr-2" />
               Language
@@ -80,10 +82,15 @@ export const AccessibilityToolbar = () => {
       
       <Button
         onClick={() => setIsOpen(!isOpen)}
-        size="lg"
-        className="rounded-full shadow-xl"
+        size={isMobile ? "icon" : "lg"}
+        className={`rounded-full shadow-xl touch-manipulation ${isMobile ? 'h-12 w-12' : ''}`}
+        aria-label="Accessibility options"
       >
-        Accessibility
+        {isMobile ? (
+          <Accessibility className="h-5 w-5" />
+        ) : (
+          "Accessibility"
+        )}
       </Button>
     </div>
   );

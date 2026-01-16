@@ -18,6 +18,7 @@ import { DashboardLayout } from "@/components/dashboard/DashboardLayout";
 import { DashboardSidebar, SidebarMenuItem } from "@/components/dashboard/DashboardSidebar";
 import { DashboardHeader } from "@/components/dashboard/DashboardHeader";
 import { ChartCard } from "@/components/dashboard/ChartCard";
+import { MobileBottomNav } from "@/components/dashboard/MobileBottomNav";
 
 const TeacherDashboard = () => {
   const [activeTab, setActiveTab] = useState("dashboard");
@@ -285,6 +286,13 @@ const TeacherDashboard = () => {
     />
   );
 
+  // Mobile nav items (subset of menu items for bottom nav)
+  const mobileNavItems = menuItems.slice(0, 5).map(item => ({
+    icon: item.icon,
+    label: item.title,
+    value: item.value,
+  }));
+
   return (
     <>
       <DashboardLayout
@@ -294,6 +302,12 @@ const TeacherDashboard = () => {
       >
         {renderContent()}
       </DashboardLayout>
+
+      <MobileBottomNav
+        items={mobileNavItems}
+        activeTab={activeTab}
+        onTabChange={setActiveTab}
+      />
 
       <StudentDetailsDialog
         student={selectedStudent}
