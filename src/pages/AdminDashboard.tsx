@@ -26,6 +26,7 @@ import { DashboardSidebar, SidebarMenuItem } from "@/components/dashboard/Dashbo
 import { DashboardHeader } from "@/components/dashboard/DashboardHeader";
 import { ChartCard } from "@/components/dashboard/ChartCard";
 import { QuickActionsCard } from "@/components/dashboard/QuickActionsCard";
+import { MobileBottomNav } from "@/components/dashboard/MobileBottomNav";
 
 const AdminDashboard = () => {
   const { 
@@ -987,6 +988,13 @@ const AdminDashboard = () => {
     />
   );
 
+  // Mobile nav items (first 5 for bottom nav)
+  const mobileNavItems = menuItems.slice(0, 5).map(item => ({
+    icon: item.icon,
+    label: item.title,
+    value: item.value,
+  }));
+
   return (
     <>
       <DashboardLayout
@@ -996,6 +1004,12 @@ const AdminDashboard = () => {
       >
         {renderContent()}
       </DashboardLayout>
+
+      <MobileBottomNav
+        items={mobileNavItems}
+        activeTab={activeTab}
+        onTabChange={setActiveTab}
+      />
 
       <StudentDetailsDialog
         student={selectedStudent}
