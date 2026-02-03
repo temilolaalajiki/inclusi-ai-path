@@ -10,6 +10,13 @@ import {
   DiagramBox,
   QuoteBox 
 } from "./SlideContent";
+import {
+  SystemArchitectureDiagram,
+  DataFlowDiagram,
+  DatabaseSchemaDiagram,
+  FeatureShowcaseDiagram,
+  ScreenshotPlaceholder
+} from "./ArchitectureDiagram";
 import { 
   ChevronLeft, 
   ChevronRight, 
@@ -26,13 +33,22 @@ import {
   GraduationCap,
   BarChart3,
   Settings,
-  FileText
+  FileText,
+  Database,
+  Server,
+  Globe,
+  Lock,
+  Eye,
+  Award,
+  Layers,
+  AlertTriangle,
+  Clock
 } from "lucide-react";
 import html2canvas from "html2canvas";
 import jsPDF from "jspdf";
 import { toast } from "sonner";
 
-const TOTAL_SLIDES = 12;
+const TOTAL_SLIDES = 15;
 
 export const DefensePresentation: React.FC = () => {
   const [currentSlide, setCurrentSlide] = useState(1);
@@ -112,16 +128,32 @@ export const DefensePresentation: React.FC = () => {
               subtitle="A Research-Based Web Application for Nigerian Educational Context"
               variant="title"
             >
-              <div className="space-y-4 mt-4">
-                <p className="text-muted-foreground text-sm sm:text-base">
-                  Presented by: [Your Name]
-                </p>
-                <p className="text-muted-foreground text-xs sm:text-sm">
-                  Supervisor: [Supervisor Name]
-                </p>
-                <p className="text-muted-foreground text-xs">
-                  [Institution Name] • [Date]
-                </p>
+              <div className="space-y-6 mt-6">
+                <div className="grid grid-cols-3 gap-4 max-w-2xl mx-auto">
+                  <div className="text-center">
+                    <Brain className="w-8 h-8 text-primary mx-auto mb-2" />
+                    <p className="text-xs text-muted-foreground">AI-Powered</p>
+                  </div>
+                  <div className="text-center">
+                    <Eye className="w-8 h-8 text-secondary mx-auto mb-2" />
+                    <p className="text-xs text-muted-foreground">Accessible</p>
+                  </div>
+                  <div className="text-center">
+                    <GraduationCap className="w-8 h-8 text-chart-3 mx-auto mb-2" />
+                    <p className="text-xs text-muted-foreground">Inclusive</p>
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  <p className="text-muted-foreground text-sm sm:text-base">
+                    Presented by: <span className="text-foreground font-medium">[Your Name]</span>
+                  </p>
+                  <p className="text-muted-foreground text-xs sm:text-sm">
+                    Supervisor: <span className="text-foreground">[Supervisor Name]</span>
+                  </p>
+                  <p className="text-muted-foreground text-xs">
+                    [Institution Name] • [Date]
+                  </p>
+                </div>
               </div>
             </PresentationSlide>
           </div>
@@ -136,22 +168,25 @@ export const DefensePresentation: React.FC = () => {
               title="Presentation Outline"
               variant="section"
             >
-              <div className="grid grid-cols-2 md:grid-cols-3 gap-3 mt-4 max-w-3xl mx-auto">
+              <div className="grid grid-cols-3 gap-3 mt-4 max-w-4xl mx-auto">
                 {[
-                  { num: 1, label: "Introduction & Problem" },
-                  { num: 2, label: "Research Questions" },
-                  { num: 3, label: "Literature Review" },
-                  { num: 4, label: "Methodology" },
-                  { num: 5, label: "System Design" },
-                  { num: 6, label: "Implementation" },
-                  { num: 7, label: "Key Features" },
-                  { num: 8, label: "Results & Findings" },
-                  { num: 9, label: "Research Contributions" },
-                  { num: 10, label: "Conclusion & Future Work" },
+                  { num: 1, label: "Introduction & Problem", icon: <AlertTriangle className="w-4 h-4" /> },
+                  { num: 2, label: "Research Questions", icon: <Lightbulb className="w-4 h-4" /> },
+                  { num: 3, label: "Literature Review", icon: <BookOpen className="w-4 h-4" /> },
+                  { num: 4, label: "Methodology", icon: <Settings className="w-4 h-4" /> },
+                  { num: 5, label: "System Architecture", icon: <Layers className="w-4 h-4" /> },
+                  { num: 6, label: "Database Design", icon: <Database className="w-4 h-4" /> },
+                  { num: 7, label: "AI Decision Engine", icon: <Brain className="w-4 h-4" /> },
+                  { num: 8, label: "Key Features", icon: <CheckCircle className="w-4 h-4" /> },
+                  { num: 9, label: "Application Demos", icon: <Globe className="w-4 h-4" /> },
+                  { num: 10, label: "Results & Findings", icon: <BarChart3 className="w-4 h-4" /> },
+                  { num: 11, label: "Research Impact", icon: <Award className="w-4 h-4" /> },
+                  { num: 12, label: "Conclusion", icon: <Target className="w-4 h-4" /> },
                 ].map((item) => (
-                  <div key={item.num} className="bg-card/50 rounded-lg p-3 text-center border border-border/30">
-                    <span className="text-primary font-bold">{item.num}.</span>
-                    <span className="text-xs sm:text-sm ml-2">{item.label}</span>
+                  <div key={item.num} className="bg-card/50 rounded-lg p-2 text-center border border-border/30 flex items-center gap-2">
+                    <span className="text-primary">{item.icon}</span>
+                    <span className="text-primary font-bold text-sm">{item.num}.</span>
+                    <span className="text-xs">{item.label}</span>
                   </div>
                 ))}
               </div>
@@ -171,22 +206,29 @@ export const DefensePresentation: React.FC = () => {
                 left={
                   <div className="space-y-4">
                     <HighlightBox title="The Challenge" variant="primary">
-                      Over 10 million Nigerian children with disabilities lack access to quality inclusive education due to inadequate identification, limited resources, and absence of data-driven decision support.
+                      Over 10 million Nigerian children with disabilities lack access to quality inclusive education due to inadequate identification, limited resources, and absence of data-driven decision support systems.
                     </HighlightBox>
                     <BulletList>
-                      <BulletPoint icon={Target}>Limited accessibility in traditional educational systems</BulletPoint>
-                      <BulletPoint icon={Target}>Lack of personalized learning interventions</BulletPoint>
-                      <BulletPoint icon={Target}>Insufficient teacher training for diverse needs</BulletPoint>
-                      <BulletPoint icon={Target}>Absence of evidence-based decision making</BulletPoint>
+                      <BulletPoint icon={AlertTriangle}>Limited accessibility tools in traditional educational systems</BulletPoint>
+                      <BulletPoint icon={AlertTriangle}>Lack of personalized learning interventions</BulletPoint>
+                      <BulletPoint icon={AlertTriangle}>Insufficient teacher training for diverse needs</BulletPoint>
+                      <BulletPoint icon={AlertTriangle}>Absence of evidence-based decision making</BulletPoint>
+                      <BulletPoint icon={AlertTriangle}>No alignment with Nigerian curriculum standards</BulletPoint>
                     </BulletList>
                   </div>
                 }
                 right={
-                  <div className="grid grid-cols-2 gap-3">
-                    <StatBox value="10M+" label="Children with Disabilities" icon={Users} />
-                    <StatBox value="65%" label="Out of School" icon={GraduationCap} />
-                    <StatBox value="<5%" label="Teachers Trained" icon={BookOpen} />
-                    <StatBox value="Low" label="Data Utilization" icon={BarChart3} />
+                  <div className="space-y-3">
+                    <div className="grid grid-cols-2 gap-3">
+                      <StatBox value="10M+" label="Children with Disabilities" icon={Users} />
+                      <StatBox value="65%" label="Out of School" icon={GraduationCap} />
+                      <StatBox value="<5%" label="Teachers Trained" icon={BookOpen} />
+                      <StatBox value="Low" label="Tech Integration" icon={Settings} />
+                    </div>
+                    <QuoteBox 
+                      quote="Education is a fundamental human right and essential for the exercise of all other human rights."
+                      author="UNESCO"
+                    />
                   </div>
                 }
               />
@@ -209,25 +251,35 @@ export const DefensePresentation: React.FC = () => {
                       <Lightbulb className="w-4 h-4 text-primary" />
                       Research Questions
                     </h4>
-                    <BulletList className="space-y-4">
-                      <BulletPoint>How can AI enhance accessibility identification and support in inclusive education?</BulletPoint>
-                      <BulletPoint>What decision-making frameworks can improve educational outcomes for learners with diverse needs?</BulletPoint>
-                      <BulletPoint>How can technology bridge the gap between policy and practice in Nigerian education?</BulletPoint>
-                    </BulletList>
+                    <div className="space-y-3">
+                      <div className="bg-primary/10 rounded-lg p-3 border-l-4 border-primary">
+                        <p className="text-sm font-medium">RQ1:</p>
+                        <p className="text-xs text-muted-foreground">How can AI enhance accessibility identification and support in inclusive education within the Nigerian context?</p>
+                      </div>
+                      <div className="bg-secondary/10 rounded-lg p-3 border-l-4 border-secondary">
+                        <p className="text-sm font-medium">RQ2:</p>
+                        <p className="text-xs text-muted-foreground">What decision-making frameworks can improve educational outcomes for learners with diverse needs?</p>
+                      </div>
+                      <div className="bg-chart-3/10 rounded-lg p-3 border-l-4 border-chart-3">
+                        <p className="text-sm font-medium">RQ3:</p>
+                        <p className="text-xs text-muted-foreground">How can technology bridge the gap between policy and practice in Nigerian inclusive education?</p>
+                      </div>
+                    </div>
                   </div>
                 }
                 right={
                   <div className="space-y-4">
                     <h4 className="font-semibold text-sm flex items-center gap-2">
                       <Target className="w-4 h-4 text-secondary" />
-                      Objectives
+                      Research Objectives
                     </h4>
                     <BulletList>
-                      <BulletPoint icon={CheckCircle}>Develop AI-powered system for learner assessment</BulletPoint>
-                      <BulletPoint icon={CheckCircle}>Create personalized intervention recommendations</BulletPoint>
+                      <BulletPoint icon={CheckCircle}>Develop AI-powered system for comprehensive learner assessment</BulletPoint>
+                      <BulletPoint icon={CheckCircle}>Create personalized intervention recommendation engine</BulletPoint>
                       <BulletPoint icon={CheckCircle}>Enable data-driven teacher decision support</BulletPoint>
-                      <BulletPoint icon={CheckCircle}>Align with Nigerian curriculum standards</BulletPoint>
-                      <BulletPoint icon={CheckCircle}>Ensure ethical AI with transparency</BulletPoint>
+                      <BulletPoint icon={CheckCircle}>Integrate Nigerian NERDC curriculum standards</BulletPoint>
+                      <BulletPoint icon={CheckCircle}>Implement WAEC/NECO assessment alignment</BulletPoint>
+                      <BulletPoint icon={CheckCircle}>Ensure ethical AI with full transparency</BulletPoint>
                     </BulletList>
                   </div>
                 }
@@ -245,34 +297,37 @@ export const DefensePresentation: React.FC = () => {
               title="Literature Review"
             >
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4 h-full">
-                <HighlightBox title="Inclusive Education" variant="primary">
+                <HighlightBox title="Inclusive Education Theory" variant="primary">
                   <BulletList className="text-xs space-y-2">
-                    <BulletPoint>UNESCO's Salamanca Statement (1994)</BulletPoint>
-                    <BulletPoint>Universal Design for Learning (UDL)</BulletPoint>
-                    <BulletPoint>Nigerian National Policy on Education</BulletPoint>
-                    <BulletPoint>SDG 4: Quality Education for All</BulletPoint>
+                    <BulletPoint>UNESCO Salamanca Statement (1994) - Education for All</BulletPoint>
+                    <BulletPoint>Universal Design for Learning (UDL) - CAST Framework</BulletPoint>
+                    <BulletPoint>Nigerian National Policy on Education - Special Needs</BulletPoint>
+                    <BulletPoint>SDG 4: Quality Education - Leave No One Behind</BulletPoint>
+                    <BulletPoint>NERDC Curriculum Framework Integration</BulletPoint>
                   </BulletList>
                 </HighlightBox>
-                <HighlightBox title="AI in Education" variant="secondary">
+                <HighlightBox title="AI in Education (AIEd)" variant="secondary">
                   <BulletList className="text-xs space-y-2">
-                    <BulletPoint>Adaptive Learning Systems</BulletPoint>
-                    <BulletPoint>Intelligent Tutoring Systems (ITS)</BulletPoint>
-                    <BulletPoint>Learning Analytics & EDM</BulletPoint>
-                    <BulletPoint>Explainable AI (XAI) in EdTech</BulletPoint>
+                    <BulletPoint>Adaptive Learning Systems - Personalization at Scale</BulletPoint>
+                    <BulletPoint>Intelligent Tutoring Systems (ITS) - Carnegie Learning</BulletPoint>
+                    <BulletPoint>Learning Analytics & Educational Data Mining</BulletPoint>
+                    <BulletPoint>Explainable AI (XAI) - Trust & Transparency</BulletPoint>
+                    <BulletPoint>LLMs in Education - GPT, Gemini Applications</BulletPoint>
                   </BulletList>
                 </HighlightBox>
-                <HighlightBox title="Decision Support" variant="success">
+                <HighlightBox title="Decision Support Systems" variant="success">
                   <BulletList className="text-xs space-y-2">
-                    <BulletPoint>Evidence-Based Practice (EBP)</BulletPoint>
+                    <BulletPoint>Evidence-Based Practice (EBP) in Education</BulletPoint>
                     <BulletPoint>Multi-Tiered Support Systems (MTSS)</BulletPoint>
-                    <BulletPoint>Response to Intervention (RTI)</BulletPoint>
-                    <BulletPoint>Data-Driven Decision Making</BulletPoint>
+                    <BulletPoint>Response to Intervention (RTI) Models</BulletPoint>
+                    <BulletPoint>Data-Driven Decision Making (DDDM)</BulletPoint>
+                    <BulletPoint>Human-in-the-Loop AI Design</BulletPoint>
                   </BulletList>
                 </HighlightBox>
               </div>
               <QuoteBox 
                 quote="AI should augment, not replace, educator expertise in making decisions about learner support."
-                author="Holmes et al., 2019"
+                author="Holmes, Bialik & Fadel, 2019"
                 className="mt-4"
               />
             </PresentationSlide>
@@ -291,47 +346,72 @@ export const DefensePresentation: React.FC = () => {
                 left={
                   <div className="space-y-4">
                     <HighlightBox title="Research Approach" variant="primary">
-                      Design Science Research (DSR) methodology combining iterative development with evaluation cycles
+                      <p className="text-xs">Design Science Research (DSR) methodology combining iterative artifact development with rigorous evaluation cycles. The approach follows Hevner's framework for IS research.</p>
                     </HighlightBox>
                     <DiagramBox
                       title="Development Phases"
                       type="flow"
                       items={[
-                        { label: "Requirements" },
-                        { label: "Design" },
-                        { label: "Implement" },
-                        { label: "Evaluate" },
-                        { label: "Iterate" },
+                        { label: "Problem ID", description: "Requirements" },
+                        { label: "Design", description: "Architecture" },
+                        { label: "Develop", description: "Implementation" },
+                        { label: "Evaluate", description: "Testing" },
+                        { label: "Iterate", description: "Refinement" },
                       ]}
                     />
+                    <div className="bg-card/50 rounded-lg p-3 border border-border/30">
+                      <h4 className="font-semibold text-xs mb-2">Evaluation Methods</h4>
+                      <div className="text-xs text-muted-foreground space-y-1">
+                        <div>• Functional testing of all system components</div>
+                        <div>• Usability evaluation with accessibility focus</div>
+                        <div>• AI decision accuracy assessment</div>
+                      </div>
+                    </div>
                   </div>
                 }
                 right={
                   <div className="space-y-3">
                     <h4 className="font-semibold text-sm">Technology Stack</h4>
                     <div className="grid grid-cols-2 gap-2 text-xs">
-                      <div className="bg-card/50 rounded-lg p-2 border border-border/30">
-                        <div className="font-medium text-primary">Frontend</div>
-                        <div className="text-muted-foreground">React, TypeScript, Tailwind CSS</div>
+                      <div className="bg-primary/10 rounded-lg p-2 border border-primary/30">
+                        <div className="font-medium text-primary flex items-center gap-1">
+                          <Globe className="w-3 h-3" /> Frontend
+                        </div>
+                        <div className="text-muted-foreground text-[10px] mt-1">
+                          React 18, TypeScript, Tailwind CSS, Shadcn/UI
+                        </div>
                       </div>
-                      <div className="bg-card/50 rounded-lg p-2 border border-border/30">
-                        <div className="font-medium text-primary">Backend</div>
-                        <div className="text-muted-foreground">Supabase, Edge Functions</div>
+                      <div className="bg-secondary/10 rounded-lg p-2 border border-secondary/30">
+                        <div className="font-medium text-secondary flex items-center gap-1">
+                          <Server className="w-3 h-3" /> Backend
+                        </div>
+                        <div className="text-muted-foreground text-[10px] mt-1">
+                          Supabase, Edge Functions, PostgreSQL
+                        </div>
                       </div>
-                      <div className="bg-card/50 rounded-lg p-2 border border-border/30">
-                        <div className="font-medium text-primary">AI/ML</div>
-                        <div className="text-muted-foreground">Gemini Pro, Custom Models</div>
+                      <div className="bg-chart-3/10 rounded-lg p-2 border border-chart-3/30">
+                        <div className="font-medium text-chart-3 flex items-center gap-1">
+                          <Brain className="w-3 h-3" /> AI/ML
+                        </div>
+                        <div className="text-muted-foreground text-[10px] mt-1">
+                          Gemini Pro, Custom Rule Engine, XAI
+                        </div>
                       </div>
-                      <div className="bg-card/50 rounded-lg p-2 border border-border/30">
-                        <div className="font-medium text-primary">Database</div>
-                        <div className="text-muted-foreground">PostgreSQL with RLS</div>
+                      <div className="bg-chart-4/10 rounded-lg p-2 border border-chart-4/30">
+                        <div className="font-medium text-chart-4 flex items-center gap-1">
+                          <Lock className="w-3 h-3" /> Security
+                        </div>
+                        <div className="text-muted-foreground text-[10px] mt-1">
+                          RLS, JWT Auth, RBAC, Encryption
+                        </div>
                       </div>
                     </div>
-                    <h4 className="font-semibold text-sm mt-3">Data Collection</h4>
+                    <h4 className="font-semibold text-sm mt-3">Data Collection Points</h4>
                     <BulletList className="text-xs">
-                      <BulletPoint>Learner profiles & accessibility needs</BulletPoint>
-                      <BulletPoint>Performance records & assessments</BulletPoint>
-                      <BulletPoint>Attendance tracking & analytics</BulletPoint>
+                      <BulletPoint>Learner profiles & accessibility needs assessment</BulletPoint>
+                      <BulletPoint>Performance records & curriculum alignment</BulletPoint>
+                      <BulletPoint>Attendance tracking & pattern analytics</BulletPoint>
+                      <BulletPoint>Teacher training & engagement metrics</BulletPoint>
                     </BulletList>
                   </div>
                 }
@@ -347,42 +427,9 @@ export const DefensePresentation: React.FC = () => {
               slideNumber={7}
               totalSlides={TOTAL_SLIDES}
               title="System Architecture"
+              subtitle="Three-Tier Architecture with AI Decision Engine"
             >
-              <div className="space-y-4">
-                <DiagramBox
-                  title="Three-Tier Architecture"
-                  type="flow"
-                  items={[
-                    { label: "Presentation Layer", description: "React UI" },
-                    { label: "Application Layer", description: "Business Logic" },
-                    { label: "Data Layer", description: "PostgreSQL" },
-                  ]}
-                  className="max-w-2xl mx-auto"
-                />
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-                  <HighlightBox title="Role-Based Access" variant="primary">
-                    <div className="text-xs space-y-1">
-                      <div>• Learners: Self-tracking, materials</div>
-                      <div>• Teachers: Full management</div>
-                      <div>• Admins: System oversight</div>
-                    </div>
-                  </HighlightBox>
-                  <HighlightBox title="AI Integration" variant="secondary">
-                    <div className="text-xs space-y-1">
-                      <div>• Hybrid AI approach</div>
-                      <div>• Rule-based fallbacks</div>
-                      <div>• Explainable reasoning</div>
-                    </div>
-                  </HighlightBox>
-                  <HighlightBox title="Security & Privacy" variant="success">
-                    <div className="text-xs space-y-1">
-                      <div>• Row-Level Security (RLS)</div>
-                      <div>• GDPR compliance</div>
-                      <div>• Data consent management</div>
-                    </div>
-                  </HighlightBox>
-                </div>
-              </div>
+              <SystemArchitectureDiagram />
             </PresentationSlide>
           </div>
         );
@@ -393,25 +440,12 @@ export const DefensePresentation: React.FC = () => {
             <PresentationSlide
               slideNumber={8}
               totalSlides={TOTAL_SLIDES}
-              title="Key Features & Implementation"
+              title="Database Design & Data Flow"
+              subtitle="25+ Tables with Row-Level Security"
             >
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-                {[
-                  { icon: Brain, title: "AI Analytics", desc: "Learner performance insights & predictions" },
-                  { icon: Users, title: "Accessibility Profiles", desc: "Comprehensive needs assessment" },
-                  { icon: FileText, title: "Curriculum Alignment", desc: "Nigerian NERDC standards" },
-                  { icon: TrendingUp, title: "Progress Tracking", desc: "Visual learning timelines" },
-                  { icon: Settings, title: "Interventions", desc: "AI-suggested recommendations" },
-                  { icon: Shield, title: "Bias Monitoring", desc: "Equity metrics dashboard" },
-                  { icon: BookOpen, title: "Content Hub", desc: "Accessible learning materials" },
-                  { icon: GraduationCap, title: "Teacher Training", desc: "Professional development" },
-                ].map((feature, index) => (
-                  <div key={index} className="bg-card/50 rounded-xl p-3 border border-border/30 text-center">
-                    <feature.icon className="w-8 h-8 text-primary mx-auto mb-2" />
-                    <h4 className="font-semibold text-xs sm:text-sm">{feature.title}</h4>
-                    <p className="text-xs text-muted-foreground mt-1">{feature.desc}</p>
-                  </div>
-                ))}
+              <DatabaseSchemaDiagram />
+              <div className="mt-4">
+                <DataFlowDiagram />
               </div>
             </PresentationSlide>
           </div>
@@ -423,38 +457,59 @@ export const DefensePresentation: React.FC = () => {
             <PresentationSlide
               slideNumber={9}
               totalSlides={TOTAL_SLIDES}
-              title="Results & Findings"
+              title="AI Decision Engine"
+              subtitle="Hybrid AI with Explainable Reasoning"
             >
-              <TwoColumn
-                left={
-                  <div className="space-y-3">
-                    <h4 className="font-semibold text-sm">System Achievements</h4>
-                    <div className="grid grid-cols-2 gap-2">
-                      <StatBox value="3" label="User Roles" />
-                      <StatBox value="15+" label="AI Functions" />
-                      <StatBox value="20+" label="Data Models" />
-                      <StatBox value="100%" label="RLS Coverage" />
+              <div className="space-y-4">
+                <div className="grid grid-cols-3 gap-4">
+                  <HighlightBox title="Input Layer" variant="primary">
+                    <div className="text-xs space-y-1">
+                      <div className="flex items-center gap-1"><Database className="w-3 h-3" /> Performance Data</div>
+                      <div className="flex items-center gap-1"><Users className="w-3 h-3" /> Learner Demographics</div>
+                      <div className="flex items-center gap-1"><Clock className="w-3 h-3" /> Attendance Patterns</div>
+                      <div className="flex items-center gap-1"><Eye className="w-3 h-3" /> Accessibility Profiles</div>
                     </div>
-                    <HighlightBox title="Usability Findings" variant="primary">
-                      <div className="text-xs">
-                        Mobile-responsive design enables field use by teachers. Accessibility toolbar supports diverse user needs.
+                  </HighlightBox>
+                  <HighlightBox title="Processing Layer" variant="secondary">
+                    <div className="text-xs space-y-1">
+                      <div className="flex items-center gap-1"><Brain className="w-3 h-3" /> Gemini Pro Analysis</div>
+                      <div className="flex items-center gap-1"><Settings className="w-3 h-3" /> Rule-Based Fallbacks</div>
+                      <div className="flex items-center gap-1"><Layers className="w-3 h-3" /> Reasoning Chains</div>
+                      <div className="flex items-center gap-1"><Shield className="w-3 h-3" /> Bias Detection</div>
+                    </div>
+                  </HighlightBox>
+                  <HighlightBox title="Output Layer" variant="success">
+                    <div className="text-xs space-y-1">
+                      <div className="flex items-center gap-1"><Target className="w-3 h-3" /> Recommendations</div>
+                      <div className="flex items-center gap-1"><AlertTriangle className="w-3 h-3" /> Intervention Alerts</div>
+                      <div className="flex items-center gap-1"><BarChart3 className="w-3 h-3" /> Progress Reports</div>
+                      <div className="flex items-center gap-1"><FileText className="w-3 h-3" /> Reasoning Logs</div>
+                    </div>
+                  </HighlightBox>
+                </div>
+
+                <div className="bg-card/30 rounded-xl p-4 border border-border/30">
+                  <h4 className="font-semibold text-sm text-center mb-3">15+ Edge Functions</h4>
+                  <div className="grid grid-cols-5 gap-2 text-xs">
+                    {[
+                      "analyze-learner",
+                      "suggest-interventions",
+                      "analyze-performance",
+                      "check-attendance-alerts",
+                      "generate-insights",
+                      "recommend-training",
+                      "calculate-equity-metrics",
+                      "check-class-capacity",
+                      "recommend-visual-materials",
+                      "generate-weekly-report"
+                    ].map((fn, i) => (
+                      <div key={i} className="bg-primary/10 rounded-lg px-2 py-1 text-center text-[10px] border border-primary/20">
+                        {fn}
                       </div>
-                    </HighlightBox>
+                    ))}
                   </div>
-                }
-                right={
-                  <div className="space-y-3">
-                    <h4 className="font-semibold text-sm">Key Outcomes</h4>
-                    <BulletList className="text-sm">
-                      <BulletPoint icon={CheckCircle}>Successful AI recommendation generation</BulletPoint>
-                      <BulletPoint icon={CheckCircle}>Real-time attendance tracking & alerts</BulletPoint>
-                      <BulletPoint icon={CheckCircle}>Transparent AI reasoning display</BulletPoint>
-                      <BulletPoint icon={CheckCircle}>Curriculum standards integration</BulletPoint>
-                      <BulletPoint icon={CheckCircle}>Teacher training recommendations</BulletPoint>
-                    </BulletList>
-                  </div>
-                }
-              />
+                </div>
+              </div>
             </PresentationSlide>
           </div>
         );
@@ -465,29 +520,9 @@ export const DefensePresentation: React.FC = () => {
             <PresentationSlide
               slideNumber={10}
               totalSlides={TOTAL_SLIDES}
-              title="Research Contributions & Impact"
+              title="Key Features & Implementation"
             >
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <HighlightBox title="Theoretical Contributions" variant="primary">
-                  <BulletList className="text-sm">
-                    <BulletPoint>Framework for AI-enhanced inclusive education</BulletPoint>
-                    <BulletPoint>Model for explainable AI in educational contexts</BulletPoint>
-                    <BulletPoint>Integration pattern for Nigerian curriculum standards</BulletPoint>
-                  </BulletList>
-                </HighlightBox>
-                <HighlightBox title="Practical Contributions" variant="secondary">
-                  <BulletList className="text-sm">
-                    <BulletPoint>Functional web application prototype</BulletPoint>
-                    <BulletPoint>Teacher decision-support tools</BulletPoint>
-                    <BulletPoint>Accessible content management system</BulletPoint>
-                  </BulletList>
-                </HighlightBox>
-              </div>
-              <div className="mt-4 grid grid-cols-3 gap-4">
-                <StatBox value="Policy" label="Informs Education Policy" icon={FileText} />
-                <StatBox value="Practice" label="Supports Teachers" icon={Users} />
-                <StatBox value="Research" label="Advances EdTech" icon={Brain} />
-              </div>
+              <FeatureShowcaseDiagram />
             </PresentationSlide>
           </div>
         );
@@ -498,33 +533,31 @@ export const DefensePresentation: React.FC = () => {
             <PresentationSlide
               slideNumber={11}
               totalSlides={TOTAL_SLIDES}
-              title="Limitations & Future Work"
+              title="Application Screenshots"
+              subtitle="Live Demonstration of System Capabilities"
             >
-              <TwoColumn
-                left={
-                  <div className="space-y-3">
-                    <h4 className="font-semibold text-sm text-destructive">Limitations</h4>
-                    <BulletList className="text-sm">
-                      <BulletPoint>Limited real-world testing with actual users</BulletPoint>
-                      <BulletPoint>Requires internet connectivity</BulletPoint>
-                      <BulletPoint>AI models need continued training</BulletPoint>
-                      <BulletPoint>Scalability testing needed</BulletPoint>
-                    </BulletList>
-                  </div>
-                }
-                right={
-                  <div className="space-y-3">
-                    <h4 className="font-semibold text-sm text-success">Future Directions</h4>
-                    <BulletList className="text-sm">
-                      <BulletPoint icon={Lightbulb}>Offline PWA support for rural areas</BulletPoint>
-                      <BulletPoint icon={Lightbulb}>Multi-language support (Hausa, Yoruba, Igbo)</BulletPoint>
-                      <BulletPoint icon={Lightbulb}>Parent/Guardian portal integration</BulletPoint>
-                      <BulletPoint icon={Lightbulb}>Mobile app development</BulletPoint>
-                      <BulletPoint icon={Lightbulb}>Extended pilot testing in Nigerian schools</BulletPoint>
-                    </BulletList>
-                  </div>
-                }
-              />
+              <div className="grid grid-cols-3 gap-4 h-full">
+                <ScreenshotPlaceholder 
+                  title="Admin Dashboard" 
+                  description="System-wide analytics and monitoring"
+                  features={["Learner/Teacher Management", "AI Performance Insights", "Equity Metrics", "Nigerian Standards"]}
+                />
+                <ScreenshotPlaceholder 
+                  title="Teacher Portal" 
+                  description="Student management and AI insights"
+                  features={["Student Profiles", "Attendance Tracking", "Content Creation", "Recommendations"]}
+                />
+                <ScreenshotPlaceholder 
+                  title="Learner Dashboard" 
+                  description="Personalized learning experience"
+                  features={["Progress Timeline", "Learning Materials", "Quiz Taking", "Accessibility Tools"]}
+                />
+              </div>
+              <div className="mt-4 text-center">
+                <p className="text-xs text-muted-foreground italic">
+                  Replace these placeholders with actual screenshots from the live application for your defense presentation
+                </p>
+              </div>
             </PresentationSlide>
           </div>
         );
@@ -535,22 +568,161 @@ export const DefensePresentation: React.FC = () => {
             <PresentationSlide
               slideNumber={12}
               totalSlides={TOTAL_SLIDES}
+              title="Results & Findings"
+            >
+              <TwoColumn
+                left={
+                  <div className="space-y-3">
+                    <h4 className="font-semibold text-sm">System Achievements</h4>
+                    <div className="grid grid-cols-2 gap-2">
+                      <StatBox value="3" label="User Roles (Admin, Teacher, Learner)" />
+                      <StatBox value="15+" label="AI Edge Functions" />
+                      <StatBox value="25+" label="Database Tables" />
+                      <StatBox value="100%" label="RLS Security Coverage" />
+                    </div>
+                    <HighlightBox title="Technical Accomplishments" variant="primary">
+                      <div className="text-xs space-y-1">
+                        <div>✓ Full-stack responsive web application</div>
+                        <div>✓ Hybrid AI with explainable reasoning</div>
+                        <div>✓ Real-time data synchronization</div>
+                        <div>✓ Nigerian curriculum integration</div>
+                      </div>
+                    </HighlightBox>
+                  </div>
+                }
+                right={
+                  <div className="space-y-3">
+                    <h4 className="font-semibold text-sm">Key Outcomes</h4>
+                    <BulletList className="text-sm">
+                      <BulletPoint icon={CheckCircle}>AI-generated personalized recommendations</BulletPoint>
+                      <BulletPoint icon={CheckCircle}>Real-time attendance tracking with automated alerts</BulletPoint>
+                      <BulletPoint icon={CheckCircle}>Transparent AI reasoning chain display</BulletPoint>
+                      <BulletPoint icon={CheckCircle}>NERDC curriculum standards alignment</BulletPoint>
+                      <BulletPoint icon={CheckCircle}>WAEC/NECO assessment framework support</BulletPoint>
+                      <BulletPoint icon={CheckCircle}>Teacher professional development recommendations</BulletPoint>
+                      <BulletPoint icon={CheckCircle}>Comprehensive accessibility toolkit</BulletPoint>
+                    </BulletList>
+                  </div>
+                }
+              />
+            </PresentationSlide>
+          </div>
+        );
+
+      case 13:
+        return (
+          <div id={slideId} key={slideNum}>
+            <PresentationSlide
+              slideNumber={13}
+              totalSlides={TOTAL_SLIDES}
+              title="Research Contributions & Impact"
+            >
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <HighlightBox title="Theoretical Contributions" variant="primary">
+                  <BulletList className="text-sm">
+                    <BulletPoint icon={Award}>Novel framework for AI-enhanced inclusive education in developing countries</BulletPoint>
+                    <BulletPoint icon={Award}>Model for explainable AI in educational decision-making contexts</BulletPoint>
+                    <BulletPoint icon={Award}>Integration pattern for aligning AI systems with local curriculum standards</BulletPoint>
+                    <BulletPoint icon={Award}>Ethical AI framework with bias monitoring for educational equity</BulletPoint>
+                  </BulletList>
+                </HighlightBox>
+                <HighlightBox title="Practical Contributions" variant="secondary">
+                  <BulletList className="text-sm">
+                    <BulletPoint icon={CheckCircle}>Fully functional production-ready web application</BulletPoint>
+                    <BulletPoint icon={CheckCircle}>Teacher decision-support tools with AI reasoning transparency</BulletPoint>
+                    <BulletPoint icon={CheckCircle}>Accessible content management system with multiple formats</BulletPoint>
+                    <BulletPoint icon={CheckCircle}>Scalable architecture for national-level deployment</BulletPoint>
+                  </BulletList>
+                </HighlightBox>
+              </div>
+              <div className="mt-4 grid grid-cols-4 gap-4">
+                <StatBox value="Policy" label="Informs Educational Policy" icon={FileText} />
+                <StatBox value="Practice" label="Supports Teacher Decision-Making" icon={Users} />
+                <StatBox value="Research" label="Advances AI in Education" icon={Brain} />
+                <StatBox value="Equity" label="Promotes Inclusive Access" icon={Shield} />
+              </div>
+            </PresentationSlide>
+          </div>
+        );
+
+      case 14:
+        return (
+          <div id={slideId} key={slideNum}>
+            <PresentationSlide
+              slideNumber={14}
+              totalSlides={TOTAL_SLIDES}
+              title="Limitations & Future Work"
+            >
+              <TwoColumn
+                left={
+                  <div className="space-y-3">
+                    <h4 className="font-semibold text-sm text-destructive flex items-center gap-2">
+                      <AlertTriangle className="w-4 h-4" />
+                      Current Limitations
+                    </h4>
+                    <BulletList className="text-sm">
+                      <BulletPoint>Limited real-world user testing in Nigerian schools</BulletPoint>
+                      <BulletPoint>Requires stable internet connectivity for full functionality</BulletPoint>
+                      <BulletPoint>AI models benefit from continuous training and refinement</BulletPoint>
+                      <BulletPoint>Scalability testing with large user bases pending</BulletPoint>
+                      <BulletPoint>Integration with existing school management systems needed</BulletPoint>
+                    </BulletList>
+                  </div>
+                }
+                right={
+                  <div className="space-y-3">
+                    <h4 className="font-semibold text-sm text-green-500 flex items-center gap-2">
+                      <Lightbulb className="w-4 h-4" />
+                      Future Research Directions
+                    </h4>
+                    <BulletList className="text-sm">
+                      <BulletPoint icon={Lightbulb}>Offline PWA support for rural Nigerian areas</BulletPoint>
+                      <BulletPoint icon={Lightbulb}>Multi-language support (Hausa, Yoruba, Igbo, Pidgin)</BulletPoint>
+                      <BulletPoint icon={Lightbulb}>Parent/Guardian portal for home-school collaboration</BulletPoint>
+                      <BulletPoint icon={Lightbulb}>Native mobile applications (iOS/Android)</BulletPoint>
+                      <BulletPoint icon={Lightbulb}>Extended pilot testing across Nigerian states</BulletPoint>
+                      <BulletPoint icon={Lightbulb}>Integration with UBEC and state education databases</BulletPoint>
+                    </BulletList>
+                  </div>
+                }
+              />
+            </PresentationSlide>
+          </div>
+        );
+
+      case 15:
+        return (
+          <div id={slideId} key={slideNum}>
+            <PresentationSlide
+              slideNumber={15}
+              totalSlides={TOTAL_SLIDES}
               title="Conclusion"
               variant="conclusion"
             >
-              <div className="max-w-3xl mx-auto space-y-6">
+              <div className="max-w-4xl mx-auto space-y-6">
                 <QuoteBox
-                  quote="This research demonstrates that AI can effectively support inclusive education decision-making while maintaining transparency, ethical standards, and alignment with local educational contexts."
-                  className="text-center"
+                  quote="This research demonstrates that AI can effectively support inclusive education decision-making while maintaining transparency, ethical standards, and alignment with local educational contexts. The developed system provides a scalable, accessible platform for improving educational outcomes for all learners."
+                  className="text-center bg-card/30 border-primary"
                 />
-                <div className="grid grid-cols-3 gap-4">
-                  <StatBox value="✓" label="AI-Enhanced Accessibility" icon={Brain} />
+                <div className="grid grid-cols-4 gap-3">
+                  <StatBox value="✓" label="AI-Powered Accessibility" icon={Brain} />
                   <StatBox value="✓" label="Evidence-Based Decisions" icon={Target} />
                   <StatBox value="✓" label="Nigerian Context Aligned" icon={GraduationCap} />
+                  <StatBox value="✓" label="Ethical & Transparent" icon={Shield} />
                 </div>
-                <div className="text-center space-y-2">
-                  <h3 className="text-xl font-bold text-primary">Thank You</h3>
-                  <p className="text-muted-foreground">Questions & Discussion</p>
+                <div className="text-center space-y-3 mt-6">
+                  <h3 className="text-2xl font-bold text-primary">Thank You</h3>
+                  <p className="text-muted-foreground">Questions & Discussion Welcome</p>
+                  <div className="flex justify-center gap-4 mt-4">
+                    <div className="bg-primary/10 rounded-lg px-4 py-2 border border-primary/30">
+                      <p className="text-xs text-muted-foreground">Email</p>
+                      <p className="text-sm font-medium">[your.email@university.edu]</p>
+                    </div>
+                    <div className="bg-secondary/10 rounded-lg px-4 py-2 border border-secondary/30">
+                      <p className="text-xs text-muted-foreground">Live Demo</p>
+                      <p className="text-sm font-medium">Available for demonstration</p>
+                    </div>
+                  </div>
                 </div>
               </div>
             </PresentationSlide>
