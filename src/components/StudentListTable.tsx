@@ -6,6 +6,7 @@ import { Progress } from "@/components/ui/progress";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { LearnerWithProgress } from "@/hooks/useTeacherData";
 import { Eye, Search } from "lucide-react";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { supabase } from "@/integrations/supabase/client";
 
 interface StudentListTableProps {
@@ -125,9 +126,23 @@ export function StudentListTable({ learners, onViewStudent, onAnalyze, onSuggest
                           </Badge>
                         ))}
                         {allNeeds.length > 2 && (
-                          <Badge variant="outline" className="text-xs">
-                            +{allNeeds.length - 2}
-                          </Badge>
+                          <Popover>
+                            <PopoverTrigger asChild>
+                              <Badge variant="outline" className="text-xs cursor-pointer hover:bg-accent">
+                                +{allNeeds.length - 2}
+                              </Badge>
+                            </PopoverTrigger>
+                            <PopoverContent className="w-64 p-3" side="top">
+                              <p className="text-sm font-medium mb-2">All Learning Needs</p>
+                              <div className="flex flex-wrap gap-1.5">
+                                {allNeeds.map((need, idx) => (
+                                  <Badge key={idx} variant="outline" className="text-xs">
+                                    {need}
+                                  </Badge>
+                                ))}
+                              </div>
+                            </PopoverContent>
+                          </Popover>
                         )}
                       </div>
                     </TableCell>
