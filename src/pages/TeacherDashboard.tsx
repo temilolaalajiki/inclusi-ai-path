@@ -3,7 +3,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
-import { Users, Brain, TrendingUp, AlertCircle, CheckCircle2, Calendar, LayoutDashboard, GraduationCap, Lightbulb, BookOpen } from "lucide-react";
+import { Users, Brain, TrendingUp, AlertCircle, CheckCircle2, Calendar, LayoutDashboard, GraduationCap, Lightbulb, BookOpen, UserPlus } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useTeacherData, LearnerWithProgress } from "@/hooks/useTeacherData";
 import { supabase } from "@/integrations/supabase/client";
@@ -20,6 +20,8 @@ import { DashboardHeader } from "@/components/dashboard/DashboardHeader";
 import { ChartCard } from "@/components/dashboard/ChartCard";
 import { MobileBottomNav } from "@/components/dashboard/MobileBottomNav";
 import { TeacherFeedbackDialog } from "@/components/TeacherFeedbackDialog";
+import { AddExternalLearnerForm } from "@/components/AddExternalLearnerForm";
+import { LearnerRecommendationPanel } from "@/components/LearnerRecommendationPanel";
 
 const TeacherDashboard = () => {
   const [activeTab, setActiveTab] = useState("dashboard");
@@ -45,6 +47,7 @@ const TeacherDashboard = () => {
     { title: "Attendance", icon: <Calendar className="h-4 w-4" />, value: "attendance" },
     { title: "AI Insights", icon: <Brain className="h-4 w-4" />, value: "insights" },
     { title: "Training", icon: <Lightbulb className="h-4 w-4" />, value: "training" },
+    { title: "Add Learner Data", icon: <UserPlus className="h-4 w-4" />, value: "add-learner" },
   ];
 
   useEffect(() => {
@@ -277,6 +280,14 @@ const TeacherDashboard = () => {
       case "content":
         return user?.id ? <TeacherContentManager teacherId={user.id} /> : null;
 
+      case "add-learner":
+        return user?.id ? (
+          <div className="space-y-6">
+            <AddExternalLearnerForm teacherId={user.id} onSuccess={refetch} />
+            <LearnerRecommendationPanel teacherId={user.id} />
+          </div>
+        ) : null;
+
       default:
         return null;
     }
@@ -325,7 +336,7 @@ const TeacherDashboard = () => {
       {feedbackStudent && user?.id && (
         <TeacherFeedbackDialog
           learnerId={feedbackStudent.id}
-          learnerName={`${feedbackStudent.profiles?.first_name} ${feedbackStudent.profiles?.last_name}`}
+          learnerName={feedbackStudent.is_external ? (feedbackStudent.external_name || 'External Learner') : `${feedbackStudent.profiles?.first_name} ${feedbackStudent.profiles?.last_name}`}
           open={feedbackDialogOpen}
           onOpenChange={setFeedbackDialogOpen}
           teacherId={user.id}

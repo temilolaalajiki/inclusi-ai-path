@@ -5,7 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { LearnerWithProgress } from "@/hooks/useTeacherData";
-import { Eye, Search, MessageSquare } from "lucide-react";
+import { Eye, Search, MessageSquare, ExternalLink } from "lucide-react";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -47,8 +47,10 @@ export function StudentListTable({ learners, onViewStudent, onAnalyze, onFeedbac
     
     const query = searchQuery.toLowerCase();
     return learners.filter(learner => {
-      const fullName = `${learner.profiles?.first_name} ${learner.profiles?.last_name}`.toLowerCase();
-      return fullName.includes(query);
+      const name = (learner as any).is_external
+        ? ((learner as any).external_name || "").toLowerCase()
+        : `${learner.profiles?.first_name} ${learner.profiles?.last_name}`.toLowerCase();
+      return name.includes(query);
     });
   }, [learners, searchQuery]);
 
@@ -102,7 +104,17 @@ export function StudentListTable({ learners, onViewStudent, onAnalyze, onFeedbac
                 return (
                   <TableRow key={learner.id} className="hover:bg-muted/50">
                     <TableCell className="font-medium">
-                      {learner.profiles?.first_name} {learner.profiles?.last_name}
+                      <div className="flex items-center gap-2">
+                        {(learner as any).is_external
+                          ? (learner as any).external_name
+                          : `${learner.profiles?.first_name} ${learner.profiles?.last_name}`}
+                        {(learner as any).is_external && (
+                          <Badge variant="outline" className="text-xs font-normal">
+                            <ExternalLink className="h-3 w-3 mr-1" />
+                            External
+                          </Badge>
+                        )}
+                      </div>
                     </TableCell>
                     <TableCell>
                       <Badge variant={status.variant}>{status.label}</Badge>
