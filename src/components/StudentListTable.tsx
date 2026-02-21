@@ -75,7 +75,7 @@ export function StudentListTable({ learners, onViewStudent, onAnalyze, onSuggest
         </div>
       </div>
 
-      <div className="border rounded-lg overflow-hidden">
+      <div className="border rounded-lg overflow-x-auto">
         <Table>
           <TableHeader>
             <TableRow>
@@ -128,9 +128,11 @@ export function StudentListTable({ learners, onViewStudent, onAnalyze, onSuggest
                         {allNeeds.length > 2 && (
                           <Popover>
                             <PopoverTrigger asChild>
-                              <Badge variant="outline" className="text-xs cursor-pointer hover:bg-accent">
-                                +{allNeeds.length - 2}
-                              </Badge>
+                              <button type="button">
+                                <Badge variant="outline" className="text-xs cursor-pointer hover:bg-accent">
+                                  +{allNeeds.length - 2}
+                                </Badge>
+                              </button>
                             </PopoverTrigger>
                             <PopoverContent className="w-64 p-3" side="top">
                               <p className="text-sm font-medium mb-2">All Learning Needs</p>
