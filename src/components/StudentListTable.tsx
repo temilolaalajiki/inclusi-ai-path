@@ -5,7 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { LearnerWithProgress } from "@/hooks/useTeacherData";
-import { Eye, Search } from "lucide-react";
+import { Eye, Search, MessageSquare } from "lucide-react";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -13,10 +13,10 @@ interface StudentListTableProps {
   learners: LearnerWithProgress[];
   onViewStudent: (student: LearnerWithProgress) => void;
   onAnalyze: (learnerId: string) => void;
-  onSuggestInterventions: (learnerId: string) => void;
+  onFeedback: (learner: LearnerWithProgress) => void;
 }
 
-export function StudentListTable({ learners, onViewStudent, onAnalyze, onSuggestInterventions }: StudentListTableProps) {
+export function StudentListTable({ learners, onViewStudent, onAnalyze, onFeedback }: StudentListTableProps) {
   const [searchQuery, setSearchQuery] = useState("");
   const [teacherNames, setTeacherNames] = useState<Record<string, string>>({});
 
@@ -168,9 +168,10 @@ export function StudentListTable({ learners, onViewStudent, onAnalyze, onSuggest
                         <Button
                           size="sm"
                           variant="secondary"
-                          onClick={() => onSuggestInterventions(learner.id)}
+                          onClick={() => onFeedback(learner)}
                         >
-                          Interventions
+                          <MessageSquare className="h-4 w-4 mr-1" />
+                          Feedback
                         </Button>
                       </div>
                     </TableCell>
