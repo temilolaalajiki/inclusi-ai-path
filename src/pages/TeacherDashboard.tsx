@@ -19,12 +19,15 @@ import { DashboardSidebar, SidebarMenuItem } from "@/components/dashboard/Dashbo
 import { DashboardHeader } from "@/components/dashboard/DashboardHeader";
 import { ChartCard } from "@/components/dashboard/ChartCard";
 import { MobileBottomNav } from "@/components/dashboard/MobileBottomNav";
+import { TeacherFeedbackDialog } from "@/components/TeacherFeedbackDialog";
 
 const TeacherDashboard = () => {
   const [activeTab, setActiveTab] = useState("dashboard");
   const [selectedStudent, setSelectedStudent] = useState<LearnerWithProgress | null>(null);
   const [studentDialogOpen, setStudentDialogOpen] = useState(false);
   const [attendanceRecords, setAttendanceRecords] = useState<any[]>([]);
+  const [feedbackStudent, setFeedbackStudent] = useState<LearnerWithProgress | null>(null);
+  const [feedbackDialogOpen, setFeedbackDialogOpen] = useState(false);
   const { user, userProfile } = useAuth();
   const { learners, loading, updateRecommendationStatus, analyzeStudent, suggestInterventions, refetch } = useTeacherData(user?.id);
 
@@ -192,7 +195,10 @@ const TeacherDashboard = () => {
                 learners={learners}
                 onViewStudent={handleViewStudent}
                 onAnalyze={analyzeStudent}
-                onSuggestInterventions={suggestInterventions}
+                onFeedback={(learner) => {
+                  setFeedbackStudent(learner);
+                  setFeedbackDialogOpen(true);
+                }}
               />
             </CardContent>
           </Card>
@@ -315,6 +321,16 @@ const TeacherDashboard = () => {
         onOpenChange={setStudentDialogOpen}
         onUpdate={refetch}
       />
+
+      {feedbackStudent && user?.id && (
+        <TeacherFeedbackDialog
+          learnerId={feedbackStudent.id}
+          learnerName={`${feedbackStudent.profiles?.first_name} ${feedbackStudent.profiles?.last_name}`}
+          open={feedbackDialogOpen}
+          onOpenChange={setFeedbackDialogOpen}
+          teacherId={user.id}
+        />
+      )}
     </>
   );
 };

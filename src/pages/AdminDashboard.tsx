@@ -10,7 +10,7 @@ import { BiasMonitoringDashboard } from "@/components/BiasMonitoringDashboard";
 import { TeacherAnalyticsDashboard } from "@/components/TeacherAnalyticsDashboard";
 import { PendingLearnersTable } from "@/components/PendingLearnersTable";
 import { BarChart, Bar, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
-import { Users, BookOpen, TrendingUp, Download, AlertTriangle, CheckCircle, FileDown, FileSpreadsheet, Calendar, Brain, UserCheck, Eye, BarChart3, ShieldAlert, Scale, Settings, UserPlus, LayoutDashboard } from "lucide-react";
+import { Users, BookOpen, TrendingUp, Download, AlertTriangle, CheckCircle, FileDown, FileSpreadsheet, Calendar, Brain, UserCheck, Eye, BarChart3, ShieldAlert, Scale, Settings, UserPlus, LayoutDashboard, MessageSquare } from "lucide-react";
 import { useAdminData } from "@/hooks/useAdminData";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
@@ -27,6 +27,7 @@ import { DashboardHeader } from "@/components/dashboard/DashboardHeader";
 import { ChartCard } from "@/components/dashboard/ChartCard";
 import { QuickActionsCard } from "@/components/dashboard/QuickActionsCard";
 import { MobileBottomNav } from "@/components/dashboard/MobileBottomNav";
+import { LearnerFeedbackView } from "@/components/LearnerFeedbackView";
 
 const AdminDashboard = () => {
   const { 
@@ -81,6 +82,7 @@ const AdminDashboard = () => {
       ]
     },
     { title: "Standards", icon: <BookOpen className="h-4 w-4" />, value: "standards" },
+    { title: "Feedback", icon: <MessageSquare className="h-4 w-4" />, value: "feedback" },
    // { title: "Equity", icon: <Scale className="h-4 w-4" />, value: "equity" },
   ];
 
@@ -632,7 +634,10 @@ const AdminDashboard = () => {
                 learners={learners}
                 onViewStudent={handleViewStudent}
                 onAnalyze={handleAnalyze}
-                onSuggestInterventions={handleSuggestInterventions}
+                onFeedback={(learner) => {
+                  setSelectedStudent(learner);
+                  setDetailsDialogOpen(true);
+                }}
               />
             </CardContent>
           </Card>
@@ -972,6 +977,9 @@ const AdminDashboard = () => {
 
       case "equity":
         return <BiasMonitoringDashboard />;
+
+      case "feedback":
+        return <LearnerFeedbackView />;
 
       default:
         return null;

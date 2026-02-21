@@ -1165,6 +1165,41 @@ export type Database = {
         }
         Relationships: []
       }
+      teacher_feedback: {
+        Row: {
+          category: string
+          created_at: string
+          feedback_text: string
+          id: string
+          learner_id: string
+          teacher_id: string
+        }
+        Insert: {
+          category?: string
+          created_at?: string
+          feedback_text: string
+          id?: string
+          learner_id: string
+          teacher_id: string
+        }
+        Update: {
+          category?: string
+          created_at?: string
+          feedback_text?: string
+          id?: string
+          learner_id?: string
+          teacher_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "teacher_feedback_learner_id_fkey"
+            columns: ["learner_id"]
+            isOneToOne: false
+            referencedRelation: "learners"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       teacher_training: {
         Row: {
           completed: boolean | null
