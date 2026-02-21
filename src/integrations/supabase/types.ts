@@ -623,31 +623,37 @@ export type Database = {
           accessibility_needs: string[] | null
           created_at: string | null
           demographics: Json | null
+          external_name: string | null
           id: string
+          is_external: boolean
           learning_challenges: string[] | null
           teacher_id: string | null
           updated_at: string | null
-          user_id: string
+          user_id: string | null
         }
         Insert: {
           accessibility_needs?: string[] | null
           created_at?: string | null
           demographics?: Json | null
+          external_name?: string | null
           id?: string
+          is_external?: boolean
           learning_challenges?: string[] | null
           teacher_id?: string | null
           updated_at?: string | null
-          user_id: string
+          user_id?: string | null
         }
         Update: {
           accessibility_needs?: string[] | null
           created_at?: string | null
           demographics?: Json | null
+          external_name?: string | null
           id?: string
+          is_external?: boolean
           learning_challenges?: string[] | null
           teacher_id?: string | null
           updated_at?: string | null
-          user_id?: string
+          user_id?: string | null
         }
         Relationships: []
       }

@@ -4,10 +4,13 @@ import { useToast } from '@/hooks/use-toast';
 
 export interface LearnerWithProgress {
   id: string;
-  user_id: string;
+  user_id: string | null;
   teacher_id: string | null;
   learning_challenges: string[];
   accessibility_needs: string[];
+  is_external?: boolean;
+  external_name?: string;
+  demographics?: any;
   profiles: {
     first_name: string;
     last_name: string;
@@ -58,14 +61,16 @@ export function useTeacherData(userId: string | undefined) {
 
       // Collect ids for related lookups
       const learnerIds = learners.map((l: any) => l.id);
-      const userIds = learners.map((l: any) => l.user_id);
+      const userIds = learners.map((l: any) => l.user_id).filter(Boolean);
 
       // Fetch related data in parallel to avoid FK-dependent joins
       const [profilesRes, perfRes, recsRes] = await Promise.all([
-        supabase
-          .from('profiles')
-          .select('id, first_name, last_name')
-          .in('id', userIds as string[]),
+        userIds.length > 0
+          ? supabase
+              .from('profiles')
+              .select('id, first_name, last_name')
+              .in('id', userIds as string[])
+          : Promise.resolve({ data: [], error: null }),
         supabase
           .from('performance_records')
           .select('learner_id, subject, score, assessment_date')
@@ -100,7 +105,9 @@ export function useTeacherData(userId: string | undefined) {
 
       const combined = learners.map((l: any) => ({
         ...l,
-        profiles: profilesByUserId.get(l.user_id) || { first_name: '', last_name: '' },
+        profiles: l.is_external
+          ? { first_name: l.external_name || 'External', last_name: '' }
+          : (profilesByUserId.get(l.user_id) || { first_name: '', last_name: '' }),
         performance_records: perfByLearnerId.get(l.id) || [],
         recommendations: recsByLearnerId.get(l.id) || [],
       }));
