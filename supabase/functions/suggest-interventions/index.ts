@@ -18,8 +18,8 @@ function generateFallbackInterventions(learnerData: any): any[] {
 
   if (negativeRecs?.length > 0) {
     interventions.push({
-      title: 'Review and Adjust Current Strategies',
-      description: 'Several recommendations received negative feedback. Consider alternative approaches tailored to student preferences.',
+      title: 'Try a Different Approach',
+      description: 'Some earlier suggestions did not work well for this student. Look at what was tried before and try a different method that better suits how the student likes to learn.',
       recommendation_type: 'intervention',
       priority: 'high'
     });
@@ -28,14 +28,14 @@ function generateFallbackInterventions(learnerData: any): any[] {
   // ADHD-specific interventions
   if (learning_challenges?.includes('adhd')) {
     interventions.push({
-      title: 'Implement Movement Breaks',
-      description: 'Schedule short 5-minute movement breaks every 20 minutes during instruction',
+      title: 'Allow Short Movement Breaks',
+      description: 'Let the student stand up, stretch, or walk around for about 5 minutes after every 20 minutes of class work. This helps them stay focused and ready to learn.',
       recommendation_type: 'teaching_strategy',
       priority: 'high'
     });
     interventions.push({
-      title: 'Use Visual Timers',
-      description: 'Provide visual countdown timers to help with time management and task completion',
+      title: 'Show Time with a Visual Timer',
+      description: 'Place a timer where the student can see it counting down. This helps them understand how much time they have left and keeps them on track to finish their work.',
       recommendation_type: 'assistive_tool',
       priority: 'medium'
     });
@@ -44,8 +44,8 @@ function generateFallbackInterventions(learnerData: any): any[] {
   // Autism spectrum support
   if (learning_challenges?.includes('autism')) {
     interventions.push({
-      title: 'Create Structured Routines',
-      description: 'Establish predictable daily schedules with visual schedules and clear transitions',
+      title: 'Follow the Same Daily Routine',
+      description: 'Keep each school day in the same order as much as possible. Use a simple picture schedule so the student always knows what is coming next. This reduces worry and helps them feel safe.',
       recommendation_type: 'teaching_strategy',
       priority: 'high'
     });
@@ -53,8 +53,8 @@ function generateFallbackInterventions(learnerData: any): any[] {
 
   // General intervention strategies
   interventions.push({
-    title: 'Peer Mentoring Program',
-    description: 'Pair student with a peer mentor for collaborative learning and social support',
+    title: 'Pair the Student with a Study Buddy',
+    description: 'Match this student with a friendly classmate who can help explain things, share notes, and work together on activities. Learning with a partner often makes lessons easier and more enjoyable.',
     recommendation_type: 'intervention',
     priority: 'medium'
   });
@@ -119,32 +119,32 @@ serve(async (req) => {
       }
 
       if (useAI) {
-        const systemPrompt = `You are an educational intervention specialist. Generate personalized, evidence-based intervention strategies for students with diverse learning needs. Focus on practical, actionable strategies teachers can implement.`;
+        const systemPrompt = `You are a helpful teaching assistant. Your job is to suggest simple, practical things a teacher can do to help a student who is struggling. Write everything in clear, plain English that any teacher can easily understand. Avoid jargon. Each suggestion should explain exactly what to do, how to do it, and why it will help the student.`;
 
         const feedbackSummary = fullLearnerData.feedback?.map((f: any) => 
           `${f.rating}: ${f.comment || 'No comment'}`
         ).join('\n') || 'No feedback yet';
 
-        const userPrompt = `Generate 3-5 intervention strategies for this student:
+        const userPrompt = `Suggest 3 to 5 practical things a teacher can do to help this student:
 
-Student Profile:
-- Learning Challenges: ${fullLearnerData.learning_challenges?.join(', ') || 'None'}
-- Accessibility Needs: ${fullLearnerData.accessibility_needs?.join(', ') || 'None'}
+About the Student:
+- Learning difficulties: ${fullLearnerData.learning_challenges?.join(', ') || 'None'}
+- Accessibility needs: ${fullLearnerData.accessibility_needs?.join(', ') || 'None'}
 
-Current Recommendations (${fullLearnerData.recommendations?.length || 0}):
+Suggestions Already Given (${fullLearnerData.recommendations?.length || 0}):
 ${fullLearnerData.recommendations?.slice(0, 5).map((r: any) => 
   `- ${r.title} (${r.status})`
 ).join('\n') || 'None'}
 
-Feedback History:
+What the Teacher Said About Previous Suggestions:
 ${feedbackSummary}
 
-Recent Performance:
+Recent Test Scores:
 ${fullLearnerData.performance_records?.slice(-3).map((r: any) => 
   `- ${r.subject}: ${r.score}%`
-).join('\n') || 'No data'}
+).join('\n') || 'No scores available'}
 
-Suggest intervention strategies that build on successful recommendations and address areas where previous suggestions were not helpful.`;
+Write each suggestion in simple, everyday English. Explain what to do and why it helps. If earlier suggestions did not work, suggest something different.`;
 
         const response = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
           method: 'POST',

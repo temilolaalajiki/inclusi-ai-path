@@ -14,8 +14,8 @@ function generateFallbackRecommendations(learnerData: any): any[] {
   // Dyslexia support
   if (learning_challenges?.includes('dyslexia')) {
     recommendations.push({
-      title: 'Enable Text-to-Speech Tools',
-      description: 'Use assistive technology like text-to-speech to support reading tasks',
+      title: 'Use Read-Aloud Tools',
+      description: 'Let the student listen to text being read out loud using a text-to-speech app. This helps them understand written content without struggling to read every word on their own.',
       recommendation_type: 'assistive_tool',
       priority: 'high'
     });
@@ -24,8 +24,8 @@ function generateFallbackRecommendations(learnerData: any): any[] {
   // ADHD support
   if (learning_challenges?.includes('adhd')) {
     recommendations.push({
-      title: 'Break Tasks into Smaller Steps',
-      description: 'Provide structured, step-by-step instructions with clear checkpoints',
+      title: 'Give Instructions One Step at a Time',
+      description: 'Instead of giving a long list of tasks, break the work into small, clear steps. Check that the student finishes each step before moving to the next one.',
       recommendation_type: 'teaching_strategy',
       priority: 'high'
     });
@@ -34,8 +34,8 @@ function generateFallbackRecommendations(learnerData: any): any[] {
   // Visual impairment support
   if (accessibility_needs?.includes('visual_impairment')) {
     recommendations.push({
-      title: 'Increase Text Size and Contrast',
-      description: 'Ensure all materials use large fonts and high contrast colors',
+      title: 'Make Text Bigger and Easier to See',
+      description: 'Use large print and bold, high-contrast colours (like black text on a white or yellow background) so the student can read more comfortably.',
       recommendation_type: 'accessibility',
       priority: 'high'
     });
@@ -48,21 +48,21 @@ function generateFallbackRecommendations(learnerData: any): any[] {
 
   if (avgScore < 60) {
     recommendations.push({
-      title: 'Incorporate Visual Learning Aids',
-      description: 'Use diagrams, charts, and visual organizers to reinforce concepts',
+      title: 'Use Pictures and Diagrams to Explain Ideas',
+      description: 'Show the student charts, drawings, or simple diagrams when teaching new topics. Visual aids make it easier for many learners to understand and remember information.',
       recommendation_type: 'learning_style',
       priority: 'medium'
     });
     recommendations.push({
-      title: 'Provide One-on-One Support Sessions',
-      description: 'Schedule individual tutoring to address specific learning gaps',
+      title: 'Give Extra One-on-One Help',
+      description: 'Set aside time to sit with the student individually and go over the topics they find difficult. Personal attention helps identify exactly where they are struggling.',
       recommendation_type: 'intervention',
       priority: 'high'
     });
   } else if (avgScore < 75) {
     recommendations.push({
-      title: 'Practice with Varied Examples',
-      description: 'Offer diverse practice problems to strengthen understanding',
+      title: 'Practice with Different Types of Questions',
+      description: 'Give the student a mix of easy, medium, and harder practice questions on each topic. This builds confidence and helps them get used to different ways questions can be asked.',
       recommendation_type: 'learning_strategy',
       priority: 'medium'
     });
@@ -203,24 +203,27 @@ serve(async (req) => {
       }
 
       if (useAI) {
-        const systemPrompt = `You are an educational AI assistant specializing in personalized learning recommendations for students with diverse needs. Analyze student data and provide actionable, evidence-based recommendations.`;
+        const systemPrompt = `You are a helpful teaching assistant. Your job is to look at a student's information and suggest simple, practical things a teacher can do to help the student learn better. Write all recommendations in clear, plain English that any teacher can easily understand. Avoid jargon or technical language. Each recommendation should tell the teacher exactly what to do and why it will help.`;
 
-        const userPrompt = `Analyze this learner profile and generate 3-5 personalized recommendations:
+        const userPrompt = `Look at this student's information and suggest 3 to 5 things the teacher can do to help them learn better.
 
-Student Profile:
-- Learning Challenges: ${fullLearnerData.learning_challenges?.join(', ') || 'None reported'}
-- Accessibility Needs: ${fullLearnerData.accessibility_needs?.join(', ') || 'None reported'}
-- Demographics: ${JSON.stringify(fullLearnerData.demographics || {})}
+Student Information:
+- Learning difficulties: ${fullLearnerData.learning_challenges?.join(', ') || 'None reported'}
+- Accessibility needs: ${fullLearnerData.accessibility_needs?.join(', ') || 'None reported'}
+- Other details: ${JSON.stringify(fullLearnerData.demographics || {})}
 
-Performance History:
+Test and Assessment Scores:
 ${fullLearnerData.performance_records?.map((r: any) => 
-  `- ${r.subject}: ${r.score}% (${r.assessment_date})${r.notes ? ' - ' + r.notes : ''}`
-).join('\n') || 'No performance data yet'}
+  `- ${r.subject}: scored ${r.score}% on ${r.assessment_date}${r.notes ? ' - ' + r.notes : ''}`
+).join('\n') || 'No scores available yet'}
 
-Current Recommendations:
-${fullLearnerData.recommendations?.map((r: any) => `- ${r.title} (${r.status})`).join('\n') || 'None'}
+Current Suggestions Already Given:
+${fullLearnerData.recommendations?.map((r: any) => `- ${r.title} (${r.status})`).join('\n') || 'None yet'}
 
-Provide recommendations that are specific, actionable, and prioritized.`;
+Write each recommendation with:
+- A short, clear title (what to do)
+- A simple description explaining how to do it and why it helps
+- Keep the language simple so any teacher can follow it easily`;
 
         const response = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
           method: 'POST',
