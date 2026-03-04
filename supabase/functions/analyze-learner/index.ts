@@ -203,24 +203,27 @@ serve(async (req) => {
       }
 
       if (useAI) {
-        const systemPrompt = `You are an educational AI assistant specializing in personalized learning recommendations for students with diverse needs. Analyze student data and provide actionable, evidence-based recommendations.`;
+        const systemPrompt = `You are a helpful teaching assistant. Your job is to look at a student's information and suggest simple, practical things a teacher can do to help the student learn better. Write all recommendations in clear, plain English that any teacher can easily understand. Avoid jargon or technical language. Each recommendation should tell the teacher exactly what to do and why it will help.`;
 
-        const userPrompt = `Analyze this learner profile and generate 3-5 personalized recommendations:
+        const userPrompt = `Look at this student's information and suggest 3 to 5 things the teacher can do to help them learn better.
 
-Student Profile:
-- Learning Challenges: ${fullLearnerData.learning_challenges?.join(', ') || 'None reported'}
-- Accessibility Needs: ${fullLearnerData.accessibility_needs?.join(', ') || 'None reported'}
-- Demographics: ${JSON.stringify(fullLearnerData.demographics || {})}
+Student Information:
+- Learning difficulties: ${fullLearnerData.learning_challenges?.join(', ') || 'None reported'}
+- Accessibility needs: ${fullLearnerData.accessibility_needs?.join(', ') || 'None reported'}
+- Other details: ${JSON.stringify(fullLearnerData.demographics || {})}
 
-Performance History:
+Test and Assessment Scores:
 ${fullLearnerData.performance_records?.map((r: any) => 
-  `- ${r.subject}: ${r.score}% (${r.assessment_date})${r.notes ? ' - ' + r.notes : ''}`
-).join('\n') || 'No performance data yet'}
+  `- ${r.subject}: scored ${r.score}% on ${r.assessment_date}${r.notes ? ' - ' + r.notes : ''}`
+).join('\n') || 'No scores available yet'}
 
-Current Recommendations:
-${fullLearnerData.recommendations?.map((r: any) => `- ${r.title} (${r.status})`).join('\n') || 'None'}
+Current Suggestions Already Given:
+${fullLearnerData.recommendations?.map((r: any) => `- ${r.title} (${r.status})`).join('\n') || 'None yet'}
 
-Provide recommendations that are specific, actionable, and prioritized.`;
+Write each recommendation with:
+- A short, clear title (what to do)
+- A simple description explaining how to do it and why it helps
+- Keep the language simple so any teacher can follow it easily`;
 
         const response = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
           method: 'POST',

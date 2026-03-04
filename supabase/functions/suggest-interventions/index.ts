@@ -119,32 +119,32 @@ serve(async (req) => {
       }
 
       if (useAI) {
-        const systemPrompt = `You are an educational intervention specialist. Generate personalized, evidence-based intervention strategies for students with diverse learning needs. Focus on practical, actionable strategies teachers can implement.`;
+        const systemPrompt = `You are a helpful teaching assistant. Your job is to suggest simple, practical things a teacher can do to help a student who is struggling. Write everything in clear, plain English that any teacher can easily understand. Avoid jargon. Each suggestion should explain exactly what to do, how to do it, and why it will help the student.`;
 
         const feedbackSummary = fullLearnerData.feedback?.map((f: any) => 
           `${f.rating}: ${f.comment || 'No comment'}`
         ).join('\n') || 'No feedback yet';
 
-        const userPrompt = `Generate 3-5 intervention strategies for this student:
+        const userPrompt = `Suggest 3 to 5 practical things a teacher can do to help this student:
 
-Student Profile:
-- Learning Challenges: ${fullLearnerData.learning_challenges?.join(', ') || 'None'}
-- Accessibility Needs: ${fullLearnerData.accessibility_needs?.join(', ') || 'None'}
+About the Student:
+- Learning difficulties: ${fullLearnerData.learning_challenges?.join(', ') || 'None'}
+- Accessibility needs: ${fullLearnerData.accessibility_needs?.join(', ') || 'None'}
 
-Current Recommendations (${fullLearnerData.recommendations?.length || 0}):
+Suggestions Already Given (${fullLearnerData.recommendations?.length || 0}):
 ${fullLearnerData.recommendations?.slice(0, 5).map((r: any) => 
   `- ${r.title} (${r.status})`
 ).join('\n') || 'None'}
 
-Feedback History:
+What the Teacher Said About Previous Suggestions:
 ${feedbackSummary}
 
-Recent Performance:
+Recent Test Scores:
 ${fullLearnerData.performance_records?.slice(-3).map((r: any) => 
   `- ${r.subject}: ${r.score}%`
-).join('\n') || 'No data'}
+).join('\n') || 'No scores available'}
 
-Suggest intervention strategies that build on successful recommendations and address areas where previous suggestions were not helpful.`;
+Write each suggestion in simple, everyday English. Explain what to do and why it helps. If earlier suggestions did not work, suggest something different.`;
 
         const response = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
           method: 'POST',
